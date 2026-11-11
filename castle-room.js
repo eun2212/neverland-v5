@@ -15,7 +15,8 @@
     <button type="button" class="room-book" data-room="book" aria-label="엔딩 기록"></button>
     <button type="button" class="room-record" data-room="record" aria-label="음악"></button>
     <button type="button" class="room-photo" data-room="photo" aria-label="앨범"></button>
-    <span class="room-avatar" aria-hidden="true"><img alt=""></span>
+    <span class="room-avatar" aria-hidden="true"><span class="room-sprite"></span></span>
+    <span class="room-exit-art" aria-hidden="true"><span></span></span>
    </div>
    <div class="castle-window-view" hidden>
     <canvas width="960" height="450" role="img" aria-label="별빛 아래 움직이는 관람차, 회전목마, 롤러코스터, 자이로드롭"></canvas>
@@ -43,25 +44,26 @@
  let options=null,frame=0,windowStart=0;
  const movement=window.NEVERLAND_BEDROOM_MOVEMENT;
  const avatar=room.querySelector('.room-avatar');
- const sprite=avatar.querySelector('img');
+ const sprite=avatar.querySelector('.room-sprite');
  const controls=room.querySelector('.room-controls');
  const use=room.querySelector('[data-room-use]');
  const skip=room.querySelector('[data-room-skip]');
  const hotspots=new Map([...bedroom.querySelectorAll('[data-room]')].map(el=>[el.dataset.room,el]));
  const keys=new Map(),touches=new Map();
- let pose={...movement.entrance},walkFrame=0,lastWalk=0,wakeAge=null,nearest=null;
+ let pose={...movement.entrance},walkFrame=0,lastWalk=0,wakeAge=null,exit=null,walkAge=0,nearest=null;
  const reduced=()=>media.matches||window.NEVERLAND_TOOLS?.settings.reduced;
  const available=()=>options&&!bedroom.hidden&&!window.NEVERLAND_SAVES?.open&&
   !window.NEVERLAND_TOOLS?.open&&!window.NEVERLAND_DIALOGUE?.open;
  function clearMovement(){keys.clear();touches.clear();}
  function paintAvatar(moving=false){
-  const lying=wakeAge!==null&&wakeAge<.95;
-  const rising=wakeAge!==null&&!lying;
-  avatar.style.left=(lying?.312:rising?.444:pose.x)*100+'%';
-  avatar.style.top=(lying?.657:rising?.744:pose.y)*100+'%';
-  avatar.dataset.pose=lying?'lying':rising?'rising':pose.facing;
-  avatar.classList.toggle('walking-avatar',moving&&!reduced());
-  const close=wakeAge===null?movement.nearest(pose):null;
+  const wakePose=wakeAge===null?null:wakeAge<.8?'lying':wakeAge<1.48?'sitting':wakeAge<2.14?'feet':'standing';
+  const wakePoint={lying:[.312,.65,4],sitting:[.432,.742,5],feet:[.453,.791,6],standing:[pose.x,pose.y,7]}[wakePose];
+  avatar.style.left=(wakePoint?.[0]??pose.x)*100+'%';
+  avatar.style.top=(wakePoint?.[1]??pose.y)*100+'%';
+  avatar.dataset.pose=wakePose||pose.facing;
+  const cell=wakePoint?.[2]??(moving&&!reduced()?Math.floor(walkAge/.125)%4:4);
+  sprite.style.backgroundPositionX=(cell*100/7)+'%';
+  const close=wakeAge===null&&!exit?movement.nearest(pose):null;
   if(close!==nearest||use.disabled!==!close){
    nearest=close;
    use.disabled=!close;
@@ -78,15 +80,35 @@
   const dt=lastWalk?Math.min(.05,(now-lastWalk)/1000):0;
   lastWalk=now;
   let dx=0,dy=0;
+  if(exit){
+   exit.age+=dt;
+   if(reduced()||exit.age>=1.15){options.leave();return;}
+   const approach=Math.min(1,exit.age/.42);
+   if(exit.age<.69){
+    pose.x=exit.x+(.112-exit.x)*approach;
+    pose.y=exit.y+(.786-exit.y)*approach;
+   }else{
+    bedroom.classList.add('door-open');
+    const pass=Math.min(1,(exit.age-.69)/.36);
+    pose.x=.112-.026*pass;pose.y=.786-.048*pass;
+    avatar.style.opacity=String(1-pass);
+   }
+   walkAge+=dt;
+   paintAvatar(exit.age<.42||exit.age>.69);
+   walkFrame=requestAnimationFrame(step);
+   return;
+  }
   if(available()){
    if(wakeAge!==null){
     wakeAge+=dt;
-    if(reduced()||wakeAge>=1.65)finishWake();
+    if(reduced()||wakeAge>=2.65)finishWake();
    }else{
     for(const key of new Set([...keys.keys(),...touches.values()])){
      const [x,y,facing]=movement.directions[key];dx+=x;dy+=y;pose.facing=facing;
     }
+    const beforeX=pose.x,beforeY=pose.y;
     movement.move(pose,Math.sign(dx),Math.sign(dy),dt);
+    if(pose.x!==beforeX||pose.y!==beforeY)walkAge+=dt;else dx=dy=0;
    }
   }
   if(!available())clearMovement();
@@ -103,7 +125,7 @@
   const key=keyName(event);
   if(!(key in movement.directions)&&key!=='e')return;
   event.preventDefault();event.stopImmediatePropagation();
-  if(wakeAge!==null)return;
+  if(wakeAge!==null||exit)return;
   if(key==='e'){if(!event.repeat&&nearest)activate(nearest);return;}
   keys.set(key,true);
  },true);
@@ -111,7 +133,7 @@
  window.addEventListener('blur',clearMovement);
  for(const el of controls.querySelectorAll('[data-direction]')){
   el.addEventListener('pointerdown',event=>{
-   if(!available()||wakeAge!==null)return;
+   if(!available()||wakeAge!==null||exit)return;
    event.preventDefault();el.setPointerCapture(event.pointerId);
    touches.set(event.pointerId,el.dataset.direction);
    const [dx,dy,facing]=movement.directions[el.dataset.direction];
@@ -120,7 +142,7 @@
   for(const type of ['pointerup','pointercancel','lostpointercapture'])
    el.addEventListener(type,event=>touches.delete(event.pointerId));
   el.addEventListener('click',event=>{
-   if(event.detail!==0||!available()||wakeAge!==null)return;
+   if(event.detail!==0||!available()||wakeAge!==null||exit)return;
    const [dx,dy,facing]=movement.directions[el.dataset.direction];
    pose.facing=facing;movement.move(pose,dx,dy,.05);paintAvatar();
   });
@@ -302,12 +324,16 @@
  function activate(action){
   if(!options)return;
   if(action==='back'){look(false);return;}
-  if(!available()||wakeAge!==null)return;
+  if(!available()||wakeAge!==null||exit)return;
   if(!movement.nearby(pose,action)){
    message('물건 가까이로 이동한 뒤 E를 누르세요.');return;
   }
   clearMovement();
-  if(action==='leave'){options.leave();return;}
+  if(action==='leave'){
+   if(reduced()){options.leave();return;}
+   exit={x:pose.x,y:pose.y,age:0};pose.facing='left';
+   paintAvatar();return;
+  }
   if(action==='window'){look(true);return;}
   if(action==='book'){
    message('책 사이에 이 밤의 엔딩들이 기록되어 있습니다.');
@@ -334,19 +360,20 @@
  window.NEVERLAND_ROOM={
   get active(){return !!options;},
   get cue(){return view.hidden?'bedroom':'window';},
-  get waking(){return wakeAge!==null;},
+  get transitioning(){return wakeAge!==null||!!exit;},
   get checkpoint(){return options?{first:options.first,windowView:!view.hidden,pose:{...pose}}:null;},
   open(next){
    options=next;room.hidden=false;bedroom.hidden=false;view.hidden=true;controls.hidden=false;
    const saved=next.roomSave?.pose;
-   pose={...(movement.valid(saved)?saved:next.first?movement.bedside:movement.entrance)};
-   wakeAge=next.first&&!next.roomSave&&!reduced()?0:null;
+   pose={...(movement.valid(saved)?saved:movement.bedside)};
+   exit=null;walkAge=0;avatar.style.opacity='';bedroom.classList.remove('door-open');
+   wakeAge=!next.roomSave&&!reduced()?0:null;
    skip.hidden=wakeAge===null;
    avatar.dataset.gender=next.gender;
-   sprite.src=next.gender==='male'?'assets/bedroom-player-male.png':'assets/bedroom-player-female.png';
+   sprite.style.backgroundImage=next.gender==='male'?'url(assets/bedroom-walk-male.png)':'url(assets/bedroom-walk-female.png)';
    message(next.first?'달빛이 비치는 침대에서 눈을 떴습니다. 창밖에서 희미한 음악이 들려옵니다.':'따뜻한 이불과 오래된 나무 책상에 달빛이 내려앉습니다.');
    if(next.windowView)look(true);else{startWalking();room.querySelector('h1').focus();}
   },
-  close(){cancelAnimationFrame(frame);cancelAnimationFrame(walkFrame);clearMovement();room.hidden=true;options=null;wakeAge=null;}
+  close(){cancelAnimationFrame(frame);cancelAnimationFrame(walkFrame);clearMovement();room.hidden=true;options=null;wakeAge=null;exit=null;}
  };
 })();

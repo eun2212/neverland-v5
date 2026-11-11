@@ -31,6 +31,8 @@ $('manual-save-load').onclick();
 test(dialog.open&&slots.children.length===3&&button(1).disabled,'title shows three empty slots');
 dialog.close();
 $('player').value='여행자';$('temper').value='moderate';$('start').onclick();
+test(!roomCheckpoint,'new game does not open the castle');
+queue=[];after=null;s.phase='profile';openCastle3d(true);
 roomCheckpoint.windowView=true;
 $('manual-save-menu').onclick();button(1).onclick();
 test(JSON.parse(localStorage.getItem(key+1)).room.windowView,'first bedroom window checkpoint saves');

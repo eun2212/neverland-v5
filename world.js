@@ -121,6 +121,7 @@ window.neverlandWorld={
   if(config.exit){exitRevealAge=8;exitRevealAnnounced=true;}
   keys.clear();
  },
+ placeAtCaptainStart(){const [x,z]=layout.rides[0].control;Object.assign(player,{x,z:z-3.7,yaw:Math.PI,pitch:0,eye:1.65});keys.clear();},
  placeAtCastleGate(){const [x,z]=layout.castleExit;Object.assign(player,{x,z,yaw:Math.PI,pitch:0,eye:1.65});keys.clear();},
  jumpToPark(x,z){interior=null;parkReturn=null;passage=null;passageReturn=null;config={...config,epilogue:0,forcedRide:-1};Object.assign(player,{x,z,yaw:0,pitch:0,eye:1.65});keys.clear();runUntil={};document.exitPointerLock?.();},
  enterEpilogue(id){interior=null;parkReturn=null;passage=null;config={...config,paused:false,free:true,exit:false,keeperRed:0,confronting:false,forcedRide:-1,epilogue:id,storyPhase:'epilogue'};Object.assign(player,{x:0,z:id===3?-8:5,yaw:0,pitch:0,eye:1.65});keys.clear();document.exitPointerLock?.();},

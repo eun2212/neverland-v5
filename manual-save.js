@@ -23,7 +23,7 @@
  }
  function reason(){
   const world=world3d.state;
-  if(window.NEVERLAND_ROOM?.waking)return '기상 장면이 끝나면 저장할 수 있습니다.';
+  if(window.NEVERLAND_ROOM?.transitioning)return '침실 장면이 끝나면 저장할 수 있습니다.';
   if(window.NEVERLAND_TOOLS?.testing)return '제작 테스트 중에는 저장할 수 없습니다.';
   if(forcedRide3d!==null||pendingRideResult||world.interior||world.passage)
    return '탑승과 장막 장면이 끝나고 공원으로 돌아오면 저장할 수 있습니다.';

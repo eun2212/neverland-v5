@@ -47,19 +47,21 @@
 #castle-room .room-door:is(:hover,:focus-visible)::after{left:0;transform:none}
 #castle-room .room-photo:is(:hover,:focus-visible)::after{left:auto;right:0;transform:none}
 
-.room-avatar{position:absolute;z-index:2;width:15%;aspect-ratio:1;transform:translate(-50%,-88%);pointer-events:none}
+.room-avatar{position:absolute;z-index:2;width:22.5%;aspect-ratio:1;transform:translate(-50%,-87%);pointer-events:none}
 .room-avatar::before{content:"";position:absolute;left:32%;bottom:9%;width:36%;height:9%;background:#160d32a8;filter:blur(2px);border-radius:50%}
-.room-avatar img{display:block;position:relative;width:100%;height:100%;object-fit:contain;transform-origin:center 87%}
-.room-avatar[data-pose="left"] img{scale:-1 1}
-.room-avatar[data-pose="up"] img{rotate:-4deg}
 .room-avatar[data-pose="lying"]{transform:translate(-50%,-50%) rotate(-80deg)}
 .room-avatar[data-pose="lying"]::before{display:none}
-.room-avatar[data-pose="rising"] img{rotate:-18deg;scale:.94}
-.walking-avatar img{animation:room-step .27s ease-in-out infinite alternate}
-@keyframes room-step{from{translate:0 0}to{translate:0 -5%;rotate:3deg}}
 #castle-room .castle-bedroom .room-nearby{box-shadow:inset 0 0 0 2px #ffdf9c99,0 0 12px #ffdf9c66}
 .room-controls,.room-directions{display:flex;align-items:center;flex-wrap:wrap;gap:.35rem}
 .room-controls{margin-top:.6rem;justify-content:space-between}
 #castle-room .room-directions button{min-width:44px;padding:.25rem;touch-action:none;user-select:none}
 #castle-room [data-room-use]:disabled{opacity:.64}
-@media(prefers-reduced-motion:reduce){.walking-avatar img{animation:none}}
+
+.room-sprite{display:block;position:relative;width:100%;height:100%;background-size:800% 100%;background-repeat:no-repeat}
+.room-avatar[data-pose="left"] .room-sprite{scale:-1 1}
+.room-avatar:is([data-pose="sitting"],[data-pose="feet"]) .room-sprite{transform-origin:50% 87%;transform:scaleY(.86)}
+.room-avatar[data-pose="sitting"]::before{display:none}
+.room-exit-art{display:none;position:absolute;z-index:1;pointer-events:none;left:1.6%;top:28.8%;width:14.1%;height:52%;background:#100b24;border:2px solid #b592e1;border-radius:48% 48% 1% 1% / 27% 27% 1% 1%;transform:skewY(-6deg);perspective:360px}
+.door-open .room-exit-art{display:block}
+.room-exit-art span{display:block;width:100%;height:100%;border:2px solid #b592e1;border-radius:inherit;background:repeating-linear-gradient(105deg,#382554 0 8px,#49306c 9px 11px);transform-origin:left center;animation:room-door-open .23s ease-out both}
+@keyframes room-door-open{from{transform:rotateY(0)}to{transform:rotateY(-72deg)}}

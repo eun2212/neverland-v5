@@ -51,8 +51,7 @@ scene=function(mode){original3d.scene(mode);sync3d();};
 newGame=function(){window.NEVERLAND_ROOM?.close();forcedRide3d=null;free3d=false;intro3d=false;firstLever3d=false;target3d=null;confronting3d=false;pendingRideResult=null;window.carnivalScene?.setOverview(false);$('scenic-view').textContent='전체 풍경';$('scenic-view').setAttribute('aria-pressed','false');world3d.reset();$('stage').classList.remove('walking');original3d.newGame();s.survivedRides=0;sync3d();};
 intro=function(){
  world3d.audio();
- if(window.NEVERLAND_ROOM){openCastle3d(true);return;}
- story([[s.name,'오랜만에 찾아온 네버랜드. 캡틴 훅을 기다리다가 졸음에 눈을 감았다.','warm'],[s.name,'눈을 뜨니 네버랜드 놀이공원이다. 텅 빈 승차 데크. 폐장했을 텐데 멀리서 음악이 들린다.']],()=>leaveCastle3d(true));
+ story([[s.name,'오랜만에 찾아온 네버랜드. 캡틴 훅을 기다리다가 졸음에 눈을 감았다.','warm'],[s.name,'눈을 뜨니 네버랜드 놀이공원이다. 텅 빈 승차 데크. 폐장했을 텐데 멀리서 음악이 들린다.']],()=>{world3d.placeAtCaptainStart();intro3d=true;target3d=[0,-9];explore3d('캡틴 훅 앞에서 깨어났습니다. 배 쪽으로 몇 걸음 다가가세요.');});
 };
 function leaveCastle3d(first){
  window.NEVERLAND_ROOM?.close();
