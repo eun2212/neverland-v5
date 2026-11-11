@@ -140,16 +140,33 @@
    ctx.fillStyle='#da9abc';ctx.fillRect(x,y-41,15,5);
    for(let j=-2;j<=2;j++)disk(x+j*w/6,y+9,2.2,'#f3c899');
   }
-  ctx.lineWidth=5;ctx.strokeStyle='#e1b6a9';
-  ctx.beginPath();ctx.moveTo(213,365);ctx.lineTo(280,222);ctx.lineTo(348,365);ctx.stroke();
-  ctx.beginPath();ctx.arc(312,222,106,0,Math.PI*2);ctx.stroke();
-  for(let i=0;i<12;i++){
-   const a=i*Math.PI/6+t*.15,x=280+106*Math.cos(a),y=222+106*Math.sin(a);
-   ctx.beginPath();ctx.moveTo(312,222);ctx.lineTo(x,y);ctx.lineWidth=2;ctx.stroke();
-   ctx.fillStyle=i%2?'#eabbbe':'#a4d3c8';ctx.fillRect(x-10,y-5,20,13);
-   disk(x,y-6,3,'#ffdf9d');
+  const wheelX=280,wheelY=222,radius=106;
+  ctx.lineWidth=7;ctx.strokeStyle='#725687';
+  ctx.beginPath();ctx.moveTo(wheelX-67,365);ctx.lineTo(wheelX,wheelY);
+  ctx.lineTo(wheelX+68,365);ctx.stroke();
+  ctx.lineWidth=2;ctx.strokeStyle='#d4a6c2';
+  ctx.beginPath();ctx.moveTo(wheelX-67,365);ctx.lineTo(wheelX,wheelY);
+  ctx.lineTo(wheelX+68,365);ctx.stroke();
+  const spokes=Array.from({length:12},(_,i)=>{
+   const angle=i*Math.PI/6+t*.15;
+   return [wheelX+radius*Math.cos(angle),wheelY+radius*Math.sin(angle)];
+  });
+  ctx.lineWidth=2;ctx.strokeStyle='#b299df';ctx.beginPath();
+  for(const [x,y] of spokes){ctx.moveTo(wheelX,wheelY);ctx.lineTo(x,y);}
+  ctx.stroke();
+  ctx.lineWidth=5;ctx.strokeStyle='#ecc5d5';
+  ctx.beginPath();ctx.arc(wheelX,wheelY,radius,0,Math.PI*2);ctx.stroke();
+  ctx.lineWidth=1;ctx.strokeStyle='#fbd99b';
+  ctx.beginPath();ctx.arc(wheelX,wheelY,radius-3,0,Math.PI*2);ctx.stroke();
+  for(const [i,[x,y]] of spokes.entries()){
+   ctx.lineWidth=2;ctx.strokeStyle='#fbd99b';
+   ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x,y+9);ctx.stroke();
+   ctx.fillStyle=i%2?'#f2a5e0':'#a8cdc6';
+   ctx.beginPath();ctx.roundRect(x-9,y+8,18,13,4);ctx.fill();
+   ctx.fillStyle='#4b386a';ctx.fillRect(x-5,y+11,10,4);
+   disk(x,y,2.5,'#fbd99b');
   }
-  disk(312,222,12,'#f9cd9a');
+  disk(wheelX,wheelY,12,'#8766d2');disk(wheelX,wheelY,6,'#fbd99b');
   ctx.fillStyle='#473168';ctx.beginPath();ctx.ellipse(671,352,85,23,0,0,Math.PI*2);ctx.fill();
   ctx.strokeStyle='#b881bf';ctx.lineWidth=5;ctx.stroke();
   const horses=Array.from({length:8},(_,i)=>({i,a:i*Math.PI/4+t*.5})).sort((a,b)=>Math.sin(a.a)-Math.sin(b.a));
