@@ -24,3 +24,36 @@
 .castle-room-copy p{margin:.25rem 0 .65rem}
 .castle-room-copy ol{margin:.4rem 0;padding-left:1.7rem}
 @media(max-width:560px){.room-book{left:43%;bottom:34%}.room-record{left:auto;right:5%;bottom:27%}.room-letter{bottom:47%}.castle-bedroom,.castle-window-view{min-height:330px}#castle-room{padding-top:4.25rem}}
+
+/* The illustrated door is itself the exit control. */
+#castle-room .room-door{
+ left:37%;
+ bottom:44%;
+ width:14%;
+ min-width:44px;
+ height:43%;
+ padding:0;
+ border:4px solid #d1a099;
+ border-radius:45% 45% 3px 3px / 26% 26% 3px 3px;
+ background:repeating-linear-gradient(90deg,#865467 0 21%,#724358 22% 25%);
+ box-shadow:0 0 0 2px #674052,inset 0 0 0 2px #a7717d,3px 5px 9px #52334c70;
+}
+.room-door::before{
+ content:"";
+ position:absolute;
+ inset:13% 16% 10%;
+ border:1px solid #d5a1a1;
+ border-radius:45% 45% 4px 4px / 22% 22% 4px 4px;
+}
+.room-door::after{
+ content:"";
+ position:absolute;
+ right:16%;
+ top:57%;
+ width:9px;
+ height:9px;
+ border-radius:50%;
+ background:#ffdb96;
+ box-shadow:0 1px 3px #412331;
+}
+#castle-room .room-door:hover{border-color:#efbaaa}

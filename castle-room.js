@@ -5,9 +5,10 @@
  room.hidden=true;
  room.setAttribute('aria-labelledby','castle-room-title');
  room.innerHTML=`
-  <header><h1 id="castle-room-title" tabindex="-1">달빛 성의 침실</h1><button type="button" data-room="leave">성 정문으로 나가기</button></header>
+  <header><h1 id="castle-room-title" tabindex="-1">달빛 성의 침실</h1></header>
   <div class="castle-illustration">
    <div class="castle-bedroom">
+    <button type="button" class="room-door" data-room="leave" aria-label="침실 문을 열고 성 정문으로 나가기"></button>
     <div class="castle-moon-window" aria-hidden="true">☾</div>
     <div class="castle-bed" aria-hidden="true"></div>
     <div class="castle-desk" aria-hidden="true"></div>
