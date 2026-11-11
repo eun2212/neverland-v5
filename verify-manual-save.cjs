@@ -1,0 +1,78 @@
+const fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
+const source=fs.readFileSync(path.join(__dirname,'verify-full-story.cjs'),'utf8');
+const checks=String.raw`
+Element.prototype.focus=function(){document.activeElement=this;};
+Element.prototype.showModal=function(){this.open=true;};
+Element.prototype.close=function(){this.open=false;};
+Element.prototype.querySelector=function(selector){return el(this.id+selector);};
+Object.defineProperty(Element.prototype,'isConnected',{get(){return this.id==='start';}});
+Element.prototype.after=function(button){elements.set(button.id,button);};
+document.documentElement=new Element();
+const appendToBody=document.body.append.bind(document.body);
+document.body.append=(...nodes)=>{for(const node of nodes)if(node.id)elements.set(node.id,node);appendToBody(...nodes);};
+for(const file of ['keeper-story.js','lost-boys.js','dialogue-controls.js','manual-save.js']){
+ vm.runInContext(fs.readFileSync(path.join(root,file),'utf8'),sandbox,{filename:file});
+}
+run(\`
+const key='neverland-manual-save-';
+const dialog=$('manual-save-dialog');
+const slots=$('manual-save-dialog[data-save-slots]');
+const note=$('manual-save-dialog[data-save-status]');
+const button=i=>slots.children[i-1].children[2];
+let roomCheckpoint=null;
+window.NEVERLAND_ROOM={
+ get active(){return !!roomCheckpoint;},
+ get checkpoint(){return roomCheckpoint;},
+ open({first,windowView}){roomCheckpoint={first,windowView};},
+ close(){roomCheckpoint=null;}
+};
+newGame();
+$('manual-save-load').onclick();
+test(dialog.open&&slots.children.length===3&&button(1).disabled,'title shows three empty slots');
+dialog.close();
+$('player').value='여행자';$('temper').value='moderate';$('start').onclick();
+roomCheckpoint.windowView=true;
+$('manual-save-menu').onclick();button(1).onclick();
+test(JSON.parse(localStorage.getItem(key+1)).room.windowView,'first bedroom window checkpoint saves');
+newGame();$('manual-save-load').onclick();button(1).onclick();
+test(roomCheckpoint.first&&roomCheckpoint.windowView&&s.phase==='profile','first bedroom window checkpoint restores');
+leaveCastle3d(true);
+test(world3d.state.player.z===-16&&intro3d,'restored first room leaves to original intro');
+free3d=true;intro3d=false;s.keeperIntroduced=true;s.cleared.add(1);s.clues.add(1);s.K=4;s.ride=1;
+keeperStoryState.responses.add('question:1:keeper');
+s.dollMemories.test={met:true};
+s.cheshire={met:true,separated:false,incident:false,choice:'',evidence:['a']};
+window.NEVERLAND_DIALOGUE.record('키퍼','기억');
+world3d.jumpToPark(22,-30);worldQA.player.yaw=1.2;worldQA.player.pitch=-.18;explore3d();
+$('manual-save-menu').onclick();button(2).onclick();
+const saved=localStorage.getItem(key+2);
+test(!!saved,'free park checkpoint saves');
+s.K=6;$('manual-save-menu').onclick();button(2).onclick();
+test(localStorage.getItem(key+2)===saved,'overwrite needs confirmation');
+slots.children[1].children[3].onclick();
+test(JSON.parse(localStorage.getItem(key+2)).story.K===6,'confirmed overwrite persists');
+newGame();
+localStorage.setItem(key+3,'{"version":99}');
+$('manual-save-load').onclick();
+test(button(3).disabled&&slots.children[2].children[1].textContent.includes('버전'),'invalid version is shown and cannot load');
+button(2).onclick();
+test(s.cleared.has(1)&&s.clues.has(1)&&s.K===6&&keeperStoryState.responses.has('question:1:keeper'),'scores, sets and Keeper progression restore');
+test(world3d.state.player.x===22&&world3d.state.player.z===-30&&world3d.state.player.yaw===1.2&&world3d.state.player.pitch===-.18,'position and camera restore exactly');
+test(s.dollMemories.test.met&&s.cheshire.evidence[0]==='a'&&window.NEVERLAND_DIALOGUE.history.some(x=>x.text==='기억'),'cast memories and dialogue log restore');
+test(!world3d.state.config.paused&&!dialog.open,'restored park permits walking');
+s.phase='story';$('manual-save-menu').onclick();
+test(button(1).disabled&&button(2).disabled&&button(3).disabled,'dialogue blocks saving');
+dialog.close();explore3d();forcedRide3d=1;$('manual-save-menu').onclick();
+test(button(3).disabled,'forced boarding blocks saving');dialog.close();forcedRide3d=null;
+localStorage.setItem(key+3,'broken JSON');$('manual-save-menu').onclick();
+test(!button(3).disabled,'corrupt slots can be replaced with confirmation');
+slots.children[2].children[2].onclick();
+const originalSet=localStorage.setItem;
+localStorage.setItem=()=>{throw Error('quota')};
+slots.children[2].children[3].onclick();
+test(note.textContent.includes('저장할 수 없습니다')&&localStorage.getItem(key+3)==='broken JSON','quota failure preserves previous slot and reports error');
+localStorage.setItem=originalSet;
+\`);
+console.log('PASS: '+assertions+' assertions including slot UI, first room, park pose, manual overwrite, restrictions, incompatible slots, and quota errors.');
+`;
+eval(source+checks.replaceAll('\\'+String.fromCharCode(96),String.fromCharCode(96)));

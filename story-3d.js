@@ -61,10 +61,10 @@ function leaveCastle3d(first){
  explore3d(first?'성 정문에 나왔습니다. 정면의 캡틴 훅 쪽으로 걸어가세요.':'달빛 성 정문');
  $('walking-map').focus?.();
 }
-function openCastle3d(first=false){
+function openCastle3d(first=false,windowView=false){
  world3d.configure({paused:true});
  window.NEVERLAND_ROOM.open({
-  first,
+  first,windowView,
   getRecords:()=>[1,2,3,4,5].map(i=>endings.includes(i)?'✦ '+endingData[i][0]:'◇ 아직 쓰이지 않은 이야기'),
   leave:()=>leaveCastle3d(first)
  });
@@ -163,11 +163,11 @@ $('sound').onclick=()=>{const muted=world3d.mute();if(rideAudio)muted?rideAudio.
 $('walking-help').onclick=()=>{
  if(world3d.state.passage)return;
  const previous=[...$('overlay').childNodes];
- modal('<h1>네버랜드에서 걷기</h1><p>WASD: 이동 · Shift: 빠르게 걷기<br>마우스 클릭 후 둘러보기 · Esc: 마우스 해제<br>드래그 또는 ← →: 시점 회전<br>E: 가까운 키퍼·조작대·흔적·출구 상호작용</p><p>지도는 현재 위치와 바라보는 방향을 보여줍니다. 구역은 직접 걸어서 이동하세요. 키퍼의 대화와 조작대의 퍼즐, 각 구역의 금빛 흔적을 살피면 길이 열립니다.</p><p>이름·성별·성향, 성향별 대화와 선택, 랜덤 이벤트, 다섯 퍼즐과 다섯 엔딩이 있습니다. 키퍼의 도움과 말이 항상 같은 뜻인지는 직접 확인해 보세요. 자동 저장 없이 진행되며 엔딩 기록만 보관합니다.</p><button id="help-close">돌아가기</button>');
+ modal('<h1>네버랜드에서 걷기</h1><p>WASD: 이동 · Shift: 빠르게 걷기<br>마우스 클릭 후 둘러보기 · Esc: 마우스 해제<br>드래그 또는 ← →: 시점 회전<br>E: 가까운 키퍼·조작대·흔적·출구 상호작용</p><p>지도는 현재 위치와 바라보는 방향을 보여줍니다. 구역은 직접 걸어서 이동하세요. 키퍼의 대화와 조작대의 퍼즐, 각 구역의 금빛 흔적을 살피면 길이 열립니다.</p><p>이름·성별·성향, 성향별 대화와 선택, 랜덤 이벤트, 다섯 퍼즐과 다섯 엔딩이 있습니다. 키퍼의 도움과 말이 항상 같은 뜻인지는 직접 확인해 보세요. 왼쪽 위 메뉴에서 공원이나 침실의 안전한 시점에 수동 저장할 수 있습니다.</p><button id="help-close">돌아가기</button>');
  $('help-close').onclick=()=>{$('overlay').replaceChildren(...previous);sync3d();};
 };
 document.addEventListener('keydown',e=>{
- if(window.NEVERLAND_ROOM?.active||e.target instanceof HTMLInputElement||e.target instanceof HTMLSelectElement)return;
+ if(window.NEVERLAND_SAVES?.open||window.NEVERLAND_ROOM?.active||e.target instanceof HTMLInputElement||e.target instanceof HTMLSelectElement)return;
  if(e.key.toLowerCase()==='q'&&world3d.state.interior&&$('stage').classList.contains('walking')){if(world3d.stand())explore3d();return;}
  if(e.key==='Escape'&&$('stage').classList.contains('walking')&&!$('overlay').children.length)return;
  if(e.key==='Enter'&&!e.repeat&&!$('stage').classList.contains('walking')&&!$('overlay').children.length){const only=$('choices').querySelectorAll('button');if(only.length===1){e.preventDefault();only[0].click();}}

@@ -181,10 +181,11 @@
  window.NEVERLAND_ROOM={
   get active(){return !!options;},
   get cue(){return view.hidden?'bedroom':'window';},
+  get checkpoint(){return options?{first:options.first,windowView:!view.hidden}:null;},
   open(next){
    options=next;room.hidden=false;bedroom.hidden=false;view.hidden=true;
    message(next.first?'달빛이 비치는 침대에서 눈을 떴습니다. 창밖에서 희미한 음악이 들려옵니다.':'따뜻한 이불과 오래된 나무 책상에 달빛이 내려앉습니다.');
-   room.querySelector('h1').focus();
+   if(next.windowView)look(true);else room.querySelector('h1').focus();
   },
   close(){cancelAnimationFrame(frame);room.hidden=true;options=null;}
  };

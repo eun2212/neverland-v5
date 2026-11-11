@@ -1,0 +1,14 @@
+#manual-save-menu{position:fixed;top:max(.65rem,env(safe-area-inset-top));left:max(.65rem,env(safe-area-inset-left));z-index:46;min-height:44px;padding:.35rem .75rem;border:1px solid #c8ad7d;border-radius:.5rem;background:#24332a;color:#fff2d7;font:600 .875rem system-ui,sans-serif}
+#manual-save-dialog{box-sizing:border-box;width:min(31rem,calc(100% - 1.25rem));max-height:calc(100% - 1.25rem);padding:1rem 1.2rem;overflow:auto;border:1px solid #b28fac;border-radius:.8rem;background:#241b31;color:#fff0e4;font-family:system-ui,sans-serif}
+#manual-save-dialog::backdrop{background:#100b1bcc}
+#manual-save-dialog header{display:flex;align-items:center;justify-content:space-between;gap:1rem}
+#manual-save-dialog h2{margin:0;font-size:1.25rem}
+#manual-save-dialog [data-save-slots]>div{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.25rem .75rem;align-items:center;padding:.65rem 0;border-top:1px solid #b28fac66}
+#manual-save-dialog [data-save-slots] span{grid-column:1;overflow-wrap:anywhere}
+#manual-save-dialog [data-save-slots] button{grid-column:2}
+#manual-save-dialog [data-save-slots] button:first-of-type{grid-row:1 / span 2}
+#manual-save-dialog button{min-height:44px;border:1px solid #b28fac;border-radius:.45rem;background:#47334d;color:inherit;padding:.35rem .7rem}
+#manual-save-dialog button:disabled{opacity:.55}
+#manual-save-dialog button:focus-visible,#manual-save-menu:focus-visible{outline:3px solid #ffe09d;outline-offset:2px}
+
+#manual-save-load{margin-inline-start:.5rem}
