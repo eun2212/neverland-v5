@@ -7,6 +7,15 @@
  function createModel({T,scene,cube,ball,cylinder,beam,curve,batch}){
   const site=window.NEVERLAND_LAYOUT.coaster;
   const fixed=new T.Group(),train=new T.Group();
+  const outline=new T.Shape();
+  for(const [i,[x,z]] of [[-30,59],[-32,65],[-32,89],[-26,93],[24,93],[29,88],[30,64],[23,57],[-17,57]].entries()){
+   if(i===0)outline.moveTo(x,z);else outline.lineTo(x,z);
+  }
+  outline.closePath();
+  const plaza=new T.Mesh(new T.ShapeGeometry(outline),new T.MeshStandardMaterial({
+   color:0xc8ab80,roughness:.92,emissive:0x8b6c4b,emissiveIntensity:.14
+  }));
+  plaza.rotation.x=-Math.PI/2;plaza.position.y=.008;plaza.receiveShadow=true;fixed.add(plaza);
   fixed.name='north-coaster-track';train.name='north-coaster-train';scene.add(fixed,train);
   const track=new T.CatmullRomCurve3([
    [-13,3,-73],[-6,3,-73],[3,4,-73],[14,13,-73],[21,9,-78],[17,4,-85],
@@ -26,6 +35,7 @@
    for(const side of [-1,1]){
     const top=p.clone().addScaledVector(r,.54*side),foot=p.clone().addScaledVector(r,1.18*side);
     beam([foot.x,0,foot.z],top.toArray(),.12,'green',fixed);
+    ball(top.x,top.y+.24,top.z,.086,'bulb',fixed);
    }
    beam([p.x+r.x*1.18,0,p.z+r.z*1.18],[p.x-r.x*.54,p.y*.74,p.z-r.z*.54],.068,'greenLight',fixed);
   }
@@ -36,14 +46,28 @@
    ball(x+offset,4.55,z-1.4,.17,'bulb',fixed);
   }
   cube(x,4.2,z-1.4,7.5,.36,1.4,'cream',fixed);
-  const sign=document.createElement('canvas');sign.width=640;sign.height=128;
-  const ink=sign.getContext('2d');
-  ink.fillStyle='#311d39';ink.fillRect(0,0,640,128);
-  ink.fillStyle='#fff1bd';ink.textAlign='center';ink.font='bold 56px sans-serif';
-  ink.fillText(site.name,320,85);
-  const map=new T.CanvasTexture(sign);map.colorSpace=T.SRGBColorSpace;
-  const plate=new T.Mesh(new T.PlaneGeometry(6.5,1.3),new T.MeshBasicMaterial({map,toneMapped:false}));
-  plate.position.set(x,3.4,z-.67);fixed.add(plate);
+  function star(px,py,pz,r,floor){
+   const shape=new T.Shape();
+   for(let i=0;i<8;i++){
+    const angle=Math.PI/2+i*Math.PI/4,length=i%2?r*.27:r;
+    const sx=Math.cos(angle)*length,sy=Math.sin(angle)*length;
+    if(i===0)shape.moveTo(sx,sy);else shape.lineTo(sx,sy);
+   }
+   shape.closePath();
+   const mark=new T.Mesh(new T.ShapeGeometry(shape),new T.MeshStandardMaterial({
+    color:0xf3d28b,metalness:.24,roughness:.68,emissive:0xe2ad48,emissiveIntensity:floor?.09:.45
+   }));
+   mark.position.set(px,py,pz);
+   if(floor)mark.rotation.x=-Math.PI/2;
+   mark.receiveShadow=floor;
+   fixed.add(mark);
+  }
+  star(x,5.17,z-1.4,.82,false);
+  for(let i=-8;i<=8;i++)ball(x+i*.42,4.25,z-.65,.065,'bulb',fixed);
+  for(const [px,pz,r] of [[-13,-65,2],[-22,-62,1.3],[-5,-61,1.45],[6,-64,2],[18,-63,1.2],[-22,-68,.9],[15,-69,1.05]]){
+   star(px,.047,pz,r,true);
+  }
+  for(const offset of [-3.3,3.3])star(x+offset,3.65,z-.61,.28,false);
   const cars=Array.from({length:3},(_,i)=>{
    const car=new T.Group();train.add(car);
    cube(0,.02,0,1.24,.24,1.45,i?'greenLight':'red',car);

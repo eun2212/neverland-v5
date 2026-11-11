@@ -138,8 +138,13 @@ for(let i=0;i<5;i++){const a=i/5*6.283;cups.push(cup(tea,Math.cos(a)*3.7,Math.si
 for(let z=5;z>=-55;z-=8)for(const x of[-34,34]){lamp(x,z);flowerbed(x+1.5,z,1);}
 for(const z of[7,-5,-40,-55])for(const x of[-7,7]){lamp(x,z);if(z!==-5)flowerbed(x+(x<0?-2:2),z,1.0);}
 for(const [x,z,a]of [[-12,5,0],[12,5,Math.PI],[-12,-42,0],[12,-42,Math.PI],[-32,-22,Math.PI/2],[32,-22,-Math.PI/2]]){bench(x,z,a);flowerbed(x,z+2,.9);}
-for(let z=-58;z<=17;z+=5)for(const x of[-36.7,36.7])tree(x,z,4+random()*2);for(let x=-32;x<=32;x+=5){tree(x,-58,4+random()*2);if(Math.abs(x)>13)tree(x,17,3.5+random());}
-for(let z=-70;z<=30;z+=7)for(const x of[-45,45])tree(x+(random()-.5)*5,z,5+random()*3);for(let x=-40;x<=40;x+=6)tree(x,-68-random()*5,6+random()*3);
+for(let z=-58;z<=17;z+=5)for(const x of[-36.7,36.7])tree(x,z,4+random()*2);for(let x=-32;x<=32;x+=5){const northHeight=4+random()*2;
+ if(Math.abs(x)>30)tree(x,-58,northHeight);else random();
+ if(Math.abs(x)>13)tree(x,17,3.5+random());}
+for(let z=-70;z<=30;z+=7)for(const x of[-45,45])tree(x+(random()-.5)*5,z,5+random()*3);for(let x=-40;x<=40;x+=6){
+ const z=-68-random()*5,height=6+random()*3;
+ if(Math.abs(x)>32)tree(x,z,height);else random();
+}
 for(const [x,z]of [[-54,-20],[54,-20],[-35,-81],[20,-83]]){const hill=ball(x,-2,z,10,'leaf');hill.scale.set(1.7,.7,1.3);}
 for(const z of[5,-18,-39,-54])flagline([-33,5,z],[33,5,z]);for(let z=-95;z<61;z+=2){railing([-74,z],[-74,z+2]);railing([74,z],[74,z+2]);}for(let x=-74;x<74;x+=2)railing([x,-95],[x+2,-95]);
 for(let i=0;i<20;i++){const a=i/20*6.283;if(Math.abs(Math.sin(a))<.24||Math.abs(Math.cos(a))<.24)continue;flowerbed(Math.cos(a)*20.2,-24+Math.sin(a)*20.2,.8);}

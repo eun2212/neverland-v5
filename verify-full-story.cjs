@@ -43,6 +43,14 @@ for(const [x,z,farX,farZ] of [[0,-16,0,-14],[0,-32,0,-34],[8,-24,11,-24],[-8,-24
 }
 test(!worldQA.valid(0,-24)&&!worldQA.valid(5.8,-21),'castle core and towers block walking');
 test(worldQA.valid(70,-90)&&!worldQA.valid(75,-90),'expanded park boundaries');
+const coaster=window.NEVERLAND_LAYOUT.coaster;
+world3d.jumpToPark(...coaster.door);
+test(worldQA.nearest()?.type==='coaster','north coaster station can be entered');
+world3d.configure({forcedRide:1});
+test(worldQA.nearest()?.type!=='coaster','coaster cannot interrupt mandatory boarding');
+world3d.configure({forcedRide:-1});
+test(!worldQA.valid(0,-79),'coaster track footprint blocks walking');
+
 for(const shop of window.NEVERLAND_LAYOUT.shops){
  world3d.jumpToPark(...shop.door);
  test(worldQA.valid(...shop.door)&&worldQA.nearest()?.shop===shop.id,'shop doorway is reachable '+shop.id);
@@ -156,6 +164,7 @@ for(let cursor=0;cursor<frontier.length;cursor++){
 }
 const positions={controls:sandbox.NEVERLAND_LAYOUT.rides.map(r=>r.control),clues:sandbox.NEVERLAND_LAYOUT.clues,keepers:sandbox.NEVERLAND_LAYOUT.keepers};
 positions.shops=layout.shops.map(shop=>shop.door);
+positions.coaster=[layout.coaster.door];
 positions.exits=positions.controls.map(([x,z])=>[x+4,z+2]);
 for(const [kind,points]of Object.entries(positions))for(const [i,p]of points.entries())test(frontier.some(([x,z])=>Math.hypot(x-p[0],z-p[1])<2),'walkable path to '+kind+' '+i);
 run("world3d.configure({paused:true});");const stationary=JSON.stringify(sandbox.worldQA.player);handlers.keydown({key:'w',repeat:false,preventDefault(){}});frames(5);test(JSON.stringify(sandbox.worldQA.player)===stationary,'modal pause prevents movement');
