@@ -170,7 +170,21 @@ batch(stat);batch(boat);for(const g of gondolas)batch(g);batch(wheel,gondolas);f
 // Sprites are actual transparent textures for the established keeper artwork.
 const keeperArt=JSON.parse(document.getElementById('keeper-art').textContent),keeperTextures=new Map(),keeperLoader=new T.TextureLoader();
 function keeperTexture(id){const src=(keeperArt[id]||keeperArt['00']).src;if(!keeperTextures.has(src)){const texture=keeperLoader.load(src);texture.colorSpace=T.SRGBColorSpace;keeperTextures.set(src,texture);}return keeperTextures.get(src);}
-const keeperSprite=new T.Sprite(new T.SpriteMaterial({map:keeperTexture('00'),alphaTest:.08}));const keeperVeinTexture=window.NEVERLAND_KEEPER_VEINS.texture(T),keeperRedUniform={value:0};keeperSprite.material.onBeforeCompile=shader=>{shader.uniforms.keeperRed=keeperRedUniform;shader.uniforms.keeperVeinField={value:keeperVeinTexture};shader.fragmentShader=shader.fragmentShader.replace('#include <common>','#include <common>\nuniform float keeperRed;uniform sampler2D keeperVeinField;').replace('#include <fog_fragment>','#include <fog_fragment>\nfloat arrival=texture2D(keeperVeinField,vMapUv).r;float vein=keeperRed>=.999?1.:keeperRed<=0.?0.:smoothstep(arrival-.006,arrival+.006,keeperRed);gl_FragColor.rgb=mix(gl_FragColor.rgb,vec3(.12+.88*dot(gl_FragColor.rgb,vec3(.299,.587,.114)),.008,.004),vein);');};keeperSprite.material.customProgramCacheKey=()=> 'keeper-mask-takeover-v4';keeperSprite.scale.set(2.0,3.0,1);scene.add(keeperSprite);let lastKeeperPose='00';
+const keeperSprite=new T.Sprite(new T.SpriteMaterial({map:keeperTexture('00'),alphaTest:.08}));
+const keeperMelt=window.NEVERLAND_KEEPER_MELT,keeperMeltMap={value:keeperMelt.texture(T,0)};
+let displayedMelt=0,lastKeeperPose='00';
+keeperSprite.material.onBeforeCompile=shader=>{
+ shader.uniforms.keeperMeltMap=keeperMeltMap;
+ shader.fragmentShader=shader.fragmentShader
+  .replace('#include <common>','#include <common>\nuniform sampler2D keeperMeltMap;')
+  .replace('#include <map_fragment>','#include <map_fragment>\nvec4 melt=texture2D(keeperMeltMap,vMapUv);diffuseColor.rgb=mix(diffuseColor.rgb,melt.rgb,melt.a);');
+};
+keeperSprite.material.customProgramCacheKey=()=> 'keeper-crayon-melt';
+keeperSprite.scale.set(2,3,1);scene.add(keeperSprite);
+const keeperPool=new T.Mesh(new T.PlaneGeometry(2.15,1.45),new T.MeshBasicMaterial({
+ map:keeperMelt.poolTexture(T),transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-1
+}));
+keeperPool.name='keeper-melt-puddle';keeperPool.rotation.x=-Math.PI/2;keeperPool.visible=false;scene.add(keeperPool);
 const clueGroups=[];for(const [x,z]of L.clues){const g=new T.Group();g.position.set(x,L.terrain(x,z),z);scene.add(g);cylinder(0,0,0,.35,.65,'green',g);cylinder(0,.65,0,.48,.1,'gold',g);sunburst(0,1.1,0,.25,g);clueGroups.push(g);batch(g);}
 const exitGroup=new T.Group();scene.add(exitGroup);cube(-1.35,0,0,.25,3.7,.3,'gold',exitGroup);cube(1.35,0,0,.25,3.7,.3,'gold',exitGroup);cube(0,3.5,0,3,.25,.3,'gold',exitGroup);cube(0,0,0,2.4,3.4,.15,'green',exitGroup);sunburst(0,2.9,.12,.53,exitGroup);for(let i=0;i<5;i++)beam([-1.1,.4+i*.5,.12],[1.1,.65+i*.5,.12],.025,'gold',exitGroup);torus(0,.04,0,1.9,.035,'exitGlow',exitGroup,true);torus(0,.04,0,2.3,.025,'gold',exitGroup,true);batch(exitGroup);
 const particles=new T.Group();scene.add(particles);const particleList=[];for(let i=0;i<48;i++)particleList.push(ball(0,0,0,.04,i%3?'bulb':'exitGlow',particles));
@@ -210,7 +224,6 @@ function render(){requestAnimationFrame(render);const t=clock.getElapsedTime(),s
  carousel.rotation.y=t*(moving('carousel')?.38:.045);for(let i=0;i<horses.length;i++)horses[i].position.y=1.4+Math.sin(t*1.6+i)*.2;tea.rotation.y=t*(moving('tea')?.5:.04);for(let i=0;i<cups.length;i++)cups[i].rotation.y=t*.3+i;
  water.material.color.setHSL(.49,.47,.36+Math.sin(t*.8)*.015);
  ripple.offset.set(t*.008,t*.014);fallTexture.offset.y=t*.5;
- keeperRedUniform.value=state.config.keeperRed||0;
  const nextKeeperPose=state.config.confronting?'08':document.getElementById('keeper')?.dataset.pose||'00';if(nextKeeperPose!==lastKeeperPose){keeperSprite.material.map=keeperTexture(nextKeeperPose);keeperSprite.material.needsUpdate=true;lastKeeperPose=nextKeeperPose;}
  keeperSprite.visible=state.config.keeperIntroduced&&document.body.classList.contains('exploring');if(state.keeper){keeperSprite.position.set(state.keeper.x,1.5+L.terrain(state.keeper.x,state.keeper.z),state.keeper.z);}
  clueGroups.forEach((g,i)=>g.visible=state.config.free);
@@ -220,10 +233,19 @@ function render(){requestAnimationFrame(render);const t=clock.getElapsedTime(),s
  coasterModel.update(camera,!!state.passage||!!state.interior||!!state.config.epilogue);
  const inPassage=!!state.passage,inside=!!state.interior||inPassage;for(const object of[stat,boatPivot,wheel,carousel,tea])object.visible=!inside;dreamStage.update(t,inside);
  if(inside){keeperSprite.visible=false;clueGroups.forEach(o=>o.visible=false);exitGroup.visible=particles.visible=revealBeams.visible=waypoint.visible=false;}
- if(inPassage){keeperSprite.visible=true;keeperSprite.position.set(0,1.5,state.player.z+4);keeperRedUniform.value=1;keeperSprite.material.fog=false;}else keeperSprite.material.fog=true;
+ if(inPassage){keeperSprite.visible=true;keeperSprite.position.set(0,1.5,state.player.z+4);keeperSprite.material.fog=false;}else keeperSprite.material.fog=true;
  const rideCamera=rideModels.update(state,t);if(rideCamera){camera.position.copy(rideCamera.position);camera.rotation.order='YXZ';camera.rotation.set(rideCamera.pitch,rideCamera.yaw,rideCamera.roll);}
  const fractureView=fracture.update(state,t);combineMat.uniforms.vision.value=state.interior?.ride===3?1:fractureView?fractureView.vision:-1;combineMat.uniforms.aspect.value=w/h;combineMat.uniforms.mazeLight.value=state.interior?.ride===3?((window.NEVERLAND_TOOLS?.settings.reduced||matchMedia('(prefers-reduced-motion: reduce)').matches)?.6:(t%4.8<.65?1:.045)):-1;
  if(fractureView){camera.position.copy(fractureView.position);camera.rotation.order='YXZ';camera.rotation.set(fractureView.pitch,fractureView.yaw,0);}
+ const level=inPassage?1:state.config.keeperMelt||0;
+ if(level!==displayedMelt){displayedMelt=level;keeperMeltMap.value=keeperMelt.texture(T,level);}
+ keeperPool.visible=level>0&&keeperSprite.visible&&!state.config.epilogue;
+ if(keeperPool.visible){
+  const {x,z}=keeperSprite.position;
+  keeperPool.position.set(x,(inPassage?0:L.terrain(x,z))+.055,z);
+  const scale=keeperMelt.poolScale(level)*(reduced?1:1+.017*Math.sin(t*1.1));
+  keeperPool.scale.set(scale,scale,1);
+ }
  const interiorKey=state.passage?'graveyard':state.interior?.ride??-1;if(interiorKey!==renderedInterior){renderer.shadowMap.needsUpdate=true;renderedInterior=interiorKey;}
  window.NEVERLAND_CAST?.render(T,scene,state,t);window.NEVERLAND_BGM?.update(state,state.config.storyPhase);
  if(state.config.epilogue){keeperSprite.visible=false;clueGroups.forEach(o=>o.visible=false);exitGroup.visible=particles.visible=revealBeams.visible=waypoint.visible=false;}window.NEVERLAND_ENDING?.render(T,scene,state,t);renderBloom(w,h);last=t;

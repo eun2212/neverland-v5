@@ -73,7 +73,7 @@ function keeperSafeResult3d(help,risk=false){
  close();log(help?'help':'ride-success');if(!s.cleared.has(s.ride)){s.cleared.add(s.ride);s.N++;if(help){s.K++;s.help++;}else{s.I+=2;s.wins++;}}else if(help)s.help++;
  checkExit();const stage=keeperStage();
  const opening=help?'그의 손이 제동 장치를 붙든다. 멎지 않던 진동이 가라앉는다. 그가 이번에는 정말 나를 구했다.':risk?'간신히 안전장치가 맞물린다. 키퍼는 나보다 먼저 숨을 내쉰다.':'표시한 순서대로 기구가 멈췄다. 내 손으로 끝낸 항해다. 키퍼는 잠시 박수치는 것을 잊는다.';
- keeperBeat([['',opening],['키퍼',help?['무사해서 다행이에요. 다음에도 저부터 불러요.','제 손이 없었으면 어쩔 뻔했어요. 이제는 조금 믿어도 되겠죠?','아슬아슬할 때마다 제 이름을 부르네요. 그 목소리가 좋아요.','이렇게 잘 돌아오는데도, 계속 밖으로 가려는군요.'][stage]:['정확해요. 그런데 제 손은 한 번도 찾지 않으셨네요.','혼자서도 잘하시네요. ……기뻐해야 하는 일인데.','제가 필요하지 않아지는 게 이렇게 빠를 줄은 몰랐어요.','당신이 가는 길마다 제가 먼저 있었어요. 잊지 말아요.'][stage]],['',stage>0?'가면의 별에서 번진 붉은색이 목 아래까지 내려와 있다. 전구 빛이 바뀌어도 그 색만은 사라지지 않는다.':'가면의 별 끝에 낯선 붉은 얼룩이 있다. 키퍼가 고개를 돌려 그것을 감춘다.']],()=>say(s.name,'그의 걱정과 원망이 같은 목소리로 들린다.',[
+ keeperBeat([['',opening],['키퍼',help?['무사해서 다행이에요. 다음에도 저부터 불러요.','제 손이 없었으면 어쩔 뻔했어요. 이제는 조금 믿어도 되겠죠?','아슬아슬할 때마다 제 이름을 부르네요. 그 목소리가 좋아요.','이렇게 잘 돌아오는데도, 계속 밖으로 가려는군요.'][stage]:['정확해요. 그런데 제 손은 한 번도 찾지 않으셨네요.','혼자서도 잘하시네요. ……기뻐해야 하는 일인데.','제가 필요하지 않아지는 게 이렇게 빠를 줄은 몰랐어요.','당신이 가는 길마다 제가 먼저 있었어요. 잊지 말아요.'][stage]],['',stage>0?'코트 밑단에서 분홍과 연보라의 줄무늬가 올라온다. 그 아래 옷자락은 흑백의 잘린 줄로 끊긴다.':'키퍼의 구두 아래에 작은 파스텔색 웅덩이가 고였다. 그는 발을 조용히 뒤로 뺀다.']],()=>say(s.name,'그의 걱정과 원망이 같은 목소리로 들린다.',[
   ['도와준 건 고마워요',()=>safeRideReply('thanks',()=>afterKeeperRide())],
   ['위험한 걸 알고 있었죠?',()=>safeRideReply('doubt',()=>afterKeeperRide())],
   ['다음에는 내 선택을 존중해줘요',()=>safeRideReply('boundary',()=>afterKeeperRide())]
@@ -99,7 +99,7 @@ talk=function(){
  if(s.talks>=2){requireRide3d();return;}
  say('키퍼',keeperStage()>0?'무엇이 그렇게 의심스러워요? 듣고 있어요.':'궁금한 게 있나요? 이번에는 무슨 이야기를 할까요?',[
   ['현재 놀이기구',()=>topic('ride')],['출구에 관해',()=>topic('exit')],['키퍼 자신에 관해',()=>topic('keeper')],
-  ['사고와 붉은 가면에 관해',keeperSuspicionTopic],['돌아가기',()=>hub()]
+  ['사고와 녹아내리는 코트에 관해',keeperSuspicionTopic],['돌아가기',()=>hub()]
  ]);
 };
 profileReply=function(topicName,text){
@@ -115,7 +115,7 @@ function keeperSuspicionTopic(){
  s.talks++;log('talk:suspicion');
  say('키퍼','아직도 그 꿈을 생각해요? 제 얼굴보다 그쪽이 더 신경 쓰이나요?',[
   ['꿈속의 인형들이 이곳 손님인가요?',()=>keeperSuspicionReply('dolls')],
-  ['가면에서 붉은색이 번지고 있어요',()=>keeperSuspicionReply('red')],
+  ['코트 밑단이 녹아내리고 있어요',()=>keeperSuspicionReply('red')],
   ['도와주려는 건지 해치려는 건지 모르겠어요',()=>keeperSuspicionReply('intent')]
  ]);
 }
@@ -147,7 +147,7 @@ finale=function(){
  if(!atExit3d){const p=controls3d[s.exitRide];target3d=[p[0]+4,p[1]+2];explore3d(rides[s.exitRide].name+' 구역의 출구까지 걸어가세요.');return;}
  confronting3d=true;keeperStoryState.confessed=true;target3d=null;sync3d();world3d.faceExit();
  const recall=keeperStoryState.dream==='accuse'?'처음부터 제 손을 보고 있었죠. 그때는 꿈이라고 하면 믿어 줄 줄 알았어요.':keeperStoryState.dream==='comfort'?'그날 제 곁에 있어 달라고 했죠. 저는 그 말이 끝나지 않기를 바랐어요.':'꿈이 아니었다고, 끝까지 생각하고 있었군요. 맞아요. 당신은 정말 그곳을 봤어요.';
- keeperBeat([['','공원은 흑백의 격자로 무너져 있다. 문 앞에 선 키퍼만 윤곽과 옷 주름이 남은 붉은 형체로 남았다. 그가 손을 들자 봉인이 닫힌다.'],['키퍼','여기까지 오면 제가 비켜 줄 거라고 생각했어요?'],['키퍼',recall],['',keeperStoryState.evidence.size?'모아 둔 기록을 펼친다. 서명과 지워진 조항을 본 키퍼는 이번에는 꿈이라는 말을 하지 않는다.':'키퍼의 손목에서 정지 고리 모양의 열쇠가 떨어진다. 첫 배에서 본 바로 그 고리다.'],['키퍼','캡틴 훅은 저절로 고장 난 게 아니에요. 제가 정지 장치를 놓았어요. 다른 기구의 경고도 알고 있었고요.'],['키퍼','무서워지면 저를 부를 줄 알았어요. 제가 구해 주면, 다음에도 제 손을 찾을 줄 알았고요.'],[s.name,'공원의 명령이 아니라, 당신이 선택한 거군요.'],['키퍼','네. 제 선택이에요. 좋아하는 마음까지 거짓은 아니었어요. 그래서 더, 당신이 저 없이 괜찮아지는 걸 견딜 수 없었어요.']],keeperConfessionChoices);
+ keeperBeat([['','공원은 흑백의 격자로 무너져 있다. 문 앞에 선 키퍼의 옷자락은 흑백의 줄과 깨진 픽셀로 끊겨 있다. 발밑의 파스텔 웅덩이가 넓어진다. 그가 손을 들자 봉인이 닫힌다.'],['키퍼','여기까지 오면 제가 비켜 줄 거라고 생각했어요?'],['키퍼',recall],['',keeperStoryState.evidence.size?'모아 둔 기록을 펼친다. 서명과 지워진 조항을 본 키퍼는 이번에는 꿈이라는 말을 하지 않는다.':'키퍼의 손목에서 정지 고리 모양의 열쇠가 떨어진다. 첫 배에서 본 바로 그 고리다.'],['키퍼','캡틴 훅은 저절로 고장 난 게 아니에요. 제가 정지 장치를 놓았어요. 다른 기구의 경고도 알고 있었고요.'],['키퍼','무서워지면 저를 부를 줄 알았어요. 제가 구해 주면, 다음에도 제 손을 찾을 줄 알았고요.'],[s.name,'공원의 명령이 아니라, 당신이 선택한 거군요.'],['키퍼','네. 제 선택이에요. 좋아하는 마음까지 거짓은 아니었어요. 그래서 더, 당신이 저 없이 괜찮아지는 걸 견딜 수 없었어요.']],keeperConfessionChoices);
 };
 function keeperConfessionChoices(){
  say(s.name,'구해 준 손과 위험에 밀어 넣은 손이 같았다.',[

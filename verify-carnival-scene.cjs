@@ -32,7 +32,6 @@ Object.assign(browser,{
  NEVERLAND_DREAM_STAGE:()=>({update(){}}),
  NEVERLAND_INTERIOR_SCENES:{create:()=>({update(){}})},
  NEVERLAND_FRACTURE:{create:()=>({update(){}})},
- NEVERLAND_KEEPER_VEINS:{texture:()=>new T.Texture()},
  neverlandWorld:{state:{
   player:{x:0,z:16.4,yaw:Math.PI,pitch:0,eye:1.65},
   elapsed:0,config:{},running:{},exitReveal:{age:-1}
@@ -41,7 +40,7 @@ Object.assign(browser,{
 const sandbox={window:browser,document,devicePixelRatio:1,innerWidth:800,innerHeight:600,
  s:{phase:'main'},newGame(){},matchMedia:()=>({matches:reduced}),requestAnimationFrame:fn=>{next=fn;return 1},performance:{now:()=>now}};
 vm.createContext(sandbox);
-for(const file of ['carnival-layout.js','castle-scene.js','coaster.js','carnival-scene.js','lost-boys.js']){
+for(const file of ['carnival-layout.js','castle-scene.js','keeper-melt.js','coaster.js','carnival-scene.js','lost-boys.js']){
  vm.runInContext(fs.readFileSync(path.join(__dirname,file),'utf8'),sandbox,{filename:file});
 }
 assert(browser.carnivalScene);
@@ -58,6 +57,15 @@ next();assert(dolls.every(doll=>!doll.visible),'ordinary park dolls stay outside
 browser.neverlandWorld.state.interior=null;
 browser.neverlandWorld.state.passage={};
 next();assert(dolls.every(doll=>!doll.visible),'ordinary park dolls stay outside the passage');
+const puddle=park.getObjectByName('keeper-melt-puddle');
+assert(puddle.visible,'passage keeper has a puddle');
+const keeper=park.children.find(o=>o.isSprite);
+const shader={uniforms:{},fragmentShader:T.ShaderLib.sprite.fragmentShader};
+keeper.material.onBeforeCompile(shader);
+assert(shader.uniforms.keeperMeltMap.value?.isTexture);
+assert(shader.fragmentShader.includes('diffuseColor.rgb=mix(diffuseColor.rgb,melt.rgb,melt.a)'));
+browser.neverlandWorld.state.passage=null;
+next();assert(!puddle.visible,'puddle resets when melt is zero');
 console.log('PASS: real Three.js geometry builds and renders its first frame with a WebGL adapter.');
 
 function element(){

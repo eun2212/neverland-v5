@@ -9,7 +9,7 @@ let pendingRideResult=null,forcedRide3d=null;
 function updateRideUI(){const state=world3d.state,d=state.interior;if(state.passage)return;$('ride-panel').hidden=!d;document.body.classList.toggle('inside-ride',!!d);if(!d)return;const roaming=$('stage').classList.contains('walking')&&!$('overlay').children.length;$('ride-status').textContent=d.running?'탑승 중 · '+Math.round(d.progress*100)+'%':d.ride===3?('흑백 거울 미로 · 길을 찾아 반대편 흰 출구에서 E'):d.seated?'좌석에 앉았습니다 · E로 조작 / Q로 일어나기':'기구 안을 걸어 둘러보세요 · 좌석 근처에서 E';$('ride-progress').value=d.progress;$('ride-progress').hidden=!d.running;$('ride-operate').hidden=d.ride===3;$('ride-stand').hidden=d.ride===3;$('ride-operate').disabled=d.running||!roaming||(d.ride!==3&&!d.seated);$('ride-stand').disabled=d.running||!d.seated||!roaming||forcedRide3d!==null;$('ride-return').disabled=d.running||!roaming||forcedRide3d!==null;}
 function returnToPark(){if(!world3d.leaveRide()){world3d.notify('움직이는 동안에는 탑승을 마칠 때까지 기다려 주세요.');return;}pendingRideResult=null;explore3d('기구 입구로 돌아왔습니다. 다른 구역을 걸어서 둘러보세요.');}
 function interiorMap3d(){const state=world3d.state,d=window.NEVERLAND_INTERIORS[state.interior.ride],b=d.bounds,p=state.player;modal('<h1>'+d.name+'</h1><p>붉은 점은 현재 위치, 금빛 원은 좌석, 초록 문은 공원으로 돌아가는 곳입니다.</p><div class="position-map"><svg viewBox="'+(b[0]-2)+' '+(b[2]-2)+' '+(b[1]-b[0]+4)+' '+(b[3]-b[2]+4)+'" role="img" aria-label="놀이기구 내부 지도"><rect x="'+b[0]+'" y="'+b[2]+'" width="'+(b[1]-b[0])+'" height="'+(b[3]-b[2])+'" fill="#e1c993"/>'+d.walls.map(([x,z,w,h])=>'<rect x="'+(x-w/2)+'" y="'+(z-h/2)+'" width="'+w+'" height="'+h+'" fill="#335b4b"/>').join('')+(d.seat?'<circle cx="'+d.seat[0]+'" cy="'+d.seat[1]+'" r=".7" fill="#e4b44b"/>':'')+'<rect x="'+(d.control[0]-.4)+'" y="'+(d.control[1]-.4)+'" width=".8" height=".8" fill="#ad343a"/><circle cx="'+d.exit[0]+'" cy="'+d.exit[1]+'" r=".65" fill="#386a46"/>'+(d.finish?'<circle cx="'+d.finish[0]+'" cy="'+d.finish[1]+'" r=".65" fill="#e7e9ba"/>':'')+'<circle cx="'+p.x+'" cy="'+p.z+'" r=".4" fill="#c43146" stroke="#fff" stroke-width=".15"/></svg></div><button id="inside-map-close">닫기</button>');$('inside-map-close').onclick=()=>explore3d();}
-function keeperRedLevel3d(){return s.exit||confronting3d?1:Math.min(.95,(s.survivedRides||0)*.19);}
+function keeperMeltLevel3d(){return s.exit||confronting3d?1:Math.min(.95,(s.survivedRides||0)*.19);}
 function commitSafeRide3d(help,risk=false){releaseForcedRide3d();s.talks=0;s.survivedRides=(s.survivedRides||0)+1;if(typeof keeperSafeResult3d==='function')keeperSafeResult3d(help,risk);else original3d.success(help,risk);}
 function releaseForcedRide3d(){forcedRide3d=null;world3d.configure({forcedRide:-1});}
 function restrictForcedChoices3d(){
@@ -23,16 +23,26 @@ function requireRide3d(){
   close();world3d.forceBoard(forcedRide3d);atControl3d=true;try{original3d.openPuzzle();}finally{atControl3d=false;}sync3d();
  });
 }
+let lastKeeperMelt=null;
 function sync3d(){
  if(!s)return;
  if(world3d.state.config.epilogue&&window.NEVERLAND_ENDING){window.NEVERLAND_ENDING.sync();return;}
- const keeperRed=keeperRedLevel3d();$('keeper-red-matrix').setAttribute('values',[1-keeperRed,0,0,0,keeperRed,0,1-keeperRed,0,0,keeperRed*.02,0,0,1-keeperRed,0,keeperRed*.01,0,0,0,1,0].join(' '));$('keeper').dataset.corruption=String(keeperRed);const veinURL=window.NEVERLAND_KEEPER_VEINS?.maskURL(keeperRed);if(veinURL)$('keeper-vein-image').setAttribute('href',veinURL);
+ const keeperMelt=keeperMeltLevel3d(),art=window.NEVERLAND_KEEPER_MELT;
+ $('keeper').dataset.corruption=String(keeperMelt);
+ if(art&&lastKeeperMelt!==keeperMelt){
+  lastKeeperMelt=keeperMelt;
+  const coat=$('keeper-melt-image'),pool=$('keeper-melt-pool'),width=art.poolScale(keeperMelt)*.88;
+  coat.setAttribute('href',keeperMelt?art.maskURL(keeperMelt):'');
+  pool.setAttribute('href',keeperMelt?art.poolURL():'');
+  pool.setAttribute('x',String((1-width)/2));pool.setAttribute('width',String(width));
+  pool.setAttribute('height',String(width*.19));pool.setAttribute('y',String(.981-width*.115));
+ }
  const roaming=$('stage').classList.contains('walking')&&!$('overlay').children.length&&s.phase!=='ending';
  const inPassage=!!world3d.state.passage;document.body.classList.toggle('fracture-walk',inPassage);
  restrictForcedChoices3d();
  document.body.classList.toggle('exploring',roaming);document.body.classList.toggle('forced-boarding',forcedRide3d!==null);
  document.getElementById('world-caption').hidden=!roaming;
- world3d.configure({storyPhase:s.phase,paused:!roaming||!!window.NEVERLAND_BOOTH_GAMES?.active||!!window.NEVERLAND_COASTER?.active||!!window.carnivalScene?.castleEntering||!!window.NEVERLAND_ROOM?.active||!!window.carnivalScene?.overview,free:free3d,intro:intro3d,keeperIntroduced:s.keeperIntroduced,keeperRed,forcedRide:forcedRide3d===null?-1:forcedRide3d,ride:s.ride,cleared:[...s.cleared],clues:[...s.clues],exit:s.exit,exitRide:s.exitRide,target:target3d,confronting:confronting3d});
+ world3d.configure({storyPhase:s.phase,paused:!roaming||!!window.NEVERLAND_BOOTH_GAMES?.active||!!window.NEVERLAND_COASTER?.active||!!window.carnivalScene?.castleEntering||!!window.NEVERLAND_ROOM?.active||!!window.carnivalScene?.overview,free:free3d,intro:intro3d,keeperIntroduced:s.keeperIntroduced,keeperMelt,forcedRide:forcedRide3d===null?-1:forcedRide3d,ride:s.ride,cleared:[...s.cleared],clues:[...s.clues],exit:s.exit,exitRide:s.exitRide,target:target3d,confronting:confronting3d});
  if(inPassage){$('walk-title').textContent='장막 너머';$('walk-objective').textContent='뒤에서 키퍼의 목소리가 들린다. “제 목소리 들려요? 이제 눈을 떠요.” · 마우스 드래그 / ← →로 뒤를 돌아보세요.';$('ride-panel').hidden=true;return;}
  $('walk-title').textContent=world3d.state.interior?window.NEVERLAND_INTERIORS[world3d.state.interior.ride].name:rides[s.ride].name+' · 네버랜드';
  $('walk-progress').textContent='정상 탑승 '+s.cleared.size+' / 5 · 조사한 흔적 '+s.clues.size+' / 5';
@@ -204,7 +214,7 @@ document.addEventListener('keydown',e=>{
 });
 new MutationObserver(sync3d).observe($('overlay'),{childList:true});
 // Read-only snapshot for QA; narrative state stays in the original engine.
-window.neverland={get state(){return{forcedRide:forcedRide3d,survivedRides:s.survivedRides||0,keeperRed:keeperRedLevel3d(),phase:s.phase,ride:s.ride,gender:s.gender,temper:s.temper,keeperIntroduced:s.keeperIntroduced,visited:[...s.visited],cleared:[...s.cleared],clues:[...s.clues],ending:s.ending,exit:s.exit,free:free3d,world:world3d.state};}};
+window.neverland={get state(){return{forcedRide:forcedRide3d,survivedRides:s.survivedRides||0,keeperMelt:keeperMeltLevel3d(),phase:s.phase,ride:s.ride,gender:s.gender,temper:s.temper,keeperIntroduced:s.keeperIntroduced,visited:[...s.visited],cleared:[...s.cleared],clues:[...s.clues],ending:s.ending,exit:s.exit,free:free3d,world:world3d.state};}};
 newGame();
 
 
