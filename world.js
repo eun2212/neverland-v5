@@ -61,7 +61,8 @@ function updateProgress(){
   const angle=Math.atan2(-dx,-dz)-player.yaw,delta=Math.atan2(Math.sin(angle),Math.cos(angle));
   caption((Math.abs(delta)<.35?'↑':Math.abs(delta)>2.5?'↶':delta>0?'←':'→')+' 목적지 '+Math.round(distance)+'m · 물길은 다리를 따라 건너세요.',2);
  }
- if(config.intro&&player.z>-11&&player.z<-7&&Math.abs(player.x)<5){config.paused=true;actionCallback({type:'intro',ride:0});return;}
+ const [introX,introZ]=rides[0].control;
+ if(config.intro&&player.z>introZ-3.1&&player.z<introZ+.9&&Math.abs(player.x-introX)<5){config.paused=true;actionCallback({type:'intro',ride:0});return;}
  if(!config.free)return;
  let nextZone=0,best=Infinity;
  for(let i=0;i<rides.length;i++){let d=Math.hypot(player.x-rides[i].control[0],player.z-rides[i].control[1]);if(d<best){best=d;nextZone=i;}}
@@ -82,6 +83,10 @@ function nearest(){
   return null;
  }
  const i=config.ride||0,r=rides[i];
+ if(config.free){
+  const shop=layout.shops.find(item=>Math.hypot(player.x-item.door[0],player.z-item.door[1])<2.7);
+  if(shop)return{type:'shop',shop:shop.id,label:'E · '+shop.name+' 들어가기'};
+ }
  if(layout.castleDistance(player.x,player.z)<4)return{type:'castle',label:'E · 달빛 성에 들어가기'};
  if(config.exit&&i===config.exitRide&&Math.hypot(player.x-(r.control[0]+4),player.z-(r.control[1]+2))<2.6)return{type:'exit',ride:i,label:'E · 새벽의 출구에서 키퍼와 마주한다'};
  if(config.keeperIntroduced&&Math.hypot(player.x-keeper.x,player.z-keeper.z)<3.2)return{type:'keeper',ride:i,label:'E · 키퍼에게 말 걸기'};
@@ -121,6 +126,7 @@ window.neverlandWorld={
   if(config.exit){exitRevealAge=8;exitRevealAnnounced=true;}
   keys.clear();
  },
+ placeAtShopDoor(shop){Object.assign(player,{x:shop.door[0],z:shop.door[1]+1,yaw:Math.PI,pitch:0,eye:1.65});keys.clear();},
  placeAtCaptainStart(){const [x,z]=layout.rides[0].control;Object.assign(player,{x,z:z-3.7,yaw:Math.PI,pitch:0,eye:1.65});keys.clear();},
  placeAtCastleGate(){const [x,z]=layout.castleExit;Object.assign(player,{x,z,yaw:Math.PI,pitch:0,eye:1.65});keys.clear();},
  jumpToPark(x,z){interior=null;parkReturn=null;passage=null;passageReturn=null;config={...config,epilogue:0,forcedRide:-1};Object.assign(player,{x,z,yaw:0,pitch:0,eye:1.65});keys.clear();runUntil={};document.exitPointerLock?.();},
@@ -128,7 +134,7 @@ window.neverlandWorld={
  finishEpilogue(){config={...config,paused:true,epilogue:0,storyPhase:'ending'};keys.clear();},
  sitEpilogue(){if(config.epilogue!==5)return false;Object.assign(player,{x:-2,z:.2,yaw:-1.1,pitch:-.05,eye:1.1});keys.clear();return true;},
  connect(actions,zones){actionCallback=actions;zoneCallback=zones;},
- enterPassage(){if(passage)return false;if(interior&&!this.leaveRide())return false;passageReturn={...player,x:0,z:-10,yaw:0,pitch:0,eye:1.65};passage={progress:0,revealHold:0};fractureUnlocked=true;Object.assign(player,{x:0,z:0,yaw:0,pitch:0,eye:1.7});keys.clear();document.exitPointerLock?.();return true;},
+ enterPassage(){if(passage)return false;if(interior&&!this.leaveRide())return false;passageReturn={...player,x:rides[0].control[0],z:rides[0].control[1]-2.1,yaw:Math.PI,pitch:0,eye:1.65};passage={progress:0,revealHold:0};fractureUnlocked=true;Object.assign(player,{x:0,z:0,yaw:0,pitch:0,eye:1.7});keys.clear();document.exitPointerLock?.();return true;},
  fracturePulse(){if(fractureUnlocked){glitchRemaining=4;glitchCount++;}},
  configure(next){const wasPaused=config.paused,hadExit=config.exit;config={...config,...next};if(config.exit&&!hadExit){exitRevealAge=0;exitRevealLast=elapsed;exitRevealAnnounced=false;exitRevealCount++;}started=true;phase=3;keeperVisible=config.keeperIntroduced;const p=keeperPoints[config.ride||0];keeper.x=p[0];keeper.z=p[1];if(config.exit&&config.ride===config.exitRide){const r=rides[config.exitRide];keeper.x=r.control[0]+4;keeper.z=r.control[1]+2.8;}if(next.free&&currentMap!=='park'){currentMap='park';build();}if(config.paused){keys.clear();document.exitPointerLock?.();}if(wasPaused&&!config.paused)keys.clear();},
  faceExit(){player.yaw=Math.atan2(player.x-keeper.x,player.z-keeper.z);player.pitch=-.04;keys.clear();},
@@ -163,7 +169,7 @@ document.querySelectorAll('[data-key]').forEach(b=>{b.onpointerdown=e=>{e.preven
 function valid(x,z){if(config.epilogue)return window.NEVERLAND_ENDING.valid(x,z);if(interior)return window.neverlandWorld.interiorValid(x,z);return parkValid(x,z,config,colliders);}
 function parkValid(x,z,config,colliders){const b=layout.bounds;if(x<b.minX||x>b.maxX||z<b.minZ||z>b.maxZ||layout.water(x,z))return false;if(!config.free&&Math.abs(x)>21)return false;if(config.exit){const r=rides[config.exitRide];if(Math.abs(x-r.control[0]-4)<1.55&&Math.abs(z-r.control[1]-2)<.4)return false;}return !colliders.some(c=>x>c.a&&x<c.b&&z>c.l&&z<c.r);}
 function resize(){const scale=Math.min(devicePixelRatio,1.3),w=Math.floor(innerWidth*scale),h=Math.floor(innerHeight*scale);if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;gl.viewport(0,0,w,h);}}
-function landmarks(){const m=cameraMatrix();for(const r of rides){const el=$('label-'+r.id);el.textContent=r.name+(config.cleared?.includes(rides.indexOf(r))?' ✓':'');const p=[r.control[0],2,r.control[1],1],q=[0,0,0,0];for(let row=0;row<4;row++)for(let k=0;k<4;k++)q[row]+=m[k*4+row]*p[k];const visible=(currentMap==='park'||r.id==='captain')&&started&&!blocked()&&phase>=1&&player.z<7&&q[3]>1&&Math.abs(q[0]/q[3])<.94&&Math.abs(q[1]/q[3])<.8&&Math.hypot(player.x-p[0],player.z-p[2])<55;el.style.display=visible?'block':'none';if(visible){el.style.left=(q[0]/q[3]*.5+.5)*innerWidth+'px';el.style.top=(-q[1]/q[3]*.5+.5)*innerHeight+'px';}}}
+function landmarks(){const m=cameraMatrix();for(const r of rides){const el=$('label-'+r.id);el.textContent=r.name+(config.cleared?.includes(rides.indexOf(r))?' ✓':'');const p=[r.control[0],2,r.control[1],1],q=[0,0,0,0];for(let row=0;row<4;row++)for(let k=0;k<4;k++)q[row]+=m[k*4+row]*p[k];const visible=(currentMap==='park'||r.id==='captain')&&started&&!blocked()&&phase>=1&&(player.z<7||r.id==='captain')&&q[3]>1&&Math.abs(q[0]/q[3])<.94&&Math.abs(q[1]/q[3])<.8&&Math.hypot(player.x-p[0],player.z-p[2])<55;el.style.display=visible?'block':'none';if(visible){el.style.left=(q[0]/q[3]*.5+.5)*innerWidth+'px';el.style.top=(-q[1]/q[3]*.5+.5)*innerHeight+'px';}}}
 function frame(ms){let dt=Math.min((ms-lastTime)/1000,.05);lastTime=ms;elapsed+=dt;resize();if(started&&!blocked()&&passage){passageStep(dt,keys.has('w')||keys.has('arrowup')?1:0);}else if(started&&!blocked()){if(!interior)glitchRemaining=Math.max(0,glitchRemaining-dt);let forward=(keys.has('w')||keys.has('arrowup')?1:0)-(keys.has('s')||keys.has('arrowdown')?1:0),strafe=(keys.has('d')?1:0)-(keys.has('a')?1:0);player.yaw+=((keys.has('arrowleft')?1:0)-(keys.has('arrowright')?1:0))*dt*1.6;const norm=Math.hypot(forward,strafe)||1,speed=(keys.has('shift')?5:3)*dt;const dx=(-Math.sin(player.yaw)*forward+Math.cos(player.yaw)*strafe)/norm*speed,dz=(-Math.cos(player.yaw)*forward-Math.sin(player.yaw)*strafe)/norm*speed;if(valid(player.x+dx,player.z))player.x+=dx;if(valid(player.x,player.z+dz))player.z+=dz;player.eye=(interior?.seated?1.35:1.65)+(forward||strafe?Math.sin(elapsed*7)*.025:0);updateProgress();}gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.uniformMatrix4fv(vpLoc,false,cameraMatrix());drawData(fixed);drawData(dynamicScene(elapsed));billboard();drawMarkers();landmarks();if(started){active=nearest();$('interact').hidden=!active;$('interact').textContent=active?.label||'';if(elapsed>captionUntil)$('caption').textContent='';}requestAnimationFrame(frame);}
 requestAnimationFrame(frame);
 // Read-only runtime state supports reproducible QA without altering play behavior.

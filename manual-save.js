@@ -23,7 +23,7 @@
  }
  function reason(){
   const world=world3d.state;
-  if(window.NEVERLAND_ROOM?.transitioning)return '침실 장면이 끝나면 저장할 수 있습니다.';
+  if(window.carnivalScene?.castleEntering||window.NEVERLAND_ROOM?.transitioning)return '침실 장면이 끝나면 저장할 수 있습니다.';
   if(window.NEVERLAND_TOOLS?.testing)return '제작 테스트 중에는 저장할 수 없습니다.';
   if(forcedRide3d!==null||pendingRideResult||world.interior||world.passage)
    return '탑승과 장막 장면이 끝나고 공원으로 돌아오면 저장할 수 있습니다.';
@@ -39,7 +39,7 @@
  function capture(){
   const world=world3d.state;
   return {
-   version,time:Date.now(),
+   version,time:Date.now(),parkRevision:2,
    story:encode({
     dollMemories:{},dollKeeperAsked:false,
     cheshire:{met:false,separated:false,incident:false,choice:'',evidence:[]},
@@ -70,7 +70,8 @@
      !ride(progress.zone)||!hasFields(progress,['free','intro','firstLever','fractureUnlocked'],v=>typeof v==='boolean')||
      (progress.target!==null&&(!arrayOf(progress.target,Number.isFinite)||progress.target.length!==2)))return false;
   if(room!==null&&(!object(room)||!hasFields(room,['first','windowView'],v=>typeof v==='boolean')))return false;
-  if(room?.pose!==undefined&&!window.NEVERLAND_BEDROOM_MOVEMENT?.valid(room.pose))return false;
+  if(room?.shop!==undefined&&(!window.NEVERLAND_LAYOUT.shops.some(shop=>shop.id===room.shop)||room.first||room.windowView))return false;
+  if(room?.pose!==undefined&&!window.NEVERLAND_BEDROOM_MOVEMENT?.valid(room.pose,room.shop))return false;
   if(story.phase!==(room?.first?'profile':'main')||
      (room?.first&&(progress.free||progress.intro||progress.firstLever||story.exit)))return false;
   if(!arrayOf(log,e=>object(e)&&typeof e.who==='string'&&typeof e.text==='string')||log.length>500)return false;
@@ -87,7 +88,11 @@
   if(room?.first)sync3d();
   else explore3d(intro3d?'성 정문에서 캡틴 훅 쪽으로 걸어가세요.':firstLever3d?'캡틴 훅 입구에서 E로 승선하세요.':undefined);
   world3d.restorePark(player,progress);
-  if(room)openCastle3d(room.first,room.windowView,room);
+  if(!save.parkRevision&&(progress.intro||progress.firstLever)){
+   world3d.placeAtCaptainStart();target3d=controls3d[0];sync3d();
+  }
+  if(room?.shop)openShop3d(window.NEVERLAND_LAYOUT.shops.find(shop=>shop.id===room.shop),room);
+  else if(room)openCastle3d(room.first,room.windowView,room);
   window.NEVERLAND_DIALOGUE.restore(log);
   world3d.audio();
  }

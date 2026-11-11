@@ -23,7 +23,7 @@ let roomCheckpoint=null;
 window.NEVERLAND_ROOM={
  get active(){return !!roomCheckpoint;},
  get checkpoint(){return roomCheckpoint;},
- open({first,windowView,roomSave}){roomCheckpoint={first,windowView,pose:roomSave?.pose};},
+ open({first,windowView,roomSave,shop}){roomCheckpoint={first,windowView,pose:roomSave?.pose,...(shop?{shop:shop.id}:{})};},
  close(){roomCheckpoint=null;}
 };
 newGame();
@@ -78,6 +78,15 @@ localStorage.setItem=()=>{throw Error('quota')};
 slots.children[2].children[3].onclick();
 test(note.textContent.includes('저장할 수 없습니다')&&localStorage.getItem(key+3)==='broken JSON','quota failure preserves previous slot and reports error');
 localStorage.setItem=originalSet;
+dialog.close();
+const shop=window.NEVERLAND_LAYOUT.shops[1];
+world3d.jumpToPark(...shop.door);explore3d();
+openShop3d(shop);
+roomCheckpoint.pose={x:.81,y:.89,facing:'right'};
+$('manual-save-menu').onclick();button(3).onclick();slots.children[2].children[3].onclick();
+test(JSON.parse(localStorage.getItem(key+3)).room.shop==='candy','shop identity saves');
+newGame();$('manual-save-load').onclick();button(3).onclick();
+test(roomCheckpoint.shop==='candy'&&roomCheckpoint.pose.x===.81,'shop identity and position restore');
 \`);
 console.log('PASS: '+assertions+' assertions including slot UI, first room, park pose, manual overwrite, restrictions, incompatible slots, and quota errors.');
 `;

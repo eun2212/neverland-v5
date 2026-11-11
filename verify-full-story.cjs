@@ -25,7 +25,7 @@ const test=(ok,label)=>sandbox.test(ok,label);
 function frames(n){for(let i=0;i<n;i++)frame((i+1)*1000/60);}
 frames(2);test(draws>0,'renderer keeps scheduling frames');
 const layout=sandbox.NEVERLAND_LAYOUT;
-test(layout.entry[1]>layout.rides[0].z,'grand entry is in front of central ship');
+test(layout.rides[0].z-layout.center[1]>65,'captain is far from the castle');
 test(layout.rides[0].x===0&&layout.rides[0].z>layout.castleExit[1],'captain is in front of the castle');
 test(layout.rides[2].x<0&&layout.rides[2].z<-24,'carousel upper left');
 test(layout.rides[1].x>0&&layout.rides[1].z<-24,'wheel upper right');
@@ -42,7 +42,12 @@ for(const [x,z,farX,farZ] of [[0,-16,0,-14],[0,-32,0,-34],[8,-24,11,-24],[-8,-24
  test(worldQA.valid(farX,farZ)&&worldQA.nearest()?.type!=='castle','castle out of range at '+farX+','+farZ);
 }
 test(!worldQA.valid(0,-24)&&!worldQA.valid(5.8,-21),'castle core and towers block walking');
-test(worldQA.valid(48,-66)&&!worldQA.valid(53,-66),'expanded park boundaries');
+test(worldQA.valid(70,-90)&&!worldQA.valid(75,-90),'expanded park boundaries');
+for(const shop of window.NEVERLAND_LAYOUT.shops){
+ world3d.jumpToPark(...shop.door);
+ test(worldQA.valid(...shop.door)&&worldQA.nearest()?.shop===shop.id,'shop doorway is reachable '+shop.id);
+ test(!worldQA.valid(shop.x,shop.z),'shop walls block walking '+shop.id);
+}
 world3d.placeAtCastleGate();
 test(worldQA.valid(worldQA.player.x,worldQA.player.z)&&worldQA.player.yaw===Math.PI,'gate exit is walkable and faces the park');newGame();
 `);
@@ -134,7 +139,7 @@ const partialPassage=run('world3d.state.passage.progress');test(partialPassage>.
 test(run('world3d.state.passage.progress')===partialPassage,'passage never auto-walks without input');
 handlers.keydown({key:'w',repeat:false,preventDefault(){}});passageFrames(1040);handlers.keyup({key:'w'});
 test(run('world3d.state.passage.progress')===1,'whole graveyard visible before return');passageFrames(100);test(!!run('world3d.state.passage'),'forward view never returns automatically');run('worldQA.player.yaw=Math.PI');passageFrames(60);test(!!run('world3d.state.passage'),'keeper gaze holds for at least one second');passageFrames(40);
-test(!run('world3d.state.passage'),'seeing keeper returns after 1.5 seconds');test(run('world3d.state.player.z')===-10,'return lands in front of central captain');
+test(!run('world3d.state.passage'),'seeing keeper returns after 1.5 seconds');test(run('world3d.state.player.z')===layout.rides[0].control[1]-2.1,'return lands in front of captain');
 test(run("$('speaker').textContent")==='키퍼'&&run("$('text').textContent").includes('어떻게'),'keeper is surprised immediately after return');
 run(`drain();test(free3d,'graveyard return unlocks full park');test(s.cleared.size===0,'first accident is not a normal ride success');world3d.fracturePulse();test(world3d.state.reality.glitchCount===1,'later ride completion can queue checker glitch');test(world3d.state.reality.glitch>0,'queued checker glitch is active');`);
 test(run('world3d.state.config.paused'),'map pauses walking');

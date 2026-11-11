@@ -61,7 +61,7 @@
   avatar.classList.toggle('room-avatar-walking',walking);
   avatar.classList.toggle('room-avatar-left',walking&&lookLeft);
   sprite.style.backgroundPositionX=(walking?(Math.floor(walkAge/.125)%4)*100/3:0)+'%';
-  const close=exit?null:movement.nearest(pose);
+  const close=exit?null:movement.nearest(pose,options?.shop);
   if(close!==nearest||use.disabled!==!close){
    nearest=close;
    use.disabled=!close;
@@ -97,7 +97,7 @@
    }
    if(dx)pose.facing=dx<0?'left':'right';
    const beforeX=pose.x,beforeY=pose.y;
-   movement.move(pose,Math.sign(dx),Math.sign(dy),dt);
+   movement.move(pose,Math.sign(dx),Math.sign(dy),dt,options.shop);
    if(pose.x!==beforeX||pose.y!==beforeY)walkAge+=dt;else dx=dy=0;
   }
   if(!available())clearMovement();
@@ -126,14 +126,14 @@
    event.preventDefault();el.setPointerCapture(event.pointerId);
    touches.set(event.pointerId,el.dataset.direction);
    const [dx,dy,facing]=movement.directions[el.dataset.direction];
-   pose.facing=facing;movement.move(pose,dx,dy,.025);paintAvatar(true);
+   pose.facing=facing;movement.move(pose,dx,dy,.025,options.shop);paintAvatar(true);
   });
   for(const type of ['pointerup','pointercancel','lostpointercapture'])
    el.addEventListener(type,event=>touches.delete(event.pointerId));
   el.addEventListener('click',event=>{
    if(event.detail!==0||!available()||exit)return;
    const [dx,dy,facing]=movement.directions[el.dataset.direction];
-   pose.facing=facing;movement.move(pose,dx,dy,.05);paintAvatar();
+   pose.facing=facing;movement.move(pose,dx,dy,.05,options.shop);paintAvatar();
   });
  }
  use.onclick=()=>{if(available()&&nearest)activate(nearest);};
@@ -313,7 +313,7 @@
   if(!options)return;
   if(action==='back'){look(false);return;}
   if(!available()||exit)return;
-  if(!movement.nearby(pose,action)){
+  if(!movement.nearby(pose,action,options.shop)){
    message('물건 가까이로 이동한 뒤 E를 누르세요.');return;
   }
   clearMovement();
@@ -323,6 +323,11 @@
    paintAvatar();return;
   }
   if(action==='window'){look(true);return;}
+  if(options.shop){
+   const drinks=options.shop.id==='drinks';
+   message(drinks?'별빛 소다 위로 레몬빛 거품이 톡톡 올라옵니다.':'솜사탕 기계에서 분홍색 설탕 실이 구름처럼 피어납니다.');
+   return;
+  }
   if(action==='book'){
    message('책 사이에 이 밤의 엔딩들이 기록되어 있습니다.');
    const list=document.createElement('ol');
@@ -349,11 +354,17 @@
   get active(){return !!options;},
   get cue(){return view.hidden?'bedroom':'window';},
   get transitioning(){return !!exit;},
-  get checkpoint(){return options?{first:options.first,windowView:!view.hidden,pose:{...pose}}:null;},
+  get checkpoint(){return options?{first:options.first,windowView:!view.hidden,pose:{...pose},...(options.shop?{shop:options.shop.id}:{})}:null;},
   open(next){
    options=next;room.hidden=false;bedroom.hidden=false;view.hidden=true;controls.hidden=false;
    const saved=next.roomSave?.pose;
-   pose={...(movement.valid(saved)?saved:movement.bedside)};
+   pose={...(movement.valid(saved,next.shop)?saved:next.shop?movement.entrance:movement.bedside)};
+   room.dataset.shop=next.shop?.id||'';
+   room.querySelector('h1').textContent=next.shop?.name||'달빛 성의 침실';
+   for(const [action,el] of hotspots)el.hidden=!!next.shop&&action!=='leave'&&action!=='record';
+   hotspots.get('leave').setAttribute('aria-label',next.shop?'공원으로 나가기':'성 정문으로 나가기');
+   hotspots.get('record').setAttribute('aria-label',next.shop?(next.shop.id==='drinks'?'별빛 소다 살펴보기':'솜사탕 기계 살펴보기'):'음악');
+   nearest=null;
    exit=null;walkAge=0;avatar.style.opacity='';bedroom.classList.remove('door-open');
    lookLeft=pose.facing==='left';
    const male=next.gender==='male';

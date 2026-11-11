@@ -62,3 +62,11 @@
 .door-open .room-exit-art{display:block}
 .room-exit-art span{display:block;width:100%;height:100%;border:2px solid #b592e1;border-radius:inherit;background:repeating-linear-gradient(105deg,#382554 0 8px,#49306c 9px 11px);transform-origin:left center;animation:room-door-open .23s ease-out both}
 @keyframes room-door-open{from{transform:rotateY(0)}to{transform:rotateY(-72deg)}}
+
+#world-root.castle-entering::after{content:"";position:absolute;inset:0;z-index:5;background:#17122a;pointer-events:none;animation:castle-entry-fade .85s ease-in both}
+@keyframes castle-entry-fade{0%,60%{opacity:0}100%{opacity:1}}
+#castle-room[data-shop] .castle-bedroom{background-color:#251940}
+#castle-room[data-shop="drinks"] .castle-bedroom{background-image:url("assets/shop-drinks.png")}
+#castle-room[data-shop="candy"] .castle-bedroom{background-image:url("assets/shop-candy.png")}
+#castle-room:is([data-shop="drinks"],[data-shop="candy"]) .room-record{left:81%;top:57%;width:23%;height:29%}
+#castle-room:is([data-shop="drinks"],[data-shop="candy"]) .room-starlight{display:none}

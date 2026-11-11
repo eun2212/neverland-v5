@@ -41,10 +41,25 @@ sky.visible=false;
 // The environment light keeps gilt readable while the visible sky stays nearly black.
 const environment=new T.PMREMGenerator(renderer);scene.environment=environment.fromScene(scene,.08).texture;environment.dispose();
 const plazaTexture=pavement();plazaTexture.repeat.set(1,1);const groundmat=new T.MeshStandardMaterial({map:stoneTexture(),roughness:.6,color:0xf3e4c6});
-const grassmat=new T.MeshStandardMaterial({color:'#112e2a',roughness:.9});const ground=mesh(new T.PlaneGeometry(106,112),grassmat);ground.rotation.x=-Math.PI/2;ground.position.set(0,-.025,-17);ground.receiveShadow=true;
+const grassmat=new T.MeshStandardMaterial({color:'#112e2a',roughness:.9});const ground=mesh(new T.PlaneGeometry(150,158),grassmat);ground.rotation.x=-Math.PI/2;ground.position.set(0,-.025,-17);ground.receiveShadow=true;
 const outerGround=mesh(new T.PlaneGeometry(230,220),new T.MeshStandardMaterial({color:'#060b16',roughness:1}));outerGround.rotation.x=-Math.PI/2;outerGround.position.set(0,-.45,-25);
 function pathStrip(points,width=4){const c=new T.CatmullRomCurve3(points.map(([x,z])=>new T.Vector3(x,.015,z))),pos=[],uv=[];for(let i=0;i<50;i++){const a=c.getPoint(i/50),b=c.getPoint((i+1)/50),dir=new T.Vector3().subVectors(b,a).normalize(),side=new T.Vector3(-dir.z,0,dir.x).multiplyScalar(width/2);const v=[a.clone().add(side),a.clone().sub(side),b.clone().add(side),a.clone().sub(side),b.clone().sub(side),b.clone().add(side)];for(const p of v){pos.push(...p.toArray());uv.push(p.x/10,p.z/10);}}const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(pos,3));g.setAttribute('uv',new T.Float32BufferAttribute(uv,2));g.computeVertexNormals();const o=mesh(g,groundmat);o.material.side=T.DoubleSide;}
-pathStrip([[0,28],[0,13],[0,-8]],8);
+pathStrip([[0,46],[0,36],[9,30],[9,20],[0,17],[0,13],[0,-8]],6);
+for(const shop of L.shops){
+ const sign=Math.sign(shop.x);
+ pathStrip([[sign*28,-13],[sign*44,-17],[sign*55,-16],shop.door],5.2);
+ const {x,z}=shop,accent=shop.id==='drinks'?'greenLight':'redLight';
+ cube(x,0,z,13,.24,11,'stone');cube(x,.24,z,12.6,5.2,10.6,accent);
+ cube(x,5.44,z,13.5,.5,11.4,'cream');
+ cube(x,0,z+5.34,2.75,3.55,.24,'dark');
+ for(const offset of [-4.4,4.4]){cube(x+offset,1.4,z+5.37,2.5,2.2,.24,'glass');cube(x+offset,1.3,z+5.55,2.8,.19,.35,'gold');}
+ for(let stripe=-5;stripe<=5;stripe++)cube(x+stripe,3.76,z+6.01,1.01,.42,1.55,stripe%2?'cream':accent);
+ const signCanvas=document.createElement('canvas');signCanvas.width=512;signCanvas.height=96;
+ const ink=signCanvas.getContext('2d');ink.fillStyle='#221637';ink.fillRect(0,0,512,96);ink.fillStyle='#ffe1ad';ink.textAlign='center';ink.font='bold 44px sans-serif';ink.fillText(shop.name,256,63);
+ const signTexture=new T.CanvasTexture(signCanvas);signTexture.colorSpace=T.SRGBColorSpace;
+ mesh(new T.PlaneGeometry(6.9,1.29),new T.MeshBasicMaterial({map:signTexture})).position.set(x,4.78,z+5.34);
+ for(const offset of [-2,2])bulb(x+offset,3.45,z+5.65,.13);
+}
 const loop=mesh(new T.RingGeometry(14.4,19,100),groundmat);loop.rotation.x=-Math.PI/2;loop.position.set(0,.02,-24);
 for(const pts of [[[-12,-36],[-18,-36],[-23,-36]],[[12,-36],[18,-36],[23,-36]],[[-16,-14],[-18,-9],[-22,2]],[[16,-14],[18,-9],[22,2]],[[0,6],[-10,5],[-23,3]],[[0,6],[10,5],[23,3]],[[-23,-35],[-32,-29],[-32,-10],[-23,3]],[[23,-35],[32,-29],[32,-10],[23,3]],[[-23,-44],[-26,-53],[0,-54],[26,-53],[23,-44]]])pathStrip(pts,4.5);
 for(const r of L.rides){if(r.id==='captain')continue;const pl=mesh(new T.CircleGeometry(r.id==='mirror'?9:9.5,64),new T.MeshStandardMaterial({map:plazaTexture,roughness:.5,color:0xf0ddad}));pl.rotation.x=-Math.PI/2;pl.position.set(r.x,.025,r.z);torus(r.x,.04,r.z,r.id==='mirror'?9:9.5,.07,'gold',stat,true);}
@@ -54,7 +69,7 @@ const rippleCanvas=document.createElement('canvas');rippleCanvas.width=rippleCan
 const fallCanvas=document.createElement('canvas');fallCanvas.width=64;fallCanvas.height=256;const fc=fallCanvas.getContext('2d');for(let x=0;x<64;x++){fc.fillStyle='rgba(217,250,238,'+(.15+random()*.65)+')';fc.fillRect(x,0,1,256);}const fallTexture=new T.CanvasTexture(fallCanvas);fallTexture.wrapT=T.RepeatWrapping;mats.flow=new T.MeshBasicMaterial({map:fallTexture,transparent:true,opacity:.72,side:T.DoubleSide,depthWrite:false});
 for(const a of[.7,2.4,4.1]){const x=Math.cos(a)*13.7,z=-24+Math.sin(a)*13.7;for(const d of[-1,1]){const o=ball(x+Math.cos(a+Math.PI/2)*d,1,z+Math.sin(a+Math.PI/2)*d,1.1,'rock');o.scale.set(.85,1.4,.8);tree(x+Math.cos(a)*2,z+Math.sin(a)*2,3.4);}const flow=mesh(new T.PlaneGeometry(1.35,2.5),'flow');flow.position.set(x,1.05,z);flow.rotation.y=-a+Math.PI/2;}
 const island=cylinder(0,0,-24,10,.28,'stone');torus(0,.3,-24,9.85,.1,'gold',stat,true);
-for(let i=0;i<58;i++){const a=i/58*6.283;if(Math.abs(Math.sin(a))<.18||Math.abs(Math.cos(a))<.18)continue;const r=14.1;const o=ball(Math.cos(a)*r,-.05,-24+Math.sin(a)*r,.55+random()*.55,'rock');o.scale.y*=.65;if(i%3===0)flowerbed(Math.cos(a)*15.3,-24+Math.sin(a)*15.3,.75);}
+for(let i=0;i<58;i++){const a=i/58*6.283;if(Math.abs(Math.sin(a))<.18||Math.abs(Math.cos(a))<.18)continue;const r=14.1;const o=ball(Math.cos(a)*r,-.05,-24+Math.sin(a)*r,.55+random()*.55,'rock');o.scale.y*=.65;if(i%7===0)flowerbed(Math.cos(a)*15.3,-24+Math.sin(a)*15.3,.75);}
 for(let side=0;side<4;side++){const angle=side*Math.PI/2,bridge=new T.Group();stat.add(bridge);bridge.position.set(0,0,-24);bridge.rotation.y=angle;for(let j=0;j<18;j++){const r=9.8+j/17*4.4,y=.28+Math.sin(j/17*Math.PI)*.55;cube(0,y,r,5.2,.13,.27,'wood',bridge);for(const x of[-2.5,2.5]){if(j%3===0){beam([x,y,r],[x,y+1.1,r],.05,'green',bridge);ball(x,y+1.17,r,.08,'gold',bridge);}if(j<17){const rr=9.8+(j+1)/17*4.4,yy=.28+Math.sin((j+1)/17*Math.PI)*.55;beam([x,y+1,r],[x,yy+1,rr],.045,'gold',bridge);}}}}
 // Grand entry: emerald towers, curved red swags, gold sunburst and densely lit molding.
 for(const x of[-6.6,6.6]){cube(x,0,13,2.4,.5,2.4,'stone');cube(x,.5,13,1.9,.3,1.9,'gold');cube(x,.8,13,1.45,8.1,1.45,'green');for(const dx of[-.66,.66])for(const dz of[-.66,.66])beam([x+dx,.9,13+dz],[x+dx,8.8,13+dz],.055);for(let y=1.2;y<8.8;y+=1.25){cube(x,y,13,1.6,.12,1.6,'gold');sunburst(x,y+.45,13.76,.26);}cube(x,8.9,13,2,.4,2,'gold');cylinder(x,9.3,13,1.2,1.5,'green',stat,.05,4);ball(x,10.9,13,.2);beam([x,10.9,13],[x,12.2,13],.04);cube(x+.35,11.6,13,.7,.45,.04,'red');}
@@ -66,11 +81,13 @@ for(const sign of[-1,1]){const pts=[];for(let i=0;i<=16;i++){const t=i/16;pts.pu
 kiosk(-11,10);kiosk(11,10);flagline([-6.6,9.2,13],[-31,5,5]);flagline([6.6,9.2,13],[31,5,5]);
 // Arrival cabin is outside the front entrance, with an open doorway toward the park.
 cube(-4.4,0,24,.3,4.2,8,'green');cube(4.4,0,24,.3,4.2,8,'green');cube(0,0,28,9,4.2,.3,'green');for(const x of[-3,3])cube(x,0,20,3,4.2,.3,'green');cube(0,3.3,20,3,.9,.3,'green');cube(0,4.2,24,9.4,.2,8.4,'green');cube(-2.8,.2,25,2,.55,3,'wood');cube(-2.8,.75,25,2,.2,3,'cream');for(const x of[-1.5,1.5])beam([x,0,19.8],[x,3.3,19.8],.06);lamp(-3.5,20);lamp(3.5,20);
+let castleEntry=null;
 const updateCastle=window.NEVERLAND_CASTLE({T,scene,stat,cube,cylinder,ball,mesh});
 // A-frame and articulated pirate ship outside the castle.
-for(const x of[-5.8,5.8]){for(const z of[-7,-1])beam([x,0,z],[x,9,-4],.22,'green');beam([x,8.9,-4],[x,9.3,-4],.3);ball(x,9.4,-4,.3);}
-beam([-5.8,9,-4],[5.8,9,-4],.27,'gold');
-const boatPivot=new T.Group();boatPivot.position.set(0,9,-4);scene.add(boatPivot);activeGroups.push(boatPivot);const boat=new T.Group();boat.position.y=-7.6;boatPivot.add(boat);
+const captainZ=L.rides[0].z;
+for(const x of[-5.8,5.8]){for(const z of[captainZ-3,captainZ+3])beam([x,0,z],[x,9,captainZ],.22,'green');beam([x,8.9,captainZ],[x,9.3,captainZ],.3);ball(x,9.4,captainZ,.3);}
+beam([-5.8,9,captainZ],[5.8,9,captainZ],.27,'gold');
+const boatPivot=new T.Group();boatPivot.position.set(0,9,captainZ);scene.add(boatPivot);activeGroups.push(boatPivot);const boat=new T.Group();boat.position.y=-7.6;boatPivot.add(boat);
 const hullShape=new T.Shape();hullShape.moveTo(-5,1.5);hullShape.bezierCurveTo(-4,-.8,3.8,-.8,5,1.5);hullShape.lineTo(4.4,1.75);hullShape.bezierCurveTo(1.3,.85,-1.3,.85,-4.4,1.75);hullShape.closePath();const hull=mesh(new T.ExtrudeGeometry(hullShape,{depth:2.8,bevelEnabled:true,bevelThickness:.15,bevelSize:.16,bevelSegments:2,steps:1}),'red',boat);hull.position.z=-1.4;
 for(const z of[-1.5,1.5]){curve([[-5,1.5,z],[-3,.9,z],[0,.7,z],[3,.9,z],[5,1.5,z]],.1,'gold',boat);for(let x=-4;x<=4;x+=.5){beam([x,1,z],[x,2,z],.035,'green',boat);ball(x,2,z,.05,'gold',boat);}curve([[-4.5,2.2,z],[-2,1.8,z],[0,1.7,z],[2,1.8,z],[4.5,2.2,z]],.07,'gold',boat);for(let x=-4;x<=4;x+=.5)bulb(x,1.1,z+.04,.065,boat);}
 for(let x=-3.5;x<=3.5;x+=1.2){cube(x,1.05,0,.65,.4,2.5,'green',boat);cube(x,1.45,-1,.65,.65,.14,'cream',boat);}
@@ -97,8 +114,8 @@ for(const [x,z,a]of [[-12,5,0],[12,5,Math.PI],[-12,-42,0],[12,-42,Math.PI],[-32,
 for(let z=-58;z<=17;z+=5)for(const x of[-36.7,36.7])tree(x,z,4+random()*2);for(let x=-32;x<=32;x+=5){tree(x,-58,4+random()*2);if(Math.abs(x)>13)tree(x,17,3.5+random());}
 for(let z=-70;z<=30;z+=7)for(const x of[-45,45])tree(x+(random()-.5)*5,z,5+random()*3);for(let x=-40;x<=40;x+=6)tree(x,-68-random()*5,6+random()*3);
 for(const [x,z]of [[-54,-20],[54,-20],[-35,-81],[20,-83]]){const hill=ball(x,-2,z,10,'leaf');hill.scale.set(1.7,.7,1.3);}
-for(const z of[5,-18,-39,-54])flagline([-33,5,z],[33,5,z]);for(let z=-72;z<38;z+=2){railing([-52,z],[-52,z+2]);railing([52,z],[52,z+2]);}for(let x=-52;x<52;x+=2)railing([x,-72],[x+2,-72]);
-for(let i=0;i<40;i++){const a=i/40*6.283;if(Math.abs(Math.sin(a))<.24||Math.abs(Math.cos(a))<.24)continue;flowerbed(Math.cos(a)*20.2,-24+Math.sin(a)*20.2,.8);}
+for(const z of[5,-18,-39,-54])flagline([-33,5,z],[33,5,z]);for(let z=-95;z<61;z+=2){railing([-74,z],[-74,z+2]);railing([74,z],[74,z+2]);}for(let x=-74;x<74;x+=2)railing([x,-95],[x+2,-95]);
+for(let i=0;i<20;i++){const a=i/20*6.283;if(Math.abs(Math.sin(a))<.24||Math.abs(Math.cos(a))<.24)continue;flowerbed(Math.cos(a)*20.2,-24+Math.sin(a)*20.2,.8);}
 for(const r of L.rides){if(r.id==='captain')continue;for(let i=0;i<12;i++){const a=i/12*6.283;if(Math.sin(a)>.72)continue;flowerbed(r.x+Math.cos(a)*8.2,r.z+Math.sin(a)*8.2,.7);}}
 for(const [x,z]of [[-6,16],[6,16],[-6,5],[6,5],[-8,-53],[8,-53]]){flowerbed(x,z,1.5);for(let j=0;j<3;j++)ball(x,1.2+j*.55,z,.65-j*.12,j%2?'leaf':'leafLight');}
 for(const [x,z]of [[0,12],[-23,-44],[23,-5],[0,-24]]){const light=new T.PointLight(0xffb54d,65,18,2);light.position.set(x,4.3,z);scene.add(light);}
@@ -131,8 +148,21 @@ renderer.shadowMap.autoUpdate=false;renderer.shadowMap.needsUpdate=true;
 function renderBloom(w,h){const rw=Math.floor(w*renderer.getPixelRatio()),rh=Math.floor(h*renderer.getPixelRatio());if(hdr.width!==rw||hdr.height!==rh){hdr.setSize(rw,rh);blurA.setSize(Math.ceil(rw/2),Math.ceil(rh/2));blurB.setSize(Math.ceil(rw/2),Math.ceil(rh/2));}if(qualityFrames++%15===0)renderer.shadowMap.needsUpdate=true;renderer.setRenderTarget(hdr);renderer.render(scene,camera);postQuad.material=blurMat;blurMat.uniforms.source.value=hdr.texture;blurMat.uniforms.direction.value.set(2/rw,0);blurMat.uniforms.threshold.value=2.0;renderer.setRenderTarget(blurA);renderer.render(postScene,postCamera);blurMat.uniforms.source.value=blurA.texture;blurMat.uniforms.direction.value.set(0,2/rh);blurMat.uniforms.threshold.value=0;renderer.setRenderTarget(blurB);renderer.render(postScene,postCamera);postQuad.material=combineMat;renderer.setRenderTarget(null);renderer.render(postScene,postCamera);}
 function render(){requestAnimationFrame(render);const t=clock.getElapsedTime(),state=window.neverlandWorld?.state;if(!state)return;
  const w=root.clientWidth,h=root.clientHeight;if(renderer.domElement.width!==Math.floor(w*renderer.getPixelRatio())||renderer.domElement.height!==Math.floor(h*renderer.getPixelRatio())){renderer.setSize(w,h,false);camera.aspect=w/h;camera.fov=w/h<.7?78:65;camera.updateProjectionMatrix();}
- const desiredFov=state.passage?(w/h<.85?98:75):overview?(w/h<.7?78:48):(w/h<.7?78:65);if(camera.fov!==desiredFov){camera.fov=desiredFov;camera.updateProjectionMatrix();}const p=state.player;if(overview){const a=.12,fit=Math.max(1,.72/(w/h));camera.position.set(Math.sin(a)*90*fit,67*fit,Math.cos(a)*90*fit-20);camera.lookAt(0,0,-20);}else{camera.position.set(p.x,p.eye+L.terrain(p.x,p.z),p.z);camera.rotation.order='YXZ';camera.rotation.set(p.pitch,p.yaw,0);}
- updateCastle(t,!!state.interior||!!state.passage||!!state.config.epilogue||window.NEVERLAND_TOOLS?.settings.reduced||matchMedia('(prefers-reduced-motion: reduce)').matches);
+ const desiredFov=state.passage?(w/h<.85?98:75):overview?(w/h<.7?78:48):(w/h<.7?78:65);if(camera.fov!==desiredFov){camera.fov=desiredFov;camera.updateProjectionMatrix();}const p=state.player;if(overview){const a=.12,fit=Math.max(1,.72/(w/h));camera.position.set(Math.sin(a)*125*fit,95*fit,Math.cos(a)*125*fit-20);camera.lookAt(0,0,-20);}else{camera.position.set(p.x,p.eye+L.terrain(p.x,p.z),p.z);camera.rotation.order='YXZ';camera.rotation.set(p.pitch,p.yaw,0);}
+ const reduced=window.NEVERLAND_TOOLS?.settings.reduced||matchMedia('(prefers-reduced-motion: reduce)').matches;
+ const hiddenCastle=!!state.interior||!!state.passage||!!state.config.epilogue;
+ const elapsed=castleEntry?performance.now()-castleEntry.start:0;
+ updateCastle(t,hiddenCastle||reduced,hiddenCastle,castleEntry?{side:castleEntry.side,progress:Math.min(1,elapsed/640)}:null);
+ if(castleEntry&&(reduced||elapsed>=850)){
+  const {done}=castleEntry;castleEntry=null;root.classList.remove('castle-entering');done();
+ }
+ if(castleEntry){
+  const a=castleEntry.side*Math.PI/2,doorDepth=castleEntry.side%2?5.2:4.2;
+  const destination=new T.Vector3(Math.sin(a)*(doorDepth+.22),1.88,L.center[1]+Math.cos(a)*(doorDepth+.22));
+  const forward=Math.max(0,Math.min(1,(elapsed-230)/620));
+  camera.position.lerp(destination,forward);
+  camera.lookAt(Math.sin(a)*doorDepth,2.1,L.center[1]+Math.cos(a)*doorDepth);
+ }
  const moving=id=>(state.running?.[id]||0)>state.elapsed;boatPivot.rotation.z=moving('captain')?Math.sin(t*1.4)*.34:Math.sin(t*.55)*.018;
  const angle=t*(moving('wheel')?.15:.018);wheel.rotation.z=angle;for(let i=0;i<gondolas.length;i++){const a=i/gondolas.length*Math.PI*2;gondolas[i].position.set(Math.cos(a)*8,Math.sin(a)*8,0);gondolas[i].rotation.z=-angle;}
  carousel.rotation.y=t*(moving('carousel')?.38:.045);for(let i=0;i<horses.length;i++)horses[i].position.y=1.4+Math.sin(t*1.6+i)*.2;tea.rotation.y=t*(moving('tea')?.5:.04);for(let i=0;i<cups.length;i++)cups[i].rotation.y=t*.3+i;
@@ -155,7 +185,14 @@ function render(){requestAnimationFrame(render);const t=clock.getElapsedTime(),s
  window.NEVERLAND_CAST?.render(T,scene,state,t);window.NEVERLAND_BGM?.update(state,state.config.storyPhase);
  if(state.config.epilogue){keeperSprite.visible=false;clueGroups.forEach(o=>o.visible=false);exitGroup.visible=particles.visible=revealBeams.visible=waypoint.visible=false;}window.NEVERLAND_ENDING?.render(T,scene,state,t);renderBloom(w,h);last=t;
 }
-window.carnivalScene={get overview(){return overview;},setOverview(v){overview=v;document.body.classList.toggle('scenic-mode',v);},get fracture(){return fracture.diagnostics;},get stats(){return{calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,materials:Object.keys(mats).length};}};
+window.carnivalScene={get castleEntering(){return !!castleEntry;},cancelCastleEntry(){castleEntry=null;root.classList.remove('castle-entering');},enterCastle(done){
+ if(castleEntry)return true;
+ if(window.NEVERLAND_TOOLS?.settings.reduced||matchMedia('(prefers-reduced-motion: reduce)').matches)return false;
+ const {x,z}=window.neverlandWorld.state.player;
+ const angle=Math.atan2(x,z-L.center[1]);
+ castleEntry={done,start:performance.now(),side:(Math.round(angle/(Math.PI/2))+4)%4};
+ root.classList.add('castle-entering');window.neverlandWorld.configure({paused:true});return true;
+},get overview(){return overview;},setOverview(v){overview=v;document.body.classList.toggle('scenic-mode',v);},get fracture(){return fracture.diagnostics;},get stats(){return{calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,materials:Object.keys(mats).length};}};
 render();
 })();
 

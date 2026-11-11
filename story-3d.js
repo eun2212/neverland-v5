@@ -32,7 +32,7 @@ function sync3d(){
  restrictForcedChoices3d();
  document.body.classList.toggle('exploring',roaming);document.body.classList.toggle('forced-boarding',forcedRide3d!==null);
  document.getElementById('world-caption').hidden=!roaming;
- world3d.configure({storyPhase:s.phase,paused:!roaming||!!window.NEVERLAND_ROOM?.active||!!window.carnivalScene?.overview,free:free3d,intro:intro3d,keeperIntroduced:s.keeperIntroduced,keeperRed,forcedRide:forcedRide3d===null?-1:forcedRide3d,ride:s.ride,cleared:[...s.cleared],clues:[...s.clues],exit:s.exit,exitRide:s.exitRide,target:target3d,confronting:confronting3d});
+ world3d.configure({storyPhase:s.phase,paused:!roaming||!!window.carnivalScene?.castleEntering||!!window.NEVERLAND_ROOM?.active||!!window.carnivalScene?.overview,free:free3d,intro:intro3d,keeperIntroduced:s.keeperIntroduced,keeperRed,forcedRide:forcedRide3d===null?-1:forcedRide3d,ride:s.ride,cleared:[...s.cleared],clues:[...s.clues],exit:s.exit,exitRide:s.exitRide,target:target3d,confronting:confronting3d});
  if(inPassage){$('walk-title').textContent='장막 너머';$('walk-objective').textContent='뒤에서 키퍼의 목소리가 들린다. “제 목소리 들려요? 이제 눈을 떠요.” · 마우스 드래그 / ← →로 뒤를 돌아보세요.';$('ride-panel').hidden=true;return;}
  $('walk-title').textContent=world3d.state.interior?window.NEVERLAND_INTERIORS[world3d.state.interior.ride].name:rides[s.ride].name+' · 네버랜드';
  $('walk-progress').textContent='정상 탑승 '+s.cleared.size+' / 5 · 조사한 흔적 '+s.clues.size+' / 5';
@@ -48,16 +48,16 @@ say=function(...args){$('stage').classList.remove('walking');original3d.say(...a
 modal=function(html){original3d.modal(html);sync3d();};
 close=function(){original3d.close();sync3d();};
 scene=function(mode){original3d.scene(mode);sync3d();};
-newGame=function(){window.NEVERLAND_ROOM?.close();forcedRide3d=null;free3d=false;intro3d=false;firstLever3d=false;target3d=null;confronting3d=false;pendingRideResult=null;window.carnivalScene?.setOverview(false);$('scenic-view').textContent='전체 풍경';$('scenic-view').setAttribute('aria-pressed','false');world3d.reset();$('stage').classList.remove('walking');original3d.newGame();s.survivedRides=0;sync3d();};
+newGame=function(){window.carnivalScene?.cancelCastleEntry?.();window.NEVERLAND_ROOM?.close();forcedRide3d=null;free3d=false;intro3d=false;firstLever3d=false;target3d=null;confronting3d=false;pendingRideResult=null;window.carnivalScene?.setOverview(false);$('scenic-view').textContent='전체 풍경';$('scenic-view').setAttribute('aria-pressed','false');world3d.reset();$('stage').classList.remove('walking');original3d.newGame();s.survivedRides=0;sync3d();};
 intro=function(){
  world3d.audio();
- story([[s.name,'오랜만에 찾아온 네버랜드. 캡틴 훅을 기다리다가 졸음에 눈을 감았다.','warm'],[s.name,'눈을 뜨니 네버랜드 놀이공원이다. 텅 빈 승차 데크. 폐장했을 텐데 멀리서 음악이 들린다.']],()=>{world3d.placeAtCaptainStart();intro3d=true;target3d=[0,-9];explore3d('캡틴 훅 앞에서 깨어났습니다. 배 쪽으로 몇 걸음 다가가세요.');});
+ story([[s.name,'오랜만에 찾아온 네버랜드. 캡틴 훅을 기다리다가 졸음에 눈을 감았다.','warm'],[s.name,'눈을 뜨니 네버랜드 놀이공원이다. 텅 빈 승차 데크. 폐장했을 텐데 멀리서 음악이 들린다.']],()=>{world3d.placeAtCaptainStart();intro3d=true;target3d=controls3d[0];explore3d('캡틴 훅 앞에서 깨어났습니다. 배 쪽으로 몇 걸음 다가가세요.');});
 };
 function leaveCastle3d(first){
  window.NEVERLAND_ROOM?.close();
  world3d.placeAtCastleGate();
- if(first){intro3d=true;target3d=[0,-9];}
- explore3d(first?'성 정문에 나왔습니다. 정면의 캡틴 훅 쪽으로 걸어가세요.':'달빛 성 정문');
+ if(first){intro3d=true;target3d=controls3d[0];}
+ explore3d(first?'성 정문에 나왔습니다. 지도에 표시된 남쪽 캡틴 훅으로 가세요.':'달빛 성 정문');
  $('walking-map').focus?.();
 }
 function openCastle3d(first=false,windowView=false,roomSave=null){
@@ -68,7 +68,16 @@ function openCastle3d(first=false,windowView=false,roomSave=null){
   leave:()=>leaveCastle3d(first)
  });
 }
-tutorial=function(){firstLever3d=true;target3d=controls3d[0];explore3d('달빛 성 정문 앞 캡틴 훅 입구에서 E로 승선하세요. 배 안에서 좌석에 앉아 레버를 조작합니다.');};
+function openShop3d(shop,roomSave=null){
+ world3d.configure({paused:true});
+ window.NEVERLAND_ROOM.open({first:false,windowView:false,roomSave,shop,gender:s.gender,leave(){
+  window.NEVERLAND_ROOM.close();
+  world3d.placeAtShopDoor(shop);
+  explore3d(shop.name+' 앞');
+  $('walking-map').focus?.();
+ }});
+}
+tutorial=function(){firstLever3d=true;target3d=controls3d[0];explore3d('공원 남쪽 캡틴 훅 입구에서 E로 승선하세요. 배 안에서 좌석에 앉아 레버를 조작합니다.');};
 hub=function(text){
  if(forcedRide3d!==null||s.talks>=2){requireRide3d();return;}
  original3d.hub(text);
@@ -83,9 +92,11 @@ map=function(){
  const p=world3d.state.player;
  let nearestRide=0,distance=Infinity;
  controls3d.forEach(([x,z],i)=>{const d=Math.hypot(p.x-x,p.z-z);if(d<distance){distance=d;nearestRide=i;}});
- const place=p.z>19?'선실':p.z>8?'그랜드 엔트리':distance<11?rides[nearestRide].name+' 구역':'순환 산책로';
+ const nearShop=window.NEVERLAND_LAYOUT.shops.find(shop=>Math.hypot(p.x-shop.x,p.z-shop.z)<14);
+ const place=nearShop?nearShop.name:p.z>34?'캡틴 훅 구역':p.z>19?'선실':p.z>8?'그랜드 엔트리':distance<11?rides[nearestRide].name+' 구역':'순환 산책로';
  const labels=window.NEVERLAND_LAYOUT.rides.map(r=>[r.name,r.x,r.z]);
- modal('<div class="eyebrow">NEVERLAND / YOU ARE HERE</div><h1>네버랜드의 지도</h1><p>붉은 점이 지금 서 있는 위치입니다. 화살표는 바라보는 방향입니다.</p><div class="position-map"><svg viewBox="-54 -74 108 114" role="img" aria-label="네버랜드 지도 · 현재 위치: '+place+'"><rect x="-53" y="-73" width="106" height="112" rx="5" fill="#cbd6b9"/><circle cx="0" cy="-24" r="12" fill="none" stroke="#73b7b5" stroke-width="4"/><circle cx="0" cy="-24" r="16.5" fill="none" stroke="#eee2bc" stroke-width="4.5"/><circle cx="0" cy="-24" r="6" fill="#b29ac8"/><text x="0" y="-23" class="map-building">달빛 성</text><path d="M0 28V-14M-10-24H10M0-34V-39M-23 1L-16-14M23 1L16-14M-23-36L-12-36M23-36L12-36" stroke="#eee2bc" stroke-width="4" fill="none"/><rect x="-7" y="12" width="14" height="2" fill="#9f2936"/><text x="0" y="18" class="map-place">그랜드 엔트리</text><rect x="-4.5" y="20" width="9" height="8" fill="#526f5c"/><text x="0" y="25" class="map-building">선실</text>'+labels.map(([name,x,z],i)=>'<g class="map-landmark"><circle cx="'+x+'" cy="'+z+'" r="'+(i===0?3.6:5)+'" fill="#788d73" stroke="#57715f" stroke-width=".4"/><text x="'+x+'" y="'+(z+.9)+'" text-anchor="middle" fill="#fff8de" font-size="3">'+['⚓','✦','♞','◇','☕'][i]+'</text><text x="'+x+'" y="'+(z+8)+'" class="map-place">'+name+'</text></g>').join('')+'<text x="31" y="-55" class="map-place">북 ↑</text><g id="map-player" transform="translate('+p.x+' '+p.z+')"><circle r="2.4" fill="#b43149" stroke="#fff9e6" stroke-width=".7"/><path d="M0-5.5L-1.7-2.8H1.7Z" fill="#b43149" stroke="#fff9e6" stroke-width=".35" transform="rotate('+(-p.yaw*180/Math.PI)+')"/></g></svg></div><p class="map-current" role="status">● 현재 위치: '+place+'</p><button id="backMap">닫기</button>');
+ const shops=window.NEVERLAND_LAYOUT.shops.map(({name,x,z})=>'<g><rect x="'+(x-3)+'" y="'+(z-3)+'" width="6" height="6" rx="1" fill="#9576a3"/><text x="'+x+'" y="'+(z+7)+'" class="map-place">'+name+'</text></g>').join('');
+ modal('<div class="eyebrow">NEVERLAND / YOU ARE HERE</div><h1>네버랜드의 지도</h1><p>붉은 점이 지금 서 있는 위치입니다. 화살표는 바라보는 방향입니다.</p><div class="position-map"><svg viewBox="-76 -97 152 160" role="img" aria-label="네버랜드 지도 · 현재 위치: '+place+'"><rect x="-75" y="-96" width="150" height="158" rx="5" fill="#cbd6b9"/><circle cx="0" cy="-24" r="12" fill="none" stroke="#73b7b5" stroke-width="4"/><circle cx="0" cy="-24" r="16.5" fill="none" stroke="#eee2bc" stroke-width="4.5"/><circle cx="0" cy="-24" r="6" fill="#b29ac8"/><text x="0" y="-23" class="map-building">달빛 성</text><path d="M0 50V-14M-28-13L-63-17M28-13L63-17M-10-24H10M0-34V-39M-23 1L-16-14M23 1L16-14M-23-36L-12-36M23-36L12-36" stroke="#eee2bc" stroke-width="4" fill="none"/><rect x="-7" y="12" width="14" height="2" fill="#9f2936"/><text x="0" y="18" class="map-place">그랜드 엔트리</text><rect x="-4.5" y="20" width="9" height="8" fill="#526f5c"/><text x="0" y="25" class="map-building">선실</text>'+labels.map(([name,x,z],i)=>'<g class="map-landmark"><circle cx="'+x+'" cy="'+z+'" r="'+(i===0?3.6:5)+'" fill="#788d73" stroke="#57715f" stroke-width=".4"/><text x="'+x+'" y="'+(z+.9)+'" text-anchor="middle" fill="#fff8de" font-size="3">'+['⚓','✦','♞','◇','☕'][i]+'</text><text x="'+x+'" y="'+(z+8)+'" class="map-place">'+name+'</text></g>').join('')+shops+'<text x="67" y="-87" class="map-place">북 ↑</text><g id="map-player" transform="translate('+p.x+' '+p.z+')"><circle r="2.4" fill="#b43149" stroke="#fff9e6" stroke-width=".7"/><path d="M0-5.5L-1.7-2.8H1.7Z" fill="#b43149" stroke="#fff9e6" stroke-width=".35" transform="rotate('+(-p.yaw*180/Math.PI)+')"/></g></svg></div><p class="map-current" role="status">● 현재 위치: '+place+'</p><button id="backMap">닫기</button>');
  if(s.exit){
   const [x,z]=controls3d[s.exitRide],marker=document.createElementNS('http://www.w3.org/2000/svg','g');
   marker.setAttribute('id','map-exit');marker.setAttribute('transform','translate('+(x+4)+' '+(z+2)+')');
@@ -127,7 +138,12 @@ function finishFracture3d(){
 }
 
 world3d.connect(action=>{
- if(action.type==='castle'){openCastle3d();return;}
+ if(action.type==='shop'){openShop3d(window.NEVERLAND_LAYOUT.shops.find(shop=>shop.id===action.shop));return;}
+ if(action.type==='castle'){
+  const enter=()=>openCastle3d();
+  if(!window.carnivalScene?.enterCastle?.(enter))enter();
+  return;
+ }
  if(action.type==='epilogue'){window.NEVERLAND_ENDING.interact();return;}
  if(action.type==='cast'||action.type==='cast-clue'){window.NEVERLAND_CAST.interact(action);return;}
  if(action.type==='interior-leave'){returnToPark();return;}

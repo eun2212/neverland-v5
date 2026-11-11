@@ -1,11 +1,12 @@
 'use strict';
 window.NEVERLAND_CASTLE = function ({T, scene, stat, cube, cylinder, ball, mesh}) {
- const stone = new T.MeshStandardMaterial({color:0xf9dbe0, roughness:.7});
- const pearl = new T.MeshStandardMaterial({color:0xffefd7, roughness:.6});
- const roof = new T.MeshStandardMaterial({color:0xab99e1, roughness:.55, metalness:.18});
- const mint = new T.MeshStandardMaterial({color:0x91d4d0, roughness:.55});
+ const stone = new T.MeshStandardMaterial({color:0xffe3ad, roughness:.7});
+ const pearl = new T.MeshStandardMaterial({color:0xe3b64d, roughness:.6});
+ const roof = new T.MeshStandardMaterial({color:0x6f253e, roughness:.55, metalness:.18});
+ const mint = new T.MeshStandardMaterial({color:0x265945, roughness:.55});
  const light = new T.MeshStandardMaterial({color:0xffd598, emissive:0xffbd7d, emissiveIntensity:.7});
- const door = new T.MeshStandardMaterial({color:0x694968, roughness:.7});
+ const doorway = new T.MeshBasicMaterial({color:0x221525});
+ const door = new T.MeshStandardMaterial({color:0x492439, roughness:.7});
  const z = window.NEVERLAND_LAYOUT.center[1];
  function tower(x, offset, radius, height, color) {
   cylinder(x,.28,z+offset,radius,height,stone);
@@ -36,17 +37,20 @@ window.NEVERLAND_CASTLE = function ({T, scene, stat, cube, cylinder, ball, mesh}
  const arch=new T.Shape();
  arch.moveTo(-1.65,0);arch.lineTo(1.65,0);arch.lineTo(1.65,2.7);
  arch.absarc(0,2.7,1.65,0,Math.PI,false);arch.lineTo(-1.65,0);
+ const doors=[];
  for (let side=0;side<4;side++) {
   const angle=side*Math.PI/2, distance=side%2?5.025:4.025;
   const frame=mesh(new T.ShapeGeometry(arch),pearl);
   frame.position.set(Math.sin(angle)*distance,.73,z+Math.cos(angle)*distance);
   frame.rotation.y=angle;
-  const panel=mesh(frame.geometry,door);
-  panel.position.copy(frame.position);
-  panel.position.x+=Math.sin(angle)*.025;
-  panel.position.z+=Math.cos(angle)*.025;
-  panel.rotation.y=angle;
-  panel.scale.set(.83,.91,1);
+  const recess=mesh(frame.geometry,doorway);recess.position.copy(frame.position);recess.rotation.y=angle;recess.translateZ(.026);recess.scale.set(.88,.95,1);
+  const gate=new T.Group();
+  gate.position.copy(frame.position);gate.rotation.y=angle;
+  gate.translateZ(.07);scene.add(gate);
+  const hinge=new T.Group();hinge.position.x=-1.37;gate.add(hinge);
+  const panel=mesh(frame.geometry,door,hinge);
+  panel.position.x=1.37;panel.scale.set(.83,.91,1);
+  doors.push({gate,hinge});
  }
  const sparks=new T.Group();
  scene.add(sparks);
@@ -56,7 +60,8 @@ window.NEVERLAND_CASTLE = function ({T, scene, stat, cube, cylinder, ball, mesh}
   const material=new T.MeshBasicMaterial({color:colors[i%4],transparent:true,depthWrite:false});
   ball(0,0,0,.10,material,sparks).castShadow=false;
  }
- return function update(t,reduced) {
+ return function update(t,reduced,inside,opening) {
+  doors.forEach(({gate,hinge},i)=>{gate.visible=!inside;hinge.rotation.y=opening?.side===i?-1.23*opening.progress:0;});
   const cycle=Math.floor(t/24), age=t%24-9;
   sparks.visible=!reduced&&age>0&&age<2.4;
   if (!sparks.visible) return;
