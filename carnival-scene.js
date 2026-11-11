@@ -55,10 +55,12 @@ function shopSign(label,width,height,accent){
  const map=new T.CanvasTexture(canvas);map.colorSpace=T.SRGBColorSpace;
  return mesh(new T.PlaneGeometry(width,height),new T.MeshBasicMaterial({map,toneMapped:false,side:T.DoubleSide}));
 }
-for(const shop of L.shops){
+for(const shop of [...L.shops,...L.games]){
  const sign=Math.sign(shop.x);
- pathStrip([[sign*13,-53.5],[sign*21,-57],shop.door],4);
- const {x,z}=shop,drinks=shop.id==='drinks',accent=drinks?'greenLight':'redLight';
+ const game=!!shop.symbol;
+ if(game)pathStrip([[sign*23,-49.4],[sign*26,shop.door[1]],shop.door],3);
+ else pathStrip([[sign*13,-53.5],[sign*19,-57],shop.door],4);
+ const {x,z}=shop,drinks=shop.id==='drinks',accent=drinks||shop.id==='pairs'||shop.id==='timing'?'greenLight':'redLight';
  cube(x,0,z,5.8,.15,4.1,'stone');
  for(const dx of [-2.65,2.65])for(const dz of [-1.75,1.75]){
   cube(x+dx,.15,z+dz,.28,3.1,.28,'green');
@@ -66,16 +68,23 @@ for(const shop of L.shops){
  for(let stripe=-3;stripe<=3;stripe++)cube(x+stripe*.84,3.25,z,.85,.25,4.5,stripe%2?'cream':accent);
  cube(x,.15,z+.45,4.8,1,1.4,accent);
  cube(x,1.15,z+.45,4.95,.13,1.55,'cream');
- const signColor=drinks?'#9ee7d5':'#ffadd8';
+ const signColor=game?'#f3d391':drinks?'#9ee7d5':'#ffadd8';
  shopSign(shop.name,5.45,1.09,signColor).position.set(x,3.86,z+2.28);
- for(const [wayX,wayZ] of [[sign*15,-50.8],[sign*22,-55.4]]){
-  const direction=sign<0?'← 음료 코너':'솜사탕 가게 →';
-  cube(wayX,0,wayZ,.18,2.7,.18,'green');
-  shopSign(direction,4.1,.82,signColor).position.set(wayX,2.64,wayZ+.12);
- }
  for(const offset of [-1.5,0,1.5]){
   const prop=x+offset;
-  if(drinks){
+  if(game){
+   if(shop.id==='rings'){
+    cylinder(prop,1.28,z+.48,.055,.63,'green');
+    torus(prop,1.65,z+.48,.23,.043,'gold',stat,true);
+   }else if(shop.id==='pairs'){
+    cube(prop,1.28,z+.48,.38,.53,.08,offset===0?'cream':'gold');
+   }else if(shop.id==='stars'){
+    sunburst(prop,1.67,z+.5,.23);
+   }else{
+    torus(prop,1.63,z+.48,.26,.045,'gold');
+    ball(prop,1.63,z+.49,.09,'bulb');
+   }
+  }else if(drinks){
    cylinder(prop,1.28,z+.48,.18,.48,'glass',stat,.24,12);
    cylinder(prop,1.76,z+.48,.24,.05,'cream');
    beam([prop,1.77,z+.48],[prop+.1,2.07,z+.48],.025,'redLight');

@@ -23,6 +23,7 @@
  }
  function reason(){
   const world=world3d.state;
+  if(window.NEVERLAND_BOOTH_GAMES?.active)return '미니게임을 마치고 공원으로 돌아오면 저장할 수 있습니다.';
   if(window.NEVERLAND_COASTER?.active)return '롤러코스터에서 공원으로 돌아오면 저장할 수 있습니다.';
   if(window.carnivalScene?.castleEntering||window.NEVERLAND_ROOM?.transitioning)return '침실 장면이 끝나면 저장할 수 있습니다.';
   if(window.NEVERLAND_TOOLS?.testing)return '제작 테스트 중에는 저장할 수 없습니다.';
@@ -40,10 +41,9 @@
  function capture(){
   const world=world3d.state;
   return {
-   version,time:Date.now(),parkRevision:5,
+   version,time:Date.now(),parkRevision:6,
    story:encode({
     dollMemories:{},dollKeeperAsked:false,
-    cheshire:{met:false,separated:false,incident:false,choice:'',evidence:[]},
     ...s
    },storySets),
    keeper:encode(keeperStoryState,keeperSets),
@@ -63,17 +63,18 @@
     return {x,z:z-3.7,yaw:Math.PI,pitch:0,eye:1.65};
    }
   }
-  if((save.parkRevision??1)<5&&progress.free){
+  if((save.parkRevision??1)<6&&progress.free){
    for(const shop of window.NEVERLAND_LAYOUT.shops){
-    const oldDoor=[Math.sign(shop.x)*63,-20.4];
+    const oldDoor=(save.parkRevision??1)<5?[Math.sign(shop.x)*63,-20.4]:[Math.sign(shop.x)*26,-61.4];
     if(save.room?.shop===shop.id||Math.hypot(player.x-oldDoor[0],player.z-oldDoor[1])<2.7){
      return {...player,x:shop.door[0],z:shop.door[1]+1};
     }
    }
   }
   if(world3d.canRestorePark(player.x,player.z,config))return player;
-  if((save.parkRevision??1)<5&&progress.free){
-   const shop=window.NEVERLAND_LAYOUT.shops.find(shop=>Math.abs(player.x-shop.x)<3&&Math.abs(player.z-shop.z)<2.2);
+  if((save.parkRevision??1)<6&&progress.free){
+   const layout=window.NEVERLAND_LAYOUT;
+   const shop=[...layout.shops,...layout.games].find(shop=>Math.abs(player.x-shop.x)<3&&Math.abs(player.z-shop.z)<2.2);
    if(shop)return {...player,x:shop.door[0],z:shop.door[1]+1};
   }
   const coaster=window.NEVERLAND_LAYOUT.coaster;
@@ -92,7 +93,7 @@
      !ride(story.ride)||!ride(story.exitRide)||!hasFields(story,storySets,v=>arrayOf(v,scalar))||
      !['visited','cleared','clues','eventChecks'].every(key=>arrayOf(story[key],ride))||
      !arrayOf(story.actions,a=>object(a)&&typeof a.kind==='string'&&ride(a.ride))||
-     !object(story.dollMemories)||!object(story.cheshire)||!arrayOf(story.cheshire.evidence,scalar))return false;
+     !object(story.dollMemories))return false;
   if(!hasFields(keeper,keeperNumbers,integer)||!hasFields(keeper,keeperFlags,v=>typeof v==='boolean')||
      keeper.orientation||typeof keeper.dream!=='string'||typeof keeper.stance!=='string'||
      !hasFields(keeper,keeperSets,v=>arrayOf(v,scalar)))return false;
@@ -112,7 +113,7 @@
   const player=parkedPose(save);
   newGame();
   queue=[];after=null;puzzle=null;
-  Object.assign(s,decode(story,['name','gender','temper','phase','actions','dollMemories','cheshire',...storyNumbers,...storyFlags],storySets));
+  Object.assign(s,decode(story,['name','gender','temper','phase','actions','dollMemories',...storyNumbers,...storyFlags],storySets));
   Object.assign(keeperStoryState,decode(keeper,['dream','stance',...keeperNumbers,...keeperFlags],keeperSets));
   free3d=progress.free;intro3d=progress.intro;firstLever3d=progress.firstLever;target3d=progress.target;
   close();
@@ -124,7 +125,7 @@
   }
   if(room?.shop)openShop3d(window.NEVERLAND_LAYOUT.shops.find(shop=>shop.id===room.shop),room);
   else if(room)openCastle3d(room.first,room.windowView,room);
-  window.NEVERLAND_DIALOGUE.restore(log);
+  window.NEVERLAND_DIALOGUE.restore(log.filter(entry=>entry.who!=='체셔'));
   world3d.audio();
  }
  function readSlot(slot){

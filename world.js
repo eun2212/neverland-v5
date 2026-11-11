@@ -87,6 +87,8 @@ function nearest(){
   const [x,z]=layout.coaster.door;
   if(config.forcedRide<0&&!config.confronting&&Math.hypot(player.x-x,player.z-z)<2.7)
    return{type:'coaster',label:'E · '+layout.coaster.name+' 탑승하기'};
+  const game=layout.games.find(item=>Math.hypot(player.x-item.door[0],player.z-item.door[1])<2.7);
+  if(game&&config.forcedRide<0&&!config.confronting)return{type:'booth-game',game:game.id,label:'E · '+game.name};
   const shop=layout.shops.find(item=>Math.hypot(player.x-item.door[0],player.z-item.door[1])<2.7);
   if(shop)return{type:'shop',shop:shop.id,label:'E · '+shop.name+' 들어가기'};
  }

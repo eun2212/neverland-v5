@@ -50,6 +50,11 @@ world3d.configure({forcedRide:1});
 test(worldQA.nearest()?.type!=='coaster','coaster cannot interrupt mandatory boarding');
 world3d.configure({forcedRide:-1});
 test(!worldQA.valid(0,-79),'coaster track footprint blocks walking');
+for(const game of window.NEVERLAND_LAYOUT.games){
+ world3d.jumpToPark(...game.door);
+ test(worldQA.nearest()?.game===game.id,'mini-game booth reachable '+game.id);
+ test(!worldQA.valid(game.x,game.z),'mini-game counter collides '+game.id);
+}
 
 for(const shop of window.NEVERLAND_LAYOUT.shops){
  world3d.jumpToPark(...shop.door);
@@ -165,6 +170,7 @@ for(let cursor=0;cursor<frontier.length;cursor++){
 const positions={controls:sandbox.NEVERLAND_LAYOUT.rides.map(r=>r.control),clues:sandbox.NEVERLAND_LAYOUT.clues,keepers:sandbox.NEVERLAND_LAYOUT.keepers};
 positions.shops=layout.shops.map(shop=>shop.door);
 positions.coaster=[layout.coaster.door];
+positions.games=layout.games.map(game=>game.door);
 positions.exits=positions.controls.map(([x,z])=>[x+4,z+2]);
 for(const [kind,points]of Object.entries(positions))for(const [i,p]of points.entries())test(frontier.some(([x,z])=>Math.hypot(x-p[0],z-p[1])<2),'walkable path to '+kind+' '+i);
 run("world3d.configure({paused:true});");const stationary=JSON.stringify(sandbox.worldQA.player);handlers.keydown({key:'w',repeat:false,preventDefault(){}});frames(5);test(JSON.stringify(sandbox.worldQA.player)===stationary,'modal pause prevents movement');

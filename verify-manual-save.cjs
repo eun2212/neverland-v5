@@ -47,7 +47,7 @@ test(world3d.state.player.z===-16&&intro3d,'restored first room leaves to origin
 free3d=true;intro3d=false;s.keeperIntroduced=true;s.cleared.add(1);s.clues.add(1);s.K=4;s.ride=1;
 keeperStoryState.responses.add('question:1:keeper');
 s.dollMemories.test={met:true};
-s.cheshire={met:true,separated:false,incident:false,choice:'',evidence:['a']};
+
 window.NEVERLAND_DIALOGUE.record('키퍼','기억');
 world3d.jumpToPark(22,-30);worldQA.player.yaw=1.2;worldQA.player.pitch=-.18;explore3d();
 $('manual-save-menu').onclick();button(2).onclick();
@@ -64,7 +64,7 @@ test(button(3).disabled&&slots.children[2].children[1].textContent.includes('버
 button(2).onclick();
 test(s.cleared.has(1)&&s.clues.has(1)&&s.K===6&&keeperStoryState.responses.has('question:1:keeper'),'scores, sets and Keeper progression restore');
 test(world3d.state.player.x===22&&world3d.state.player.z===-30&&world3d.state.player.yaw===1.2&&world3d.state.player.pitch===-.18,'position and camera restore exactly');
-test(s.dollMemories.test.met&&s.cheshire.evidence[0]==='a'&&window.NEVERLAND_DIALOGUE.history.some(x=>x.text==='기억'),'cast memories and dialogue log restore');
+test(s.dollMemories.test.met&&window.NEVERLAND_DIALOGUE.history.some(x=>x.text==='기억'),'cast memories and dialogue log restore');
 test(!world3d.state.config.paused&&!dialog.open,'restored park permits walking');
 s.phase='story';$('manual-save-menu').onclick();
 test(button(1).disabled&&button(2).disabled&&button(3).disabled,'dialogue blocks saving');
@@ -94,9 +94,12 @@ newGame();$('manual-save-load').onclick();button(3).onclick();
 test(roomCheckpoint.shop==='candy'&&roomCheckpoint.pose.x===.81&&world3d.state.player.x===shop.door[0]&&world3d.state.player.z===shop.door[1]+1,'old shop checkpoint keeps indoor pose and relocates exterior return');
 const old=JSON.parse(localStorage.getItem(key+2));
 old.parkRevision=2;old.player.x=0;old.player.z=24;
+old.story.cheshire={met:true,evidence:['legacy']};
+old.log.push({who:'체셔',text:'legacy scene'});
 localStorage.setItem(key+2,JSON.stringify(old));
 newGame();$('manual-save-load').onclick();button(2).onclick();
 test(world3d.state.player.z===window.NEVERLAND_LAYOUT.rides[0].control[1]-3.7,'old cabin save relocates to safe captain approach');
+test(!s.cheshire&&!window.NEVERLAND_DIALOGUE.history.some(x=>x.who==='체셔'),'legacy Cheshire fields do not restore the deleted character');
 old.parkRevision=3;old.player.x=0;old.player.z=-80;
 localStorage.setItem(key+2,JSON.stringify(old));
 newGame();$('manual-save-load').onclick();button(2).onclick();

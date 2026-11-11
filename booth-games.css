@@ -1,0 +1,11 @@
+#booth-game{box-sizing:border-box;width:min(28rem,calc(100vw - 2rem));max-height:85dvh;overflow:auto;padding:1.25rem;color:#fff2d4;background:#291d38;border:2px solid #d0a87a;border-radius:1rem}
+#booth-game::backdrop{background:#181023ab}
+#booth-game h2{margin:0 0 .7rem}
+#booth-game button{min-height:44px;padding:.45rem .65rem;border:1px solid #d0a87a;border-radius:.45rem;color:inherit;background:#503657;font:inherit}
+#booth-game button:disabled{opacity:.55}
+#booth-game button:focus-visible{outline:2px solid #ffe399;outline-offset:2px}
+.booth-game-body{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.6rem;margin-bottom:1rem}
+.booth-game-body progress{grid-column:1/-1;width:100%;accent-color:#e9c57d}
+.booth-game-body button[hidden]{display:none}
+
+.booth-game-body select{grid-column:1/-1;min-height:44px;border:1px solid #d0a87a;border-radius:.45rem;background:#392943;color:#fff2d4;padding:.4rem}
