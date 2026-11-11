@@ -8,16 +8,16 @@
   <header><h1 id="castle-room-title" tabindex="-1">달빛 성의 침실</h1></header>
   <div class="castle-illustration">
    <div class="castle-bedroom">
-    <button type="button" class="room-door" data-room="leave" aria-label="침실 문을 열고 성 정문으로 나가기"></button>
+    <button type="button" class="room-door" data-room="leave" aria-label="성 정문으로 나가기"></button>
     <i class="room-starlight" aria-hidden="true"></i>
     <button type="button" class="room-window" data-room="window" aria-label="창가에 앉기"></button>
-    <button type="button" class="room-letter" data-room="letter" aria-label="새 편지 읽기"></button>
-    <button type="button" class="room-book" data-room="book" aria-label="책에서 엔딩 기록 보기"></button>
-    <button type="button" class="room-record" data-room="record" aria-label="레코드 플레이어"></button>
-    <button type="button" class="room-photo" data-room="photo" aria-label="사진과 앨범 보기"></button>
+    <button type="button" class="room-letter" data-room="letter" aria-label="대사 로그"></button>
+    <button type="button" class="room-book" data-room="book" aria-label="엔딩 기록"></button>
+    <button type="button" class="room-record" data-room="record" aria-label="음악"></button>
+    <button type="button" class="room-photo" data-room="photo" aria-label="앨범"></button>
    </div>
    <div class="castle-window-view" hidden>
-    <canvas width="960" height="450" role="img" aria-label="별빛 아래 천천히 도는 관람차와 불 켜진 회전목마"></canvas>
+    <canvas width="960" height="450" role="img" aria-label="별빛 아래 움직이는 관람차, 회전목마, 롤러코스터"></canvas>
     <button type="button" data-room="back">침실로 돌아가기</button>
    </div>
   </div>
@@ -51,6 +51,40 @@
   wax.lineWidth=.4+random()*1.4;
   wax.beginPath();wax.moveTo(x,y);wax.lineTo(x+length,y-length*.55);wax.stroke();
  }
+ const coasterStart=423,coasterEnd=944;
+ function coasterHeight(x){
+  return 324-126*Math.exp(-(((x-528)/54)**2))-167*Math.exp(-(((x-813)/57)**2));
+ }
+ function drawCoaster(t){
+  ctx.lineJoin='round';ctx.lineCap='round';
+  ctx.strokeStyle='#604d88';ctx.lineWidth=3;
+  for(let x=439;x<coasterEnd;x+=27){
+   const y=coasterHeight(x)+7;
+   ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x,369);
+   ctx.moveTo(x,366);ctx.lineTo(x+24,coasterHeight(x+24)+8);ctx.stroke();
+  }
+  for(const [offset,color] of [[7,'#9c73b1'],[0,'#d79ace']]){
+   ctx.strokeStyle=color;ctx.lineWidth=3;
+   ctx.beginPath();ctx.moveTo(coasterStart,coasterHeight(coasterStart)+offset);
+   for(let x=coasterStart+3;x<=coasterEnd;x+=3)ctx.lineTo(x,coasterHeight(x)+offset);
+   ctx.stroke();
+  }
+  ctx.strokeStyle='#bf8fbd';ctx.lineWidth=2;
+  for(let x=coasterStart+6;x<coasterEnd;x+=10){
+   const y=coasterHeight(x);
+   ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-3,y+7);ctx.stroke();
+  }
+  const head=coasterStart+((t*43+390)%581);
+  for(let i=4;i>=0;i--){
+   const x=head-i*12;
+   if(x<coasterStart||x>coasterEnd)continue;
+   const slope=(coasterHeight(x+1)-coasterHeight(x-1))/2;
+   ctx.save();ctx.translate(x,coasterHeight(x));ctx.rotate(Math.atan(slope));
+   ctx.fillStyle=i===0?'#edabd1':'#a88ae2';ctx.fillRect(-5,-8,11,6);
+   ctx.fillStyle='#ffe5a9';ctx.fillRect(i===0?3:-2,-7,3,2);
+   ctx.restore();
+  }
+ }
  function draw(now){
   const t=media.matches||window.NEVERLAND_TOOLS?.settings.reduced?0:(now-windowStart)/1000;
   const sky=ctx.createLinearGradient(0,0,0,450);
@@ -68,6 +102,7 @@
   disk(746,85,34,'#ffdcad');disk(759,73,31,'#1b1738');
   for(let i=0;i<12;i++)disk(i*88,441,125+(i%4)*15,i%2?'#574e72':'#615677');
   ctx.fillStyle='#211c42';ctx.fillRect(0,363,960,87);
+  drawCoaster(t);
   // Tents and the low park midway sit behind the moving attractions.
   for(const [x,y,w] of [[55,348,77],[144,359,78],[456,350,72],[527,359,49],[827,350,91],[908,366,53]]){
    ctx.fillStyle='#373064';ctx.fillRect(x-w/2,y,w,38);

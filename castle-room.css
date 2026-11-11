@@ -25,3 +25,24 @@
 .castle-room-copy p{margin:.25rem 0 .65rem}
 .castle-room-copy ol{margin:.4rem 0;padding-left:1.7rem}
 @media(max-width:560px){#castle-room{padding-top:4.25rem;padding-inline:.5rem}}
+
+#castle-room .castle-bedroom button:is(:hover,:focus-visible){z-index:1}
+#castle-room .castle-bedroom button:is(:hover,:focus-visible)::after{
+ content:attr(aria-label);
+ position:absolute;
+ bottom:100%;
+ left:50%;
+ transform:translateX(-50%);
+ margin-bottom:5px;
+ padding:.25rem .5rem;
+ border:1px solid #b38cbd;
+ border-radius:.4rem;
+ background:#211630;
+ color:#fff0e4;
+ font-size:clamp(.7rem,2.2vw,.88rem);
+ line-height:1.4;
+ white-space:nowrap;
+ pointer-events:none;
+}
+#castle-room .room-door:is(:hover,:focus-visible)::after{left:0;transform:none}
+#castle-room .room-photo:is(:hover,:focus-visible)::after{left:auto;right:0;transform:none}
