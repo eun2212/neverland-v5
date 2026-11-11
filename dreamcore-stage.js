@@ -12,8 +12,8 @@ window.NEVERLAND_DREAM_STAGE=function(h){
  for(let y=0;y<256;y+=2){ink.fillStyle=y%4?'#e4cbb5':'#f2e2d2';ink.fillRect(0,y,256,1);}for(let x=0;x<256;x+=3){ink.fillStyle='#42304a12';ink.fillRect(x,0,1,256);}
  const textile=new T.CanvasTexture(fabric);textile.wrapS=textile.wrapT=T.RepeatWrapping;textile.repeat.set(3,3);textile.colorSpace=T.SRGBColorSpace;
  mats.red.map=textile;mats.green.map=textile;
- mats.velvet=new T.MeshStandardMaterial({color:'#8766d2',roughness:.87,side:T.DoubleSide,map:textile});
- mats.nightTrim=new T.MeshStandardMaterial({color:'#17122a',metalness:.35,roughness:.4});
+ mats.velvet=new T.MeshStandardMaterial({color:'#691d37',roughness:.87,side:T.DoubleSide,map:textile});
+ mats.nightTrim=new T.MeshStandardMaterial({color:'#152644',metalness:.35,roughness:.4});
  function star(x,y,z,r,m='starLight',p=stage,points=4){
   const s=new T.Shape();for(let i=0;i<points*2;i++){const a=i/points*Math.PI+Math.PI/2,rr=i%2?r*.29:r;if(i===0)s.moveTo(Math.cos(a)*rr,Math.sin(a)*rr);else s.lineTo(Math.cos(a)*rr,Math.sin(a)*rr);}s.closePath();
   const o=mesh(new T.ExtrudeGeometry(s,{depth:.06,bevelEnabled:false}),m,p);o.position.set(x,y,z);o.castShadow=false;return o;
@@ -95,12 +95,12 @@ window.NEVERLAND_DREAM_STAGE=function(h){
  // Scenic plinths with constellation globes at the four outer corners.
  for(const [x,z]of[[-34,12],[34,12],[-34,-55],[34,-55]]){cylinder(x,0,z,.85,.25,'green',stage);cylinder(x,.25,z,.65,.5,'gold',stage);cylinder(x,.75,z,.45,1.3,'green',stage);torus(x,2.7,z,.9,.035,'gold',stage);torus(x,2.7,z,.9,.035,'gold',stage,true);star(x,2.7,z,.55);bulb(x,3.7,z,.1,stage);}
  // Soft translucent theatrical shafts: limited count and no extra shadow lights.
- const beamMat=new T.ShaderMaterial({transparent:true,depthWrite:false,side:T.DoubleSide,blending:T.AdditiveBlending,uniforms:{color:{value:new T.Color('#fbd99b')}},vertexShader:'varying vec2 v;void main(){v=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',fragmentShader:'varying vec2 v;uniform vec3 color;void main(){float edge=pow(max(0.,1.-abs(v.x-.5)*2.),2.);gl_FragColor=vec4(color,edge*.045*pow(1.-v.y,.65));}'});
- const shafts=[];for(const [i,a]of crowns.entries()){const g=new T.Group();g.position.set(a.x,a.y+5,a.z);motion.add(g);const cone=new T.Mesh(new T.ConeGeometry(a.r*.8,a.y+5,24,1,true),beamMat);cone.position.y=-(a.y+5)/2;g.add(cone);shafts.push(g);const light=new T.PointLight(i%2?0xcba3f2:0xfbd99b,95,26,2);light.position.set(a.x,5,a.z);motion.add(light);}
+ const beamMat=new T.ShaderMaterial({transparent:true,depthWrite:false,side:T.DoubleSide,blending:T.AdditiveBlending,uniforms:{color:{value:new T.Color('#f7c675')}},vertexShader:'varying vec2 v;void main(){v=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',fragmentShader:'varying vec2 v;uniform vec3 color;void main(){float edge=pow(max(0.,1.-abs(v.x-.5)*2.),2.);gl_FragColor=vec4(color,edge*.045*pow(1.-v.y,.65));}'});
+ const shafts=[];for(const [i,a]of crowns.entries()){const g=new T.Group();g.position.set(a.x,a.y+5,a.z);motion.add(g);const cone=new T.Mesh(new T.ConeGeometry(a.r*.8,a.y+5,24,1,true),beamMat);cone.position.y=-(a.y+5)/2;g.add(cone);shafts.push(g);const light=new T.PointLight(i%2?0x8bb9ef:0xffca70,95,26,2);light.position.set(a.x,5,a.z);motion.add(light);}
  // Floating confetti uses one draw call; muted sizes retain a clear path view.
  const dustPos=[];for(let i=0;i<180;i++)dustPos.push((random()-.5)*70,2+random()*14,random()*75-57);
  const dustGeo=new T.BufferGeometry();dustGeo.setAttribute('position',new T.Float32BufferAttribute(dustPos,3));
- const dust=new T.Points(dustGeo,new T.PointsMaterial({color:'#fcdfb3',size:.045,transparent:true,opacity:.68,depthWrite:false,blending:T.AdditiveBlending}));motion.add(dust);
+ const dust=new T.Points(dustGeo,new T.PointsMaterial({color:'#ffe5a1',size:.045,transparent:true,opacity:.68,depthWrite:false,blending:T.AdditiveBlending}));motion.add(dust);
  batch(stage);
  return{update(t,inside){motion.visible=!inside;stars.visible=true;const still=reduced||window.NEVERLAND_TOOLS?.settings.reduced;crossStars.forEach((sprite,i)=>{sprite.material.opacity=still?.82:.73+.16*Math.sin(t*.65+i*2.4);});if(!still){shafts.forEach((g,i)=>{g.rotation.z=Math.sin(t*.14+i)*.045;});dust.position.y=Math.sin(t*.2)*.25;}}};
 };

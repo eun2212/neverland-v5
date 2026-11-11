@@ -1,11 +1,11 @@
 'use strict';
 window.NEVERLAND_CASTLE = function ({T, scene, stat, cube, cylinder, ball, mesh}) {
- const stone = new T.MeshStandardMaterial({color:0xf2a5e0, roughness:.7});
- const pearl = new T.MeshStandardMaterial({color:0xfbd99b, roughness:.6});
- const roof = new T.MeshStandardMaterial({color:0x8766d2, roughness:.55, metalness:.18});
- const mint = new T.MeshStandardMaterial({color:0xa8cdc6, roughness:.55});
- const light = new T.MeshStandardMaterial({color:0xfcdfb3, emissive:0xfacfa8, emissiveIntensity:.7});
- const door = new T.MeshStandardMaterial({color:0x222471, roughness:.7});
+ const stone = new T.MeshStandardMaterial({color:0xf9dbe0, roughness:.7});
+ const pearl = new T.MeshStandardMaterial({color:0xffefd7, roughness:.6});
+ const roof = new T.MeshStandardMaterial({color:0xab99e1, roughness:.55, metalness:.18});
+ const mint = new T.MeshStandardMaterial({color:0x91d4d0, roughness:.55});
+ const light = new T.MeshStandardMaterial({color:0xffd598, emissive:0xffbd7d, emissiveIntensity:.7});
+ const door = new T.MeshStandardMaterial({color:0x694968, roughness:.7});
  const z = window.NEVERLAND_LAYOUT.center[1];
  function tower(x, offset, radius, height, color) {
   cylinder(x,.28,z+offset,radius,height,stone);
@@ -51,7 +51,7 @@ window.NEVERLAND_CASTLE = function ({T, scene, stat, cube, cylinder, ball, mesh}
  const sparks=new T.Group();
  scene.add(sparks);
  sparks.visible=false;
- const colors=[0xf5a3da,0xcba3f2,0xa8cdc6,0xfbd99b];
+ const colors=[0xffafd9,0xb6baff,0x9cf5df,0xffd691];
  for (let i=0;i<32;i++) {
   const material=new T.MeshBasicMaterial({color:colors[i%4],transparent:true,depthWrite:false});
   ball(0,0,0,.10,material,sparks).castShadow=false;
