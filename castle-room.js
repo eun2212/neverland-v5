@@ -15,11 +15,22 @@
     <button type="button" class="room-book" data-room="book" aria-label="엔딩 기록"></button>
     <button type="button" class="room-record" data-room="record" aria-label="음악"></button>
     <button type="button" class="room-photo" data-room="photo" aria-label="앨범"></button>
+    <span class="room-avatar" aria-hidden="true"><img alt=""></span>
    </div>
    <div class="castle-window-view" hidden>
     <canvas width="960" height="450" role="img" aria-label="별빛 아래 움직이는 관람차, 회전목마, 롤러코스터, 자이로드롭"></canvas>
     <button type="button" data-room="back">침실로 돌아가기</button>
    </div>
+  </div>
+  <div class="room-controls" aria-label="침실 이동 및 상호작용">
+   <div class="room-directions">
+    <button type="button" data-direction="ArrowUp" aria-label="위로 이동">↑</button>
+    <button type="button" data-direction="ArrowLeft" aria-label="왼쪽으로 이동">←</button>
+    <button type="button" data-direction="ArrowDown" aria-label="아래로 이동">↓</button>
+    <button type="button" data-direction="ArrowRight" aria-label="오른쪽으로 이동">→</button>
+   </div>
+   <button type="button" data-room-use disabled>상호작용 · E</button>
+   <button type="button" data-room-skip hidden>기상 장면 건너뛰기</button>
   </div>
   <div class="castle-room-copy" aria-live="polite"></div>`;
  document.body.append(room);
@@ -30,6 +41,93 @@
  const copy=room.querySelector('.castle-room-copy');
  const media=matchMedia('(prefers-reduced-motion: reduce)');
  let options=null,frame=0,windowStart=0;
+ const movement=window.NEVERLAND_BEDROOM_MOVEMENT;
+ const avatar=room.querySelector('.room-avatar');
+ const sprite=avatar.querySelector('img');
+ const controls=room.querySelector('.room-controls');
+ const use=room.querySelector('[data-room-use]');
+ const skip=room.querySelector('[data-room-skip]');
+ const hotspots=new Map([...bedroom.querySelectorAll('[data-room]')].map(el=>[el.dataset.room,el]));
+ const keys=new Map(),touches=new Map();
+ let pose={...movement.entrance},walkFrame=0,lastWalk=0,wakeAge=null,nearest=null;
+ const reduced=()=>media.matches||window.NEVERLAND_TOOLS?.settings.reduced;
+ const available=()=>options&&!bedroom.hidden&&!window.NEVERLAND_SAVES?.open&&
+  !window.NEVERLAND_TOOLS?.open&&!window.NEVERLAND_DIALOGUE?.open;
+ function clearMovement(){keys.clear();touches.clear();}
+ function paintAvatar(moving=false){
+  const lying=wakeAge!==null&&wakeAge<.95;
+  const rising=wakeAge!==null&&!lying;
+  avatar.style.left=(lying?.312:rising?.444:pose.x)*100+'%';
+  avatar.style.top=(lying?.657:rising?.744:pose.y)*100+'%';
+  avatar.dataset.pose=lying?'lying':rising?'rising':pose.facing;
+  avatar.classList.toggle('walking-avatar',moving&&!reduced());
+  const close=wakeAge===null?movement.nearest(pose):null;
+  if(close!==nearest||use.disabled!==!close){
+   nearest=close;
+   use.disabled=!close;
+   use.textContent=close?hotspots.get(close).getAttribute('aria-label')+' · E':'가까이 가서 상호작용 · E';
+   for(const [action,el] of hotspots)el.classList.toggle('room-nearby',action===close);
+  }
+ }
+ function finishWake(){
+  wakeAge=null;skip.hidden=true;
+  message('방향키나 WASD로 움직이세요. 물건 가까이에서 E를 누르세요.');
+  paintAvatar();
+ }
+ function step(now){
+  const dt=lastWalk?Math.min(.05,(now-lastWalk)/1000):0;
+  lastWalk=now;
+  let dx=0,dy=0;
+  if(available()){
+   if(wakeAge!==null){
+    wakeAge+=dt;
+    if(reduced()||wakeAge>=1.65)finishWake();
+   }else{
+    for(const key of new Set([...keys.keys(),...touches.values()])){
+     const [x,y,facing]=movement.directions[key];dx+=x;dy+=y;pose.facing=facing;
+    }
+    movement.move(pose,Math.sign(dx),Math.sign(dy),dt);
+   }
+  }
+  if(!available())clearMovement();
+  paintAvatar(!!(dx||dy));
+  walkFrame=requestAnimationFrame(step);
+ }
+ function startWalking(){
+  cancelAnimationFrame(walkFrame);lastWalk=0;paintAvatar();
+  walkFrame=requestAnimationFrame(step);
+ }
+ function keyName(event){return event.key.length===1?event.key.toLowerCase():event.key;}
+ window.addEventListener('keydown',event=>{
+  if(!available()||event.altKey||event.ctrlKey||event.metaKey)return;
+  const key=keyName(event);
+  if(!(key in movement.directions)&&key!=='e')return;
+  event.preventDefault();event.stopImmediatePropagation();
+  if(wakeAge!==null)return;
+  if(key==='e'){if(!event.repeat&&nearest)activate(nearest);return;}
+  keys.set(key,true);
+ },true);
+ window.addEventListener('keyup',event=>keys.delete(keyName(event)),true);
+ window.addEventListener('blur',clearMovement);
+ for(const el of controls.querySelectorAll('[data-direction]')){
+  el.addEventListener('pointerdown',event=>{
+   if(!available()||wakeAge!==null)return;
+   event.preventDefault();el.setPointerCapture(event.pointerId);
+   touches.set(event.pointerId,el.dataset.direction);
+   const [dx,dy,facing]=movement.directions[el.dataset.direction];
+   pose.facing=facing;movement.move(pose,dx,dy,.025);paintAvatar(true);
+  });
+  for(const type of ['pointerup','pointercancel','lostpointercapture'])
+   el.addEventListener(type,event=>touches.delete(event.pointerId));
+  el.addEventListener('click',event=>{
+   if(event.detail!==0||!available()||wakeAge!==null)return;
+   const [dx,dy,facing]=movement.directions[el.dataset.direction];
+   pose.facing=facing;movement.move(pose,dx,dy,.05);paintAvatar();
+  });
+ }
+ use.onclick=()=>{if(available()&&nearest)activate(nearest);};
+ skip.onclick=()=>{finishWake();room.querySelector('h1').focus();};
+
  function message(text){
   const p=document.createElement('p');
   p.textContent=text;
@@ -190,22 +288,27 @@
   frame=requestAnimationFrame(draw);
  }
  function look(outside){
-  cancelAnimationFrame(frame);
-  bedroom.hidden=outside;view.hidden=!outside;
+  cancelAnimationFrame(frame);cancelAnimationFrame(walkFrame);clearMovement();
+  controls.hidden=outside;bedroom.hidden=outside;view.hidden=!outside;
   if(outside){
    windowStart=performance.now();draw(windowStart);
    message('창유리 너머로 관람차가 돌고, 희미한 음악이 밤공기를 타고 옵니다.');
    view.querySelector('button').focus();
   }else{
    message('따뜻한 이불과 오래된 나무 책상에 달빛이 내려앉습니다.');
-   bedroom.querySelector('.room-window').focus();
+   startWalking();bedroom.querySelector('.room-window').focus();
   }
  }
- room.addEventListener('click',event=>{
-  const action=event.target.closest('[data-room]')?.dataset.room;
-  if(!action||!options)return;
+ function activate(action){
+  if(!options)return;
+  if(action==='back'){look(false);return;}
+  if(!available()||wakeAge!==null)return;
+  if(!movement.nearby(pose,action)){
+   message('물건 가까이로 이동한 뒤 E를 누르세요.');return;
+  }
+  clearMovement();
   if(action==='leave'){options.leave();return;}
-  if(action==='window'||action==='back'){look(action==='window');return;}
+  if(action==='window'){look(true);return;}
   if(action==='book'){
    message('책 사이에 이 밤의 엔딩들이 기록되어 있습니다.');
    const list=document.createElement('ol');
@@ -213,26 +316,37 @@
    copy.append(list);
   }else if(action==='photo'){
    message('불 켜진 관람차 앞에서 누군가 손을 흔들고 있습니다.');
-   button('앨범 열기',()=>window.NEVERLAND_TOOLS?.album());
+   window.NEVERLAND_TOOLS?.album();
   }else if(action==='record'){
    message('바늘이 천천히 홈을 따라갑니다. 레코드에서 잔잔한 음악이 흐릅니다.');
-   button(window.NEVERLAND_BGM?.state.muted?'음악 켜기':'음악 끄기',()=>{document.getElementById('sound').click();room.querySelector('[data-room="record"]').click();copy.querySelector('button').focus();});
+   button(window.NEVERLAND_BGM?.state.muted?'음악 켜기':'음악 끄기',()=>{document.getElementById('sound').click();activate('record');copy.querySelector('button').focus();});
   }else{
    const letter='밤에 눈을 뜨면 정문으로 나오세요. 캡틴 훅 옆에서 기다릴게요. — 키퍼';
    message(letter);
    window.NEVERLAND_DIALOGUE?.record('창가의 편지',letter);
-   button('대사 로그 열기',()=>window.NEVERLAND_DIALOGUE?.openLog());
+   window.NEVERLAND_DIALOGUE?.openLog();
   }
+ }
+ room.addEventListener('click',event=>{
+  const action=event.target.closest('[data-room]')?.dataset.room;
+  if(action)activate(action);
  });
  window.NEVERLAND_ROOM={
   get active(){return !!options;},
   get cue(){return view.hidden?'bedroom':'window';},
-  get checkpoint(){return options?{first:options.first,windowView:!view.hidden}:null;},
+  get waking(){return wakeAge!==null;},
+  get checkpoint(){return options?{first:options.first,windowView:!view.hidden,pose:{...pose}}:null;},
   open(next){
-   options=next;room.hidden=false;bedroom.hidden=false;view.hidden=true;
+   options=next;room.hidden=false;bedroom.hidden=false;view.hidden=true;controls.hidden=false;
+   const saved=next.roomSave?.pose;
+   pose={...(movement.valid(saved)?saved:next.first?movement.bedside:movement.entrance)};
+   wakeAge=next.first&&!next.roomSave&&!reduced()?0:null;
+   skip.hidden=wakeAge===null;
+   avatar.dataset.gender=next.gender;
+   sprite.src=next.gender==='male'?'assets/bedroom-player-male.png':'assets/bedroom-player-female.png';
    message(next.first?'달빛이 비치는 침대에서 눈을 떴습니다. 창밖에서 희미한 음악이 들려옵니다.':'따뜻한 이불과 오래된 나무 책상에 달빛이 내려앉습니다.');
-   if(next.windowView)look(true);else room.querySelector('h1').focus();
+   if(next.windowView)look(true);else{startWalking();room.querySelector('h1').focus();}
   },
-  close(){cancelAnimationFrame(frame);room.hidden=true;options=null;}
+  close(){cancelAnimationFrame(frame);cancelAnimationFrame(walkFrame);clearMovement();room.hidden=true;options=null;wakeAge=null;}
  };
 })();

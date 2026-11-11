@@ -10,7 +10,7 @@ Element.prototype.after=function(button){elements.set(button.id,button);};
 document.documentElement=new Element();
 const appendToBody=document.body.append.bind(document.body);
 document.body.append=(...nodes)=>{for(const node of nodes)if(node.id)elements.set(node.id,node);appendToBody(...nodes);};
-for(const file of ['keeper-story.js','lost-boys.js','dialogue-controls.js','manual-save.js']){
+for(const file of ['keeper-story.js','lost-boys.js','dialogue-controls.js','castle-movement.js','manual-save.js']){
  vm.runInContext(fs.readFileSync(path.join(root,file),'utf8'),sandbox,{filename:file});
 }
 run(\`
@@ -23,7 +23,7 @@ let roomCheckpoint=null;
 window.NEVERLAND_ROOM={
  get active(){return !!roomCheckpoint;},
  get checkpoint(){return roomCheckpoint;},
- open({first,windowView}){roomCheckpoint={first,windowView};},
+ open({first,windowView,roomSave}){roomCheckpoint={first,windowView,pose:roomSave?.pose};},
  close(){roomCheckpoint=null;}
 };
 newGame();
@@ -35,7 +35,11 @@ roomCheckpoint.windowView=true;
 $('manual-save-menu').onclick();button(1).onclick();
 test(JSON.parse(localStorage.getItem(key+1)).room.windowView,'first bedroom window checkpoint saves');
 newGame();$('manual-save-load').onclick();button(1).onclick();
-test(roomCheckpoint.first&&roomCheckpoint.windowView&&s.phase==='profile','first bedroom window checkpoint restores');
+test(roomCheckpoint.first&&roomCheckpoint.windowView&&s.phase==='profile','legacy first bedroom window checkpoint restores');
+roomCheckpoint.pose={x:.52,y:.82,facing:'left'};
+$('manual-save-menu').onclick();button(1).onclick();slots.children[0].children[3].onclick();
+newGame();$('manual-save-load').onclick();button(1).onclick();
+test(roomCheckpoint.pose.x===.52&&roomCheckpoint.pose.y===.82&&roomCheckpoint.pose.facing==='left','bedroom position and direction restore');
 leaveCastle3d(true);
 test(world3d.state.player.z===-16&&intro3d,'restored first room leaves to original intro');
 free3d=true;intro3d=false;s.keeperIntroduced=true;s.cleared.add(1);s.clues.add(1);s.K=4;s.ride=1;

@@ -61,10 +61,10 @@ function leaveCastle3d(first){
  explore3d(first?'성 정문에 나왔습니다. 정면의 캡틴 훅 쪽으로 걸어가세요.':'달빛 성 정문');
  $('walking-map').focus?.();
 }
-function openCastle3d(first=false,windowView=false){
+function openCastle3d(first=false,windowView=false,roomSave=null){
  world3d.configure({paused:true});
  window.NEVERLAND_ROOM.open({
-  first,windowView,
+  first,windowView,roomSave,gender:s.gender,
   getRecords:()=>[1,2,3,4,5].map(i=>endings.includes(i)?'✦ '+endingData[i][0]:'◇ 아직 쓰이지 않은 이야기'),
   leave:()=>leaveCastle3d(first)
  });

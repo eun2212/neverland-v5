@@ -39,6 +39,6 @@
   if(mode!=='manual'&&!continuation)stop();refresh();if(mode==='manual'||!continuation)return;if(blocked()){deadline=Date.now()+delay();return;}
   if(Date.now()>=deadline){const advance=continuation;continuation=null;advance();}
  },100);
- window.NEVERLAND_DIALOGUE={restore(entries){history.splice(0,history.length,...entries);refresh();},record(who,text){history.push({who,text});},get history(){return history.map(entry=>({...entry}));},get mode(){return mode;},openLog,closeLog,stop};
+ window.NEVERLAND_DIALOGUE={restore(entries){history.splice(0,history.length,...entries);refresh();},record(who,text){history.push({who,text});},get history(){return history.map(entry=>({...entry}));},get mode(){return mode;},get open(){return logOpen;},openLog,closeLog,stop};
  refresh();
 })();
