@@ -57,7 +57,7 @@ function shopSign(label,width,height,accent){
 }
 for(const shop of L.shops){
  const sign=Math.sign(shop.x);
- pathStrip([[sign*28,-13],[sign*44,-17],[sign*55,-16],shop.door],5.2);
+ pathStrip([[sign*13,-53.5],[sign*21,-57],shop.door],4);
  const {x,z}=shop,drinks=shop.id==='drinks',accent=drinks?'greenLight':'redLight';
  cube(x,0,z,5.8,.15,4.1,'stone');
  for(const dx of [-2.65,2.65])for(const dz of [-1.75,1.75]){
@@ -68,7 +68,7 @@ for(const shop of L.shops){
  cube(x,1.15,z+.45,4.95,.13,1.55,'cream');
  const signColor=drinks?'#9ee7d5':'#ffadd8';
  shopSign(shop.name,5.45,1.09,signColor).position.set(x,3.86,z+2.28);
- for(const [wayX,wayZ] of [[sign*27,-9.6],[sign*44,-13.8]]){
+ for(const [wayX,wayZ] of [[sign*15,-50.8],[sign*22,-55.4]]){
   const direction=sign<0?'← 음료 코너':'솜사탕 가게 →';
   cube(wayX,0,wayZ,.18,2.7,.18,'green');
   shopSign(direction,4.1,.82,signColor).position.set(wayX,2.64,wayZ+.12);

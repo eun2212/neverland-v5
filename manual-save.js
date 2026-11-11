@@ -40,7 +40,7 @@
  function capture(){
   const world=world3d.state;
   return {
-   version,time:Date.now(),parkRevision:4,
+   version,time:Date.now(),parkRevision:5,
    story:encode({
     dollMemories:{},dollKeeperAsked:false,
     cheshire:{met:false,separated:false,incident:false,choice:'',evidence:[]},
@@ -63,7 +63,19 @@
     return {x,z:z-3.7,yaw:Math.PI,pitch:0,eye:1.65};
    }
   }
+  if((save.parkRevision??1)<5&&progress.free){
+   for(const shop of window.NEVERLAND_LAYOUT.shops){
+    const oldDoor=[Math.sign(shop.x)*63,-20.4];
+    if(save.room?.shop===shop.id||Math.hypot(player.x-oldDoor[0],player.z-oldDoor[1])<2.7){
+     return {...player,x:shop.door[0],z:shop.door[1]+1};
+    }
+   }
+  }
   if(world3d.canRestorePark(player.x,player.z,config))return player;
+  if((save.parkRevision??1)<5&&progress.free){
+   const shop=window.NEVERLAND_LAYOUT.shops.find(shop=>Math.abs(player.x-shop.x)<3&&Math.abs(player.z-shop.z)<2.2);
+   if(shop)return {...player,x:shop.door[0],z:shop.door[1]+1};
+  }
   const coaster=window.NEVERLAND_LAYOUT.coaster;
   const [left,right,back,front]=coaster.bounds;
   if((save.parkRevision??1)<4&&progress.free&&player.x>left-.2&&player.x<right+.2&&player.z>back-.2&&player.z<front+.2)
