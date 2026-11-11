@@ -45,6 +45,16 @@ const grassmat=new T.MeshStandardMaterial({color:'#112e2a',roughness:.9});const 
 const outerGround=mesh(new T.PlaneGeometry(230,220),new T.MeshStandardMaterial({color:'#060b16',roughness:1}));outerGround.rotation.x=-Math.PI/2;outerGround.position.set(0,-.45,-25);
 function pathStrip(points,width=4){const c=new T.CatmullRomCurve3(points.map(([x,z])=>new T.Vector3(x,.015,z))),pos=[],uv=[];for(let i=0;i<50;i++){const a=c.getPoint(i/50),b=c.getPoint((i+1)/50),dir=new T.Vector3().subVectors(b,a).normalize(),side=new T.Vector3(-dir.z,0,dir.x).multiplyScalar(width/2);const v=[a.clone().add(side),a.clone().sub(side),b.clone().add(side),a.clone().sub(side),b.clone().sub(side),b.clone().add(side)];for(const p of v){pos.push(...p.toArray());uv.push(p.x/10,p.z/10);}}const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(pos,3));g.setAttribute('uv',new T.Float32BufferAttribute(uv,2));g.computeVertexNormals();const o=mesh(g,groundmat);o.material.side=T.DoubleSide;}
 for(const side of [-1,1])pathStrip([[0,57],[0,43],[side*9,34],[side*9,18],[0,14],[0,2],[0,-8]],5);
+function shopSign(label,width,height,accent){
+ const canvas=document.createElement('canvas');canvas.width=640;canvas.height=128;
+ const ink=canvas.getContext('2d');
+ ink.fillStyle='#201328';ink.fillRect(0,0,640,128);
+ ink.strokeStyle=accent;ink.lineWidth=10;ink.strokeRect(8,8,624,112);
+ ink.fillStyle='#fff0c7';ink.textAlign='center';ink.font='bold 63px sans-serif';
+ ink.fillText(label,320,88,600);
+ const map=new T.CanvasTexture(canvas);map.colorSpace=T.SRGBColorSpace;
+ return mesh(new T.PlaneGeometry(width,height),new T.MeshBasicMaterial({map,toneMapped:false,side:T.DoubleSide}));
+}
 for(const shop of L.shops){
  const sign=Math.sign(shop.x);
  pathStrip([[sign*28,-13],[sign*44,-17],[sign*55,-16],shop.door],5.2);
@@ -56,10 +66,13 @@ for(const shop of L.shops){
  for(let stripe=-3;stripe<=3;stripe++)cube(x+stripe*.84,3.25,z,.85,.25,4.5,stripe%2?'cream':accent);
  cube(x,.15,z+.45,4.8,1,1.4,accent);
  cube(x,1.15,z+.45,4.95,.13,1.55,'cream');
- const signCanvas=document.createElement('canvas');signCanvas.width=512;signCanvas.height=96;
- const ink=signCanvas.getContext('2d');ink.fillStyle='#221637';ink.fillRect(0,0,512,96);ink.fillStyle='#ffe1ad';ink.textAlign='center';ink.font='bold 52px sans-serif';ink.fillText(shop.name,256,65);
- const signTexture=new T.CanvasTexture(signCanvas);signTexture.colorSpace=T.SRGBColorSpace;
- mesh(new T.PlaneGeometry(4.5,.84),new T.MeshBasicMaterial({map:signTexture})).position.set(x,3.26,z+2.28);
+ const signColor=drinks?'#9ee7d5':'#ffadd8';
+ shopSign(shop.name,5.45,1.09,signColor).position.set(x,3.86,z+2.28);
+ for(const [wayX,wayZ] of [[sign*27,-9.6],[sign*44,-13.8]]){
+  const direction=sign<0?'← 음료 코너':'솜사탕 가게 →';
+  cube(wayX,0,wayZ,.18,2.7,.18,'green');
+  shopSign(direction,4.1,.82,signColor).position.set(wayX,2.64,wayZ+.12);
+ }
  for(const offset of [-1.5,0,1.5]){
   const prop=x+offset;
   if(drinks){

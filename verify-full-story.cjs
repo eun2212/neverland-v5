@@ -147,6 +147,7 @@ test(run('world3d.state.config.paused'),'map pauses walking');
 run("$('backMap').onclick()");test(!run('world3d.state.config.paused'),'map close resumes walking');
 // A flood fill proves each control, clue, keeper and possible exit can be reached from outside the relocated entrance.
 run('startMain();world3d.configure({free:true,paused:false});');
+run(" $('walking-map').onclick();test($('overlay').innerHTML.includes('네버랜드의 지도')&&$('overlay').innerHTML.includes('별빛 음료 코너')&&$('overlay').innerHTML.includes('id=\"map-player\"'),'walking map button opens rendered map');$('backMap').onclick();test(!$('overlay').children.length&&!world3d.state.config.paused,'closing map resumes walking');");
 const walkable=sandbox.worldQA.valid,frontier=[[0,layout.entry[1]+4]],seen=new Set([frontier[0].join(',')]);
 for(let cursor=0;cursor<frontier.length;cursor++){
  const [x,z]=frontier[cursor];for(const [dx,dz]of [[.5,0],[-.5,0],[0,.5],[0,-.5]]){
