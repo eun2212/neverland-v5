@@ -41,7 +41,7 @@
  function capture(){
   const world=world3d.state;
   return {
-   version,time:Date.now(),parkRevision:6,
+   version,time:Date.now(),parkRevision:7,
    story:encode({
     dollMemories:{},dollKeeperAsked:false,
     ...s
@@ -63,19 +63,20 @@
     return {x,z:z-3.7,yaw:Math.PI,pitch:0,eye:1.65};
    }
   }
-  if((save.parkRevision??1)<6&&progress.free){
+  if((save.parkRevision??1)<7&&progress.free){
    for(const shop of window.NEVERLAND_LAYOUT.shops){
-    const oldDoor=(save.parkRevision??1)<5?[Math.sign(shop.x)*63,-20.4]:[Math.sign(shop.x)*26,-61.4];
+    const revision=save.parkRevision??1;
+    const oldDoor=revision<5?[Math.sign(shop.x)*63,-20.4]:[Math.sign(shop.x)*(revision===5?26:20),-61.4];
     if(save.room?.shop===shop.id||Math.hypot(player.x-oldDoor[0],player.z-oldDoor[1])<2.7){
-     return {...player,x:shop.door[0],z:shop.door[1]+1};
+     return {...player,...window.NEVERLAND_LAYOUT.boothExit(shop)};
     }
    }
   }
   if(world3d.canRestorePark(player.x,player.z,config))return player;
-  if((save.parkRevision??1)<6&&progress.free){
+  if((save.parkRevision??1)<7&&progress.free){
    const layout=window.NEVERLAND_LAYOUT;
-   const shop=[...layout.shops,...layout.games].find(shop=>Math.abs(player.x-shop.x)<3&&Math.abs(player.z-shop.z)<2.2);
-   if(shop)return {...player,x:shop.door[0],z:shop.door[1]+1};
+   const shop=[...layout.shops,...layout.games].find(shop=>Math.abs(player.x-shop.x)<2.2&&Math.abs(player.z-shop.z)<3);
+   if(shop)return {...player,...layout.boothExit(shop)};
   }
   const coaster=window.NEVERLAND_LAYOUT.coaster;
   const [left,right,back,front]=coaster.bounds;
@@ -101,7 +102,7 @@
      !ride(progress.zone)||!hasFields(progress,['free','intro','firstLever','fractureUnlocked'],v=>typeof v==='boolean')||
      (progress.target!==null&&(!arrayOf(progress.target,Number.isFinite)||progress.target.length!==2)))return false;
   if(room!==null&&(!object(room)||!hasFields(room,['first','windowView'],v=>typeof v==='boolean')))return false;
-  if(room?.shop!==undefined&&(!window.NEVERLAND_LAYOUT.shops.some(shop=>shop.id===room.shop)||room.first||room.windowView))return false;
+  if(room?.shop!==undefined&&(![...window.NEVERLAND_LAYOUT.shops,...window.NEVERLAND_LAYOUT.games].some(shop=>shop.id===room.shop)||room.first||room.windowView))return false;
   if(room?.pose!==undefined&&!window.NEVERLAND_BEDROOM_MOVEMENT?.valid(room.pose,room.shop))return false;
   if(story.phase!==(room?.first?'profile':'main')||
      (room?.first&&(progress.free||progress.intro||progress.firstLever||story.exit)))return false;
@@ -123,7 +124,7 @@
   if((save.parkRevision??1)<3&&(progress.intro||progress.firstLever)){
    target3d=controls3d[0];sync3d();
   }
-  if(room?.shop)openShop3d(window.NEVERLAND_LAYOUT.shops.find(shop=>shop.id===room.shop),room);
+  if(room?.shop){const {shops,games}=window.NEVERLAND_LAYOUT;openShop3d([...shops,...games].find(shop=>shop.id===room.shop),room);}
   else if(room)openCastle3d(room.first,room.windowView,room);
   window.NEVERLAND_DIALOGUE.restore(log.filter(entry=>entry.who!=='체셔'));
   world3d.audio();

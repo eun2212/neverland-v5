@@ -51,7 +51,7 @@
  let pose={...movement.entrance},walkFrame=0,lastWalk=0,exit=null,walkAge=0,nearest=null,lookLeft=false;
  const reduced=()=>media.matches||window.NEVERLAND_TOOLS?.settings.reduced;
  const available=()=>options&&!bedroom.hidden&&!window.NEVERLAND_SAVES?.open&&
-  !window.NEVERLAND_TOOLS?.open&&!window.NEVERLAND_DIALOGUE?.open;
+  !window.NEVERLAND_TOOLS?.open&&!window.NEVERLAND_DIALOGUE?.open&&!window.NEVERLAND_BOOTH_GAMES?.active;
  function clearMovement(){keys.clear();touches.clear();}
  function paintAvatar(moving=false){
   avatar.style.left=pose.x*100+'%';
@@ -323,6 +323,11 @@
    paintAvatar();return;
   }
   if(action==='window'){look(true);return;}
+  if(options.shop?.symbol){
+   const booth=options.shop;
+   window.NEVERLAND_BOOTH_GAMES.open(booth.id,()=>use.focus());
+   return;
+  }
   if(options.shop){
    const drinks=options.shop.id==='drinks';
    message(drinks?'별빛 소다 위로 레몬빛 거품이 톡톡 올라옵니다.':'솜사탕 기계에서 분홍색 설탕 실이 구름처럼 피어납니다.');
@@ -363,7 +368,7 @@
    room.querySelector('h1').textContent=next.shop?.name||'달빛 성의 침실';
    for(const [action,el] of hotspots)el.hidden=!!next.shop&&action!=='leave'&&action!=='record';
    hotspots.get('leave').setAttribute('aria-label',next.shop?'공원으로 나가기':'성 정문으로 나가기');
-   hotspots.get('record').setAttribute('aria-label',next.shop?(next.shop.id==='drinks'?'별빛 소다 살펴보기':'솜사탕 기계 살펴보기'):'음악');
+   hotspots.get('record').setAttribute('aria-label',next.shop?.symbol?next.shop.name+' 시작':next.shop?(next.shop.id==='drinks'?'별빛 소다 살펴보기':'솜사탕 기계 살펴보기'):'음악');
    nearest=null;
    exit=null;walkAge=0;avatar.style.opacity='';bedroom.classList.remove('door-open');
    lookLeft=pose.facing==='left';

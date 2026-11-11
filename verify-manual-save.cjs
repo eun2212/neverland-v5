@@ -91,7 +91,7 @@ const oldShop=JSON.parse(localStorage.getItem(key+3));
 oldShop.parkRevision=4;oldShop.player.x=63;oldShop.player.z=-20.4;
 localStorage.setItem(key+3,JSON.stringify(oldShop));
 newGame();$('manual-save-load').onclick();button(3).onclick();
-test(roomCheckpoint.shop==='candy'&&roomCheckpoint.pose.x===.81&&world3d.state.player.x===shop.door[0]&&world3d.state.player.z===shop.door[1]+1,'old shop checkpoint keeps indoor pose and relocates exterior return');
+test(roomCheckpoint.shop==='candy'&&roomCheckpoint.pose.x===.81&&world3d.state.player.x===window.NEVERLAND_LAYOUT.boothExit(shop).x&&world3d.state.player.z===shop.door[1],'old shop checkpoint keeps indoor pose and relocates exterior return');
 const old=JSON.parse(localStorage.getItem(key+2));
 old.parkRevision=2;old.player.x=0;old.player.z=24;
 old.story.cheshire={met:true,evidence:['legacy']};

@@ -45,7 +45,7 @@ const grassmat=new T.MeshStandardMaterial({color:'#112e2a',roughness:.9});const 
 const outerGround=mesh(new T.PlaneGeometry(230,220),new T.MeshStandardMaterial({color:'#060b16',roughness:1}));outerGround.rotation.x=-Math.PI/2;outerGround.position.set(0,-.45,-25);
 function pathStrip(points,width=4){const c=new T.CatmullRomCurve3(points.map(([x,z])=>new T.Vector3(x,.015,z))),pos=[],uv=[];for(let i=0;i<50;i++){const a=c.getPoint(i/50),b=c.getPoint((i+1)/50),dir=new T.Vector3().subVectors(b,a).normalize(),side=new T.Vector3(-dir.z,0,dir.x).multiplyScalar(width/2);const v=[a.clone().add(side),a.clone().sub(side),b.clone().add(side),a.clone().sub(side),b.clone().sub(side),b.clone().add(side)];for(const p of v){pos.push(...p.toArray());uv.push(p.x/10,p.z/10);}}const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(pos,3));g.setAttribute('uv',new T.Float32BufferAttribute(uv,2));g.computeVertexNormals();const o=mesh(g,groundmat);o.material.side=T.DoubleSide;}
 for(const side of [-1,1])pathStrip([[0,57],[0,43],[side*9,34],[side*9,18],[0,14],[0,2],[0,-8]],5);
-function shopSign(label,width,height,accent){
+function shopSign(label,width,height,accent,parent){
  const canvas=document.createElement('canvas');canvas.width=640;canvas.height=128;
  const ink=canvas.getContext('2d');
  ink.fillStyle='#201328';ink.fillRect(0,0,640,128);
@@ -53,47 +53,51 @@ function shopSign(label,width,height,accent){
  ink.fillStyle='#fff0c7';ink.textAlign='center';ink.font='bold 63px sans-serif';
  ink.fillText(label,320,88,600);
  const map=new T.CanvasTexture(canvas);map.colorSpace=T.SRGBColorSpace;
- return mesh(new T.PlaneGeometry(width,height),new T.MeshBasicMaterial({map,toneMapped:false,side:T.DoubleSide}));
+ return mesh(new T.PlaneGeometry(width,height),new T.MeshBasicMaterial({map,toneMapped:false,side:T.DoubleSide}),parent);
+}
+for(const side of [-1,1]){
+ pathStrip([[side*13,-51],[side*15,-57],[side*15,-67]],3.2);
 }
 for(const shop of [...L.shops,...L.games]){
- const sign=Math.sign(shop.x);
- const game=!!shop.symbol;
- if(game)pathStrip([[sign*23,-49.4],[sign*26,shop.door[1]],shop.door],3);
- else pathStrip([[sign*13,-53.5],[sign*19,-57],shop.door],4);
- const {x,z}=shop,drinks=shop.id==='drinks',accent=drinks||shop.id==='pairs'||shop.id==='timing'?'greenLight':'redLight';
- cube(x,0,z,5.8,.15,4.1,'stone');
- for(const dx of [-2.65,2.65])for(const dz of [-1.75,1.75]){
-  cube(x+dx,.15,z+dz,.28,3.1,.28,'green');
+ const [doorX,doorZ]=shop.door;
+ pathStrip([[Math.sign(doorX)*15,doorZ],[doorX,doorZ]],2.5);
+ const booth=new T.Group();
+ booth.name='midway-booth-'+shop.id;
+ booth.position.set(shop.x,0,shop.z);
+ booth.rotation.y=shop.inward*Math.PI/2;
+ stat.add(booth);
+ const game=!!shop.symbol,drinks=shop.id==='drinks';
+ const accent=drinks||shop.id==='pairs'||shop.id==='timing'?'greenLight':'redLight';
+ cube(0,0,0,5.8,.15,4.1,'stone',booth);
+ for(const x of [-2.65,2.65])for(const z of [-1.75,1.75]){
+  cube(x,.15,z,.28,3.1,.28,'green',booth);
  }
- for(let stripe=-3;stripe<=3;stripe++)cube(x+stripe*.84,3.25,z,.85,.25,4.5,stripe%2?'cream':accent);
- cube(x,.15,z+.45,4.8,1,1.4,accent);
- cube(x,1.15,z+.45,4.95,.13,1.55,'cream');
+ for(let stripe=-3;stripe<=3;stripe++)cube(stripe*.84,3.25,0,.85,.25,4.5,stripe%2?'cream':accent,booth);
+ cube(0,.15,.45,4.8,1,1.4,accent,booth);
+ cube(0,1.15,.45,4.95,.13,1.55,'cream',booth);
  const signColor=game?'#f3d391':drinks?'#9ee7d5':'#ffadd8';
- shopSign(shop.name,5.45,1.09,signColor).position.set(x,3.86,z+2.28);
- for(const offset of [-1.5,0,1.5]){
-  const prop=x+offset;
-  if(game){
-   if(shop.id==='rings'){
-    cylinder(prop,1.28,z+.48,.055,.63,'green');
-    torus(prop,1.65,z+.48,.23,.043,'gold',stat,true);
-   }else if(shop.id==='pairs'){
-    cube(prop,1.28,z+.48,.38,.53,.08,offset===0?'cream':'gold');
-   }else if(shop.id==='stars'){
-    sunburst(prop,1.67,z+.5,.23);
-   }else{
-    torus(prop,1.63,z+.48,.26,.045,'gold');
-    ball(prop,1.63,z+.49,.09,'bulb');
-   }
+ shopSign(shop.name,5.45,1.09,signColor,booth).position.set(0,3.86,2.28);
+ for(const x of [-1.5,0,1.5]){
+  if(shop.id==='rings'){
+   cylinder(x,1.28,.48,.055,.63,'green',booth);
+   torus(x,1.65,.48,.23,.043,'gold',booth,true);
+  }else if(shop.id==='pairs'){
+   cube(x,1.28,.48,.38,.53,.08,x===0?'cream':'gold',booth);
+  }else if(shop.id==='stars'){
+   sunburst(x,1.67,.5,.23,booth);
+  }else if(shop.id==='timing'){
+   torus(x,1.63,.48,.26,.045,'gold',booth);
+   ball(x,1.63,.49,.09,'bulb',booth);
   }else if(drinks){
-   cylinder(prop,1.28,z+.48,.18,.48,'glass',stat,.24,12);
-   cylinder(prop,1.76,z+.48,.24,.05,'cream');
-   beam([prop,1.77,z+.48],[prop+.1,2.07,z+.48],.025,'redLight');
+   cylinder(x,1.28,.48,.18,.48,'glass',booth,.24,12);
+   cylinder(x,1.76,.48,.24,.05,'cream',booth);
+   beam([x,1.77,.48],[x+.1,2.07,.48],.025,'redLight',booth);
   }else{
-   beam([prop,1.28,z+.48],[prop,1.86,z+.48],.032,'wood');
-   for(const [dx,dy,r] of [[0,.55,.27],[-.16,.5,.2],[.13,.61,.2]])ball(prop+dx,1.28+dy,z+.48,r,'redLight');
+   beam([x,1.28,.48],[x,1.86,.48],.032,'wood',booth);
+   for(const [dx,dy,r] of [[0,.55,.27],[-.16,.5,.2],[.13,.61,.2]])ball(x+dx,1.28+dy,.48,r,'redLight',booth);
   }
  }
- for(const offset of [-2,2])bulb(x+offset,2.97,z+1.85,.1);
+ for(const x of [-2,2])bulb(x,2.97,1.85,.1,booth);
 }
 pathStrip([[-23,-53],[-20,-60],L.coaster.door],4.5);
 pathStrip([[0,-54],[-3,-61],L.coaster.door],4.5);

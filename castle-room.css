@@ -68,5 +68,9 @@
 #castle-room[data-shop] .castle-bedroom{background-color:#251940}
 #castle-room[data-shop="drinks"] .castle-bedroom{background-image:url("assets/shop-drinks.png")}
 #castle-room[data-shop="candy"] .castle-bedroom{background-image:url("assets/shop-candy.png")}
-#castle-room:is([data-shop="drinks"],[data-shop="candy"]) .room-record{left:81%;top:57%;width:23%;height:29%}
-#castle-room:is([data-shop="drinks"],[data-shop="candy"]) .room-starlight{display:none}
+#castle-room:is([data-shop]:not([data-shop=""])) .room-record{left:81%;top:57%;width:23%;height:29%}
+#castle-room:is([data-shop]:not([data-shop=""])) .room-starlight{display:none}
+#castle-room[data-shop="rings"] .castle-bedroom{background-image:url("assets/shop-rings.png")}
+#castle-room[data-shop="stars"] .castle-bedroom{background-image:url("assets/shop-stars.png")}
+#castle-room[data-shop="pairs"] .castle-bedroom{background-image:url("assets/shop-pairs.png")}
+#castle-room[data-shop="timing"] .castle-bedroom{background-image:url("assets/shop-timing.png")}

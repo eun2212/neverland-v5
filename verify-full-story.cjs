@@ -171,6 +171,13 @@ const positions={controls:sandbox.NEVERLAND_LAYOUT.rides.map(r=>r.control),clues
 positions.shops=layout.shops.map(shop=>shop.door);
 positions.coaster=[layout.coaster.door];
 positions.games=layout.games.map(game=>game.door);
+for(const side of [-1,1]){
+ const row=[...layout.shops,...layout.games].filter(booth=>Math.sign(booth.x)===side).sort((a,b)=>a.z-b.z);
+ test(row.length===3&&row.every(booth=>booth.inward===-side&&Math.abs(booth.door[0])<Math.abs(booth.x)),'three booth doors face the aisle '+side);
+ test(row.slice(1).every((booth,i)=>Math.abs(booth.z-row[i].z-6.05)<.001),'booth awnings are closely spaced '+side);
+}
+for(let z=-52;z>=-67;z-=.5)for(const x of [-13,-9,0,9,13])
+ test(walkable(x,z),'central corridor remains open at '+x+','+z);
 positions.exits=positions.controls.map(([x,z])=>[x+4,z+2]);
 for(const [kind,points]of Object.entries(positions))for(const [i,p]of points.entries())test(frontier.some(([x,z])=>Math.hypot(x-p[0],z-p[1])<2),'walkable path to '+kind+' '+i);
 run("world3d.configure({paused:true});");const stationary=JSON.stringify(sandbox.worldQA.player);handlers.keydown({key:'w',repeat:false,preventDefault(){}});frames(5);test(JSON.stringify(sandbox.worldQA.player)===stationary,'modal pause prevents movement');
