@@ -1,9 +1,9 @@
 'use strict';
 window.NEVERLAND_CASTLE = function ({T, scene, stat, cube, cylinder, ball, mesh}) {
- const stone = new T.MeshStandardMaterial({color:0xf9dbe0, roughness:.7});
- const pearl = new T.MeshStandardMaterial({color:0xffefd7, roughness:.6});
- const roof = new T.MeshStandardMaterial({color:0xab99e1, roughness:.55, metalness:.18});
- const mint = new T.MeshStandardMaterial({color:0x91d4d0, roughness:.55});
+ const stone = new T.MeshStandardMaterial({color:0xe7b4d7, roughness:.7});
+ const pearl = new T.MeshStandardMaterial({color:0xffe1a7, roughness:.6});
+ const roof = new T.MeshStandardMaterial({color:0x8d75cf, roughness:.55, metalness:.18});
+ const mint = new T.MeshStandardMaterial({color:0xa5cfc9, roughness:.55});
  const light = new T.MeshStandardMaterial({color:0xffd598, emissive:0xffbd7d, emissiveIntensity:.7});
  const door = new T.MeshStandardMaterial({color:0x694968, roughness:.7});
  const z = window.NEVERLAND_LAYOUT.center[1];

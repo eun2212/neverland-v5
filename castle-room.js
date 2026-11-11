@@ -17,7 +17,7 @@
     <button type="button" class="room-photo" data-room="photo" aria-label="앨범"></button>
    </div>
    <div class="castle-window-view" hidden>
-    <canvas width="960" height="450" role="img" aria-label="별빛 아래 움직이는 관람차, 회전목마, 롤러코스터"></canvas>
+    <canvas width="960" height="450" role="img" aria-label="별빛 아래 움직이는 관람차, 회전목마, 롤러코스터, 자이로드롭"></canvas>
     <button type="button" data-room="back">침실로 돌아가기</button>
    </div>
   </div>
@@ -85,6 +85,26 @@
    ctx.restore();
   }
  }
+ function drawDrop(t){
+  const x=402,top=156,base=363;
+  ctx.fillStyle='#4c3b73';ctx.fillRect(x-8,top,16,base-top);
+  ctx.strokeStyle='#bb9bd8';ctx.lineWidth=2;
+  ctx.strokeRect(x-8,top,16,base-top);
+  for(let y=top+8;y<base-12;y+=14){
+   ctx.beginPath();ctx.moveTo(x-8,y);ctx.lineTo(x+8,y+11);ctx.stroke();
+  }
+  ctx.fillStyle='#e7afd8';ctx.fillRect(x-13,top-7,26,8);
+  ctx.fillStyle='#fbe0a8';ctx.fillRect(x-2,top-13,4,5);
+  const cycle=(t+3)%11;
+  const lift=cycle<6?cycle/6:cycle<7.5?1:Math.max(0,1-((cycle-7.5)/1.7)**2);
+  const y=base-26-lift*158;
+  ctx.fillStyle='#a883cb';ctx.fillRect(x-22,y,44,10);
+  ctx.fillStyle='#e8b3da';ctx.fillRect(x-21,y+7,42,4);
+  for(let i=-2;i<=2;i++){
+   ctx.fillStyle='#4b315e';ctx.fillRect(x+i*8-3,y-5,6,12);
+   ctx.fillStyle='#ffdf9d';ctx.fillRect(x+i*8-2,y+7,4,3);
+  }
+ }
  function draw(now){
   const t=media.matches||window.NEVERLAND_TOOLS?.settings.reduced?0:(now-windowStart)/1000;
   const sky=ctx.createLinearGradient(0,0,0,450);
@@ -95,6 +115,15 @@
    ctx.globalAlpha=.55+.34*Math.cos(i+t*.8);
    ctx.fillRect((i*173)%960,(i*79)%235,i%5===0?3:2,2);
   }
+  for(let i=0;i<19;i++){
+   const x=26+i*49,y=24+(i*53)%124,r=i%5===0?9:3+i%3;
+   ctx.globalAlpha=.73+.17*Math.sin(t*.85+i);
+   ctx.fillStyle=['#ffe3ad','#efa7cc','#c4aae9','#b9decd'][i%4];
+   ctx.beginPath();ctx.moveTo(x,y-r);ctx.lineTo(x+r*.24,y-r*.21);
+   ctx.lineTo(x+r*.8,y);ctx.lineTo(x+r*.22,y+r*.2);ctx.lineTo(x,y+r);
+   ctx.lineTo(x-r*.23,y+r*.21);ctx.lineTo(x-r*.81,y);ctx.lineTo(x-r*.22,y-r*.2);
+   ctx.closePath();ctx.fill();
+  }
   ctx.globalAlpha=1;
   function disk(x,y,r,color){
    ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();
@@ -102,7 +131,7 @@
   disk(746,85,34,'#ffdcad');disk(759,73,31,'#1b1738');
   for(let i=0;i<12;i++)disk(i*88,441,125+(i%4)*15,i%2?'#574e72':'#615677');
   ctx.fillStyle='#211c42';ctx.fillRect(0,363,960,87);
-  drawCoaster(t);
+  drawCoaster(t);drawDrop(t);
   // Tents and the low park midway sit behind the moving attractions.
   for(const [x,y,w] of [[55,348,77],[144,359,78],[456,350,72],[527,359,49],[827,350,91],[908,366,53]]){
    ctx.fillStyle='#373064';ctx.fillRect(x-w/2,y,w,38);
@@ -112,10 +141,10 @@
    for(let j=-2;j<=2;j++)disk(x+j*w/6,y+9,2.2,'#f3c899');
   }
   ctx.lineWidth=5;ctx.strokeStyle='#e1b6a9';
-  ctx.beginPath();ctx.moveTo(245,365);ctx.lineTo(312,222);ctx.lineTo(380,365);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(213,365);ctx.lineTo(280,222);ctx.lineTo(348,365);ctx.stroke();
   ctx.beginPath();ctx.arc(312,222,106,0,Math.PI*2);ctx.stroke();
   for(let i=0;i<12;i++){
-   const a=i*Math.PI/6+t*.15,x=312+106*Math.cos(a),y=222+106*Math.sin(a);
+   const a=i*Math.PI/6+t*.15,x=280+106*Math.cos(a),y=222+106*Math.sin(a);
    ctx.beginPath();ctx.moveTo(312,222);ctx.lineTo(x,y);ctx.lineWidth=2;ctx.stroke();
    ctx.fillStyle=i%2?'#eabbbe':'#a4d3c8';ctx.fillRect(x-10,y-5,20,13);
    disk(x,y-6,3,'#ffdf9d');

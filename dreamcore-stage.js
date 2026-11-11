@@ -12,8 +12,8 @@ window.NEVERLAND_DREAM_STAGE=function(h){
  for(let y=0;y<256;y+=2){ink.fillStyle=y%4?'#e4cbb5':'#f2e2d2';ink.fillRect(0,y,256,1);}for(let x=0;x<256;x+=3){ink.fillStyle='#42304a12';ink.fillRect(x,0,1,256);}
  const textile=new T.CanvasTexture(fabric);textile.wrapS=textile.wrapT=T.RepeatWrapping;textile.repeat.set(3,3);textile.colorSpace=T.SRGBColorSpace;
  mats.red.map=textile;mats.green.map=textile;
- mats.velvet=new T.MeshStandardMaterial({color:'#691d37',roughness:.87,side:T.DoubleSide,map:textile});
- mats.nightTrim=new T.MeshStandardMaterial({color:'#152644',metalness:.35,roughness:.4});
+ mats.velvet=new T.MeshStandardMaterial({color:'#653866',roughness:.87,side:T.DoubleSide,map:textile});
+ mats.nightTrim=new T.MeshStandardMaterial({color:'#251c43',metalness:.35,roughness:.4});
  function star(x,y,z,r,m='starLight',p=stage,points=4){
   const s=new T.Shape();for(let i=0;i<points*2;i++){const a=i/points*Math.PI+Math.PI/2,rr=i%2?r*.29:r;if(i===0)s.moveTo(Math.cos(a)*rr,Math.sin(a)*rr);else s.lineTo(Math.cos(a)*rr,Math.sin(a)*rr);}s.closePath();
   const o=mesh(new T.ExtrudeGeometry(s,{depth:.06,bevelEnabled:false}),m,p);o.position.set(x,y,z);o.castShadow=false;return o;
@@ -33,7 +33,30 @@ window.NEVERLAND_DREAM_STAGE=function(h){
  const starPositions=[],starColors=[];for(let i=0;i<(mobile?650:1150);i++){const a=random()*Math.PI*2,e=.08+random()*1.44,r=145;starPositions.push(Math.cos(a)*Math.cos(e)*r,Math.sin(e)*r,Math.sin(a)*Math.cos(e)*r-20);const c=new T.Color(i%9===0?'#b0c6ff':i%7===0?'#ffd49d':'#e9e9ff');starColors.push(c.r,c.g,c.b);}
  const starsGeo=new T.BufferGeometry();starsGeo.setAttribute('position',new T.Float32BufferAttribute(starPositions,3));starsGeo.setAttribute('color',new T.Float32BufferAttribute(starColors,3));
  const stars=new T.Points(starsGeo,new T.PointsMaterial({size:mobile?.32:.25,vertexColors:true,sizeAttenuation:true,toneMapped:false,fog:false}));scene.add(stars);
- for(let i=0;i<24;i++){const a=i/24*Math.PI*2,r=90,y=25+random()*50;const o=star(Math.cos(a)*r,y,Math.sin(a)*r-20,.22+random()*.35,i%5?'starLight':'blueLight',motion);o.lookAt(0,8,-20);}
+ const starPaper=document.createElement('canvas');
+ starPaper.width=starPaper.height=64;
+ const wax=starPaper.getContext('2d');
+ wax.beginPath();
+ for(const [i,[x,y]] of [[32,2],[38,24],[61,31],[39,37],[32,62],[25,39],[3,32],[25,25]].entries()){
+  if(i===0)wax.moveTo(x,y);else wax.lineTo(x,y);
+ }
+ wax.closePath();wax.clip();wax.fillStyle='#fff';wax.fillRect(0,0,64,64);
+ for(let i=0;i<240;i++){
+  const x=random()*64,y=random()*64;
+  wax.strokeStyle=i%3?'#e8d8ee77':'#8c75af88';
+  wax.beginPath();wax.moveTo(x,y);wax.lineTo(x+2+random()*8,y-4);wax.stroke();
+ }
+ const waxTexture=new T.CanvasTexture(starPaper);waxTexture.colorSpace=T.SRGBColorSpace;
+ const crossStars=[];
+ for(let i=0;i<37;i++){
+  const angle=i*2.399963,alt=.16+random()*.94,r=160;
+  const color=['#ffe1a7','#c3a1ee','#eca6ca','#b9e0cf'][i%4];
+  const material=new T.SpriteMaterial({map:waxTexture,color,fog:false,toneMapped:false,depthWrite:false,opacity:.8});
+  const sprite=new T.Sprite(material);
+  sprite.position.set(Math.cos(angle)*Math.cos(alt)*r,Math.sin(alt)*r,Math.sin(angle)*Math.cos(alt)*r-20);
+  const size=i%9===0?4.2:1.1+random()*1.8;
+  sprite.scale.set(size,size*1.13,1);motion.add(sprite);crossStars.push(sprite);
+ }
  // Back-of-stage moon, ribbons, tiered clouds, and gilt proscenium.
  moon(-9,27,-65,5.2);star(1,32,-66,2.1);star(13,26,-65,1.2,'coralLight');
  for(const side of[-1,1]){
@@ -79,5 +102,5 @@ window.NEVERLAND_DREAM_STAGE=function(h){
  const dustGeo=new T.BufferGeometry();dustGeo.setAttribute('position',new T.Float32BufferAttribute(dustPos,3));
  const dust=new T.Points(dustGeo,new T.PointsMaterial({color:'#ffe5a1',size:.045,transparent:true,opacity:.68,depthWrite:false,blending:T.AdditiveBlending}));motion.add(dust);
  batch(stage);
- return{update(t,inside){motion.visible=!inside;stars.visible=true;if(!reduced){shafts.forEach((g,i)=>{g.rotation.z=Math.sin(t*.14+i)*.045;});dust.position.y=Math.sin(t*.2)*.25;}}};
+ return{update(t,inside){motion.visible=!inside;stars.visible=true;const still=reduced||window.NEVERLAND_TOOLS?.settings.reduced;crossStars.forEach((sprite,i)=>{sprite.material.opacity=still?.82:.73+.16*Math.sin(t*.65+i*2.4);});if(!still){shafts.forEach((g,i)=>{g.rotation.z=Math.sin(t*.14+i)*.045;});dust.position.y=Math.sin(t*.2)*.25;}}};
 };
