@@ -39,7 +39,7 @@
  function capture(){
   const world=world3d.state;
   return {
-   version,time:Date.now(),parkRevision:2,
+   version,time:Date.now(),parkRevision:3,
    story:encode({
     dollMemories:{},dollKeeperAsked:false,
     cheshire:{met:false,separated:false,incident:false,choice:'',evidence:[]},
@@ -51,6 +51,18 @@
    room:window.NEVERLAND_ROOM?.checkpoint??null,
    log:window.NEVERLAND_DIALOGUE.history.slice(-500)
   };
+ }
+ function parkedPose(save){
+  const {player,story,progress}=save;
+  const config={free:progress.free,exit:story.exit,exitRide:story.exitRide};
+  if((save.parkRevision??1)<3){
+   const blockedByShip=Math.abs(player.x)<6.25&&Math.abs(player.z-24)<3.2;
+   if(progress.intro||progress.firstLever||blockedByShip){
+    const [x,z]=window.NEVERLAND_LAYOUT.rides[0].control;
+    return {x,z:z-3.7,yaw:Math.PI,pitch:0,eye:1.65};
+   }
+  }
+  return world3d.canRestorePark(player.x,player.z,config)?player:null;
  }
  function validate(save){
   if(!object(save)||save.version!==version||!integer(save.time)||!Number.isFinite(new Date(save.time).getTime()))return false;
@@ -75,10 +87,11 @@
   if(story.phase!==(room?.first?'profile':'main')||
      (room?.first&&(progress.free||progress.intro||progress.firstLever||story.exit)))return false;
   if(!arrayOf(log,e=>object(e)&&typeof e.who==='string'&&typeof e.text==='string')||log.length>500)return false;
-  return world3d.canRestorePark(player.x,player.z,{free:progress.free,exit:story.exit,exitRide:story.exitRide});
+  return !!parkedPose(save);
  }
  function restore(save){
-  const {story,keeper,player,progress,room,log}=save;
+  const {story,keeper,progress,room,log}=save;
+  const player=parkedPose(save);
   newGame();
   queue=[];after=null;puzzle=null;
   Object.assign(s,decode(story,['name','gender','temper','phase','actions','dollMemories','cheshire',...storyNumbers,...storyFlags],storySets));
@@ -88,8 +101,8 @@
   if(room?.first)sync3d();
   else explore3d(intro3d?'성 정문에서 캡틴 훅 쪽으로 걸어가세요.':firstLever3d?'캡틴 훅 입구에서 E로 승선하세요.':undefined);
   world3d.restorePark(player,progress);
-  if(!save.parkRevision&&(progress.intro||progress.firstLever)){
-   world3d.placeAtCaptainStart();target3d=controls3d[0];sync3d();
+  if((save.parkRevision??1)<3&&(progress.intro||progress.firstLever)){
+   target3d=controls3d[0];sync3d();
   }
   if(room?.shop)openShop3d(window.NEVERLAND_LAYOUT.shops.find(shop=>shop.id===room.shop),room);
   else if(room)openCastle3d(room.first,room.windowView,room);

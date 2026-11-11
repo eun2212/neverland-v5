@@ -44,21 +44,34 @@ const plazaTexture=pavement();plazaTexture.repeat.set(1,1);const groundmat=new T
 const grassmat=new T.MeshStandardMaterial({color:'#112e2a',roughness:.9});const ground=mesh(new T.PlaneGeometry(150,158),grassmat);ground.rotation.x=-Math.PI/2;ground.position.set(0,-.025,-17);ground.receiveShadow=true;
 const outerGround=mesh(new T.PlaneGeometry(230,220),new T.MeshStandardMaterial({color:'#060b16',roughness:1}));outerGround.rotation.x=-Math.PI/2;outerGround.position.set(0,-.45,-25);
 function pathStrip(points,width=4){const c=new T.CatmullRomCurve3(points.map(([x,z])=>new T.Vector3(x,.015,z))),pos=[],uv=[];for(let i=0;i<50;i++){const a=c.getPoint(i/50),b=c.getPoint((i+1)/50),dir=new T.Vector3().subVectors(b,a).normalize(),side=new T.Vector3(-dir.z,0,dir.x).multiplyScalar(width/2);const v=[a.clone().add(side),a.clone().sub(side),b.clone().add(side),a.clone().sub(side),b.clone().sub(side),b.clone().add(side)];for(const p of v){pos.push(...p.toArray());uv.push(p.x/10,p.z/10);}}const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(pos,3));g.setAttribute('uv',new T.Float32BufferAttribute(uv,2));g.computeVertexNormals();const o=mesh(g,groundmat);o.material.side=T.DoubleSide;}
-pathStrip([[0,46],[0,36],[9,30],[9,20],[0,17],[0,13],[0,-8]],6);
+pathStrip([[0,57],[0,43],[side*9,34],[side*9,18],[0,14],[0,2],[0,-8]],5);
 for(const shop of L.shops){
  const sign=Math.sign(shop.x);
  pathStrip([[sign*28,-13],[sign*44,-17],[sign*55,-16],shop.door],5.2);
- const {x,z}=shop,accent=shop.id==='drinks'?'greenLight':'redLight';
- cube(x,0,z,13,.24,11,'stone');cube(x,.24,z,12.6,5.2,10.6,accent);
- cube(x,5.44,z,13.5,.5,11.4,'cream');
- cube(x,0,z+5.34,2.75,3.55,.24,'dark');
- for(const offset of [-4.4,4.4]){cube(x+offset,1.4,z+5.37,2.5,2.2,.24,'glass');cube(x+offset,1.3,z+5.55,2.8,.19,.35,'gold');}
- for(let stripe=-5;stripe<=5;stripe++)cube(x+stripe,3.76,z+6.01,1.01,.42,1.55,stripe%2?'cream':accent);
+ const {x,z}=shop,drinks=shop.id==='drinks',accent=drinks?'greenLight':'redLight';
+ cube(x,0,z,5.8,.15,4.1,'stone');
+ for(const dx of [-2.65,2.65])for(const dz of [-1.75,1.75]){
+  cube(x+dx,.15,z+dz,.28,3.1,.28,'green');
+ }
+ for(let stripe=-3;stripe<=3;stripe++)cube(x+stripe*.84,3.25,z,.85,.25,4.5,stripe%2?'cream':accent);
+ cube(x,.15,z+.45,4.8,1,1.4,accent);
+ cube(x,1.15,z+.45,4.95,.13,1.55,'cream');
  const signCanvas=document.createElement('canvas');signCanvas.width=512;signCanvas.height=96;
- const ink=signCanvas.getContext('2d');ink.fillStyle='#221637';ink.fillRect(0,0,512,96);ink.fillStyle='#ffe1ad';ink.textAlign='center';ink.font='bold 44px sans-serif';ink.fillText(shop.name,256,63);
+ const ink=signCanvas.getContext('2d');ink.fillStyle='#221637';ink.fillRect(0,0,512,96);ink.fillStyle='#ffe1ad';ink.textAlign='center';ink.font='bold 52px sans-serif';ink.fillText(shop.name,256,65);
  const signTexture=new T.CanvasTexture(signCanvas);signTexture.colorSpace=T.SRGBColorSpace;
- mesh(new T.PlaneGeometry(6.9,1.29),new T.MeshBasicMaterial({map:signTexture})).position.set(x,4.78,z+5.34);
- for(const offset of [-2,2])bulb(x+offset,3.45,z+5.65,.13);
+ mesh(new T.PlaneGeometry(4.5,.84),new T.MeshBasicMaterial({map:signTexture})).position.set(x,3.26,z+2.28);
+ for(const offset of [-1.5,0,1.5]){
+  const prop=x+offset;
+  if(drinks){
+   cylinder(prop,1.28,z+.48,.18,.48,'glass',stat,.24,12);
+   cylinder(prop,1.76,z+.48,.24,.05,'cream');
+   beam([prop,1.77,z+.48],[prop+.1,2.07,z+.48],.025,'redLight');
+  }else{
+   beam([prop,1.28,z+.48],[prop,1.86,z+.48],.032,'wood');
+   for(const [dx,dy,r] of [[0,.55,.27],[-.16,.5,.2],[.13,.61,.2]])ball(prop+dx,1.28+dy,z+.48,r,'redLight');
+  }
+ }
+ for(const offset of [-2,2])bulb(x+offset,2.97,z+1.85,.1);
 }
 const loop=mesh(new T.RingGeometry(14.4,19,100),groundmat);loop.rotation.x=-Math.PI/2;loop.position.set(0,.02,-24);
 for(const pts of [[[-12,-36],[-18,-36],[-23,-36]],[[12,-36],[18,-36],[23,-36]],[[-16,-14],[-18,-9],[-22,2]],[[16,-14],[18,-9],[22,2]],[[0,6],[-10,5],[-23,3]],[[0,6],[10,5],[23,3]],[[-23,-35],[-32,-29],[-32,-10],[-23,3]],[[23,-35],[32,-29],[32,-10],[23,3]],[[-23,-44],[-26,-53],[0,-54],[26,-53],[23,-44]]])pathStrip(pts,4.5);
@@ -71,16 +84,15 @@ for(const a of[.7,2.4,4.1]){const x=Math.cos(a)*13.7,z=-24+Math.sin(a)*13.7;for(
 const island=cylinder(0,0,-24,10,.28,'stone');torus(0,.3,-24,9.85,.1,'gold',stat,true);
 for(let i=0;i<58;i++){const a=i/58*6.283;if(Math.abs(Math.sin(a))<.18||Math.abs(Math.cos(a))<.18)continue;const r=14.1;const o=ball(Math.cos(a)*r,-.05,-24+Math.sin(a)*r,.55+random()*.55,'rock');o.scale.y*=.65;if(i%7===0)flowerbed(Math.cos(a)*15.3,-24+Math.sin(a)*15.3,.75);}
 for(let side=0;side<4;side++){const angle=side*Math.PI/2,bridge=new T.Group();stat.add(bridge);bridge.position.set(0,0,-24);bridge.rotation.y=angle;for(let j=0;j<18;j++){const r=9.8+j/17*4.4,y=.28+Math.sin(j/17*Math.PI)*.55;cube(0,y,r,5.2,.13,.27,'wood',bridge);for(const x of[-2.5,2.5]){if(j%3===0){beam([x,y,r],[x,y+1.1,r],.05,'green',bridge);ball(x,y+1.17,r,.08,'gold',bridge);}if(j<17){const rr=9.8+(j+1)/17*4.4,yy=.28+Math.sin((j+1)/17*Math.PI)*.55;beam([x,y+1,r],[x,yy+1,rr],.045,'gold',bridge);}}}}
+const gateZ=L.entry[1];
 // Grand entry: emerald towers, curved red swags, gold sunburst and densely lit molding.
-for(const x of[-6.6,6.6]){cube(x,0,13,2.4,.5,2.4,'stone');cube(x,.5,13,1.9,.3,1.9,'gold');cube(x,.8,13,1.45,8.1,1.45,'green');for(const dx of[-.66,.66])for(const dz of[-.66,.66])beam([x+dx,.9,13+dz],[x+dx,8.8,13+dz],.055);for(let y=1.2;y<8.8;y+=1.25){cube(x,y,13,1.6,.12,1.6,'gold');sunburst(x,y+.45,13.76,.26);}cube(x,8.9,13,2,.4,2,'gold');cylinder(x,9.3,13,1.2,1.5,'green',stat,.05,4);ball(x,10.9,13,.2);beam([x,10.9,13],[x,12.2,13],.04);cube(x+.35,11.6,13,.7,.45,.04,'red');}
-const arch=[];for(let i=0;i<=40;i++){const x=-6.6+i/40*13.2,y=6.4+Math.sin(i/40*Math.PI)*2.4;arch.push([x,y,13]);bulb(x,y-.22,13.32,.09);if(i%2===0)bulb(x,y+.25,13.2,.075);}
-curve(arch,.22,'green');curve(arch.map(([x,y,z])=>[x,y+.32,z]),.07);curve(arch.map(([x,y,z])=>[x,y-.32,z]),.065);sunburst(0,9.45,13.1,1.15);
-for(const x of[-6.6,6.6])cube(x,1.1,13.76,1.08,6.8,.025,'ornament');
-for(const sign of[-1,1])for(let i=0;i<6;i++){const x=sign*(4.9+i*.15);beam([x,1.2+i*.12,13.35],[x,6.7,13.35],.12,'red');}for(const x of[-5.3,5.3])curve([[x,1.2,13.5],[x*.92,3,13.55],[x,6.5,13.5]],.035,'gold');
-for(const sign of[-1,1]){const pts=[];for(let i=0;i<=16;i++){const t=i/16;pts.push([sign*(.5+t*5.8),7.9-Math.sin(t*Math.PI)*1.25,13.15]);}for(let k=0;k<6;k++)curve(pts.map(([x,y,z])=>[x,y-k*.09,z+k*.018]),.13,'red');curve(pts.map(([x,y,z])=>[x,y-.55,z+.1]),.04);}
-kiosk(-11,10);kiosk(11,10);flagline([-6.6,9.2,13],[-31,5,5]);flagline([6.6,9.2,13],[31,5,5]);
-// Arrival cabin is outside the front entrance, with an open doorway toward the park.
-cube(-4.4,0,24,.3,4.2,8,'green');cube(4.4,0,24,.3,4.2,8,'green');cube(0,0,28,9,4.2,.3,'green');for(const x of[-3,3])cube(x,0,20,3,4.2,.3,'green');cube(0,3.3,20,3,.9,.3,'green');cube(0,4.2,24,9.4,.2,8.4,'green');cube(-2.8,.2,25,2,.55,3,'wood');cube(-2.8,.75,25,2,.2,3,'cream');for(const x of[-1.5,1.5])beam([x,0,19.8],[x,3.3,19.8],.06);lamp(-3.5,20);lamp(3.5,20);
+for(const x of[-6.6,6.6]){cube(x,0,gateZ,2.4,.5,2.4,'stone');cube(x,.5,gateZ,1.9,.3,1.9,'gold');cube(x,.8,gateZ,1.45,8.1,1.45,'green');for(const dx of[-.66,.66])for(const dz of[-.66,.66])beam([x+dx,.9,13+dz],[x+dx,8.8,13+dz],.055);for(let y=1.2;y<8.8;y+=1.25){cube(x,y,gateZ,1.6,.12,1.6,'gold');sunburst(x,y+.45,gateZ+.76,.26);}cube(x,8.9,gateZ,2,.4,2,'gold');cylinder(x,9.3,gateZ,1.2,1.5,'green',stat,.05,4);ball(x,10.9,gateZ,.2);beam([x,10.9,gateZ],[x,12.2,gateZ],.04);cube(x+.35,11.6,gateZ,.7,.45,.04,'red');}
+const arch=[];for(let i=0;i<=40;i++){const x=-6.6+i/40*13.2,y=6.4+Math.sin(i/40*Math.PI)*2.4;arch.push([x,y,gateZ]);bulb(x,y-.22,gateZ+.32,.09);if(i%2===0)bulb(x,y+.25,gateZ+.2,.075);}
+curve(arch,.22,'green');curve(arch.map(([x,y,z])=>[x,y+.32,z]),.07);curve(arch.map(([x,y,z])=>[x,y-.32,z]),.065);sunburst(0,9.45,gateZ+.1,1.15);
+for(const x of[-6.6,6.6])cube(x,1.1,gateZ+.76,1.08,6.8,.025,'ornament');
+for(const sign of[-1,1])for(let i=0;i<6;i++){const x=sign*(4.9+i*.15);beam([x,1.2+i*.12,gateZ+.35],[x,6.7,gateZ+.35],.12,'red');}for(const x of[-5.3,5.3])curve([[x,1.2,gateZ+.5],[x*.92,3,gateZ+.55],[x,6.5,gateZ+.5]],.035,'gold');
+for(const sign of[-1,1]){const pts=[];for(let i=0;i<=16;i++){const t=i/16;pts.push([sign*(.5+t*5.8),7.9-Math.sin(t*Math.PI)*1.25,gateZ+.15]);}for(let k=0;k<6;k++)curve(pts.map(([x,y,z])=>[x,y-k*.09,z+k*.018]),.13,'red');curve(pts.map(([x,y,z])=>[x,y-.55,z+.1]),.04);}
+kiosk(-11,gateZ-3);kiosk(11,gateZ-3);flagline([-6.6,9.2,gateZ],[-24,5,gateZ-8]);flagline([6.6,9.2,gateZ],[24,5,gateZ-8]);
 let castleEntry=null;
 const updateCastle=window.NEVERLAND_CASTLE({T,scene,stat,cube,cylinder,ball,mesh});
 // A-frame and articulated pirate ship outside the castle.

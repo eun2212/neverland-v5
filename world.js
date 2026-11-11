@@ -148,7 +148,7 @@ window.neverlandWorld={
  unlockInterior(){if(interior)interior.solved=true;},
  setRidePower(value){if(interior)interior.power=Math.max(0,Math.min(100,Number(value)||0));},
  interiorValid(x,z){if(!interior)return false;if(interior.seated)return false;const d=window.NEVERLAND_INTERIORS[interior.ride],b=d.bounds;if(x<b[0]||x>b[1]||z<b[2]||z>b[3])return false;if(interior.ride===4&&Math.hypot(x,z)>4.55)return false;if(interior.ride===2&&Math.hypot(x,z)>7.9)return false;return !d.walls.some(([xx,zz,w,h])=>Math.abs(x-xx)<w/2+.23&&Math.abs(z-zz)<h/2+.23);},
- reset(){config={paused:true,free:false,intro:false,keeperIntroduced:false,ride:0,cleared:[],clues:[],exit:false};passage=null;passageReturn=null;fractureUnlocked=false;glitchRemaining=0;glitchCount=0;interior=null;parkReturn=null;exitRevealAge=-1;exitRevealLast=elapsed;exitRevealAnnounced=false;exitRevealCount=0;zone=0;currentMap='deck';build();started=true;keeperVisible=false;Object.assign(player,layout.spawn);player.pitch=0;keys.clear();runUntil={};},
+ reset(){config={paused:true,free:false,intro:false,keeperIntroduced:false,ride:0,cleared:[],clues:[],exit:false};passage=null;passageReturn=null;fractureUnlocked=false;glitchRemaining=0;glitchCount=0;interior=null;parkReturn=null;exitRevealAge=-1;exitRevealLast=elapsed;exitRevealAnnounced=false;exitRevealCount=0;zone=0;currentMap='deck';build();started=true;keeperVisible=false;Object.assign(player,layout.spawn,{z:layout.entry[1]+4});player.pitch=0;keys.clear();runUntil={};},
  animateRide(i){runUntil[rides[i].id]=elapsed+24;},
  audio(){initAudio();},
  mute(){muted=!muted;window.NEVERLAND_BGM?.mute(muted);if(audio)audio.master.gain.setTargetAtTime(muted?0:.18,audio.currentTime,.1);return muted;},

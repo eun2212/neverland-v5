@@ -87,6 +87,11 @@ $('manual-save-menu').onclick();button(3).onclick();slots.children[2].children[3
 test(JSON.parse(localStorage.getItem(key+3)).room.shop==='candy','shop identity saves');
 newGame();$('manual-save-load').onclick();button(3).onclick();
 test(roomCheckpoint.shop==='candy'&&roomCheckpoint.pose.x===.81,'shop identity and position restore');
+const old=JSON.parse(localStorage.getItem(key+2));
+old.parkRevision=2;old.player.x=0;old.player.z=24;
+localStorage.setItem(key+2,JSON.stringify(old));
+newGame();$('manual-save-load').onclick();button(2).onclick();
+test(world3d.state.player.z===window.NEVERLAND_LAYOUT.rides[0].control[1]-3.7,'old cabin save relocates to safe captain approach');
 \`);
 console.log('PASS: '+assertions+' assertions including slot UI, first room, park pose, manual overwrite, restrictions, incompatible slots, and quota errors.');
 `;

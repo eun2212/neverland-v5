@@ -25,7 +25,7 @@ const test=(ok,label)=>sandbox.test(ok,label);
 function frames(n){for(let i=0;i<n;i++)frame((i+1)*1000/60);}
 frames(2);test(draws>0,'renderer keeps scheduling frames');
 const layout=sandbox.NEVERLAND_LAYOUT;
-test(layout.rides[0].z-layout.center[1]>65,'captain is far from the castle');
+test(layout.rides[0].z===24&&layout.rides[0].z<layout.entry[1],'captain occupies former cabin inside south entrance');
 test(layout.rides[0].x===0&&layout.rides[0].z>layout.castleExit[1],'captain is in front of the castle');
 test(layout.rides[2].x<0&&layout.rides[2].z<-24,'carousel upper left');
 test(layout.rides[1].x>0&&layout.rides[1].z<-24,'wheel upper right');
@@ -46,7 +46,8 @@ test(worldQA.valid(70,-90)&&!worldQA.valid(75,-90),'expanded park boundaries');
 for(const shop of window.NEVERLAND_LAYOUT.shops){
  world3d.jumpToPark(...shop.door);
  test(worldQA.valid(...shop.door)&&worldQA.nearest()?.shop===shop.id,'shop doorway is reachable '+shop.id);
- test(!worldQA.valid(shop.x,shop.z),'shop walls block walking '+shop.id);
+ test(!worldQA.valid(shop.x,shop.z),'shop counter blocks walking '+shop.id);
+ test(worldQA.valid(shop.x+3.2,shop.z),'open sides do not create building collisions '+shop.id);
 }
 world3d.placeAtCastleGate();
 test(worldQA.valid(worldQA.player.x,worldQA.player.z)&&worldQA.player.yaw===Math.PI,'gate exit is walkable and faces the park');newGame();
@@ -144,27 +145,28 @@ test(run("$('speaker').textContent")==='키퍼'&&run("$('text').textContent").in
 run(`drain();test(free3d,'graveyard return unlocks full park');test(s.cleared.size===0,'first accident is not a normal ride success');world3d.fracturePulse();test(world3d.state.reality.glitchCount===1,'later ride completion can queue checker glitch');test(world3d.state.reality.glitch>0,'queued checker glitch is active');`);
 test(run('world3d.state.config.paused'),'map pauses walking');
 run("$('backMap').onclick()");test(!run('world3d.state.config.paused'),'map close resumes walking');
-// A flood fill proves each control, clue, keeper and possible exit can be reached from the cabin.
+// A flood fill proves each control, clue, keeper and possible exit can be reached from outside the relocated entrance.
 run('startMain();world3d.configure({free:true,paused:false});');
-const walkable=sandbox.worldQA.valid,seen=new Set(['0,15']),frontier=[[0,15]];
+const walkable=sandbox.worldQA.valid,frontier=[[0,layout.entry[1]+4]],seen=new Set([frontier[0].join(',')]);
 for(let cursor=0;cursor<frontier.length;cursor++){
  const [x,z]=frontier[cursor];for(const [dx,dz]of [[.5,0],[-.5,0],[0,.5],[0,-.5]]){
   const nx=x+dx,nz=z+dz,key=nx+','+nz;if(!seen.has(key)&&walkable(nx,nz)){seen.add(key);frontier.push([nx,nz]);}
  }
 }
 const positions={controls:sandbox.NEVERLAND_LAYOUT.rides.map(r=>r.control),clues:sandbox.NEVERLAND_LAYOUT.clues,keepers:sandbox.NEVERLAND_LAYOUT.keepers};
+positions.shops=layout.shops.map(shop=>shop.door);
 positions.exits=positions.controls.map(([x,z])=>[x+4,z+2]);
 for(const [kind,points]of Object.entries(positions))for(const [i,p]of points.entries())test(frontier.some(([x,z])=>Math.hypot(x-p[0],z-p[1])<2),'walkable path to '+kind+' '+i);
 run("world3d.configure({paused:true});");const stationary=JSON.stringify(sandbox.worldQA.player);handlers.keydown({key:'w',repeat:false,preventDefault(){}});frames(5);test(JSON.stringify(sandbox.worldQA.player)===stationary,'modal pause prevents movement');
 // Imported core and art manifests must match the approved source exactly.
 // All interior spaces have navigable entry-to-seat/control paths and reversible teleportation.
 for(let i=0;i<5;i++){
- run(`startMain();s.ride=${i};sync3d();test(world3d.enterRide(${i}),'enter interior ${i}');explore3d();`);
+ run(`startMain();s.ride=${i};sync3d();var parkZ=worldQA.player.z;test(world3d.enterRide(${i}),'enter interior ${i}');explore3d();`);
  const d=sandbox.NEVERLAND_INTERIORS[i],visited=new Set([d.spawn.join(',')]),todo=[[...d.spawn]];
  for(let k=0;k<todo.length;k++){const [x,z]=todo[k];for(const [dx,dz]of [[.5,0],[-.5,0],[0,.5],[0,-.5]]){const nx=x+dx,nz=z+dz,key=nx+','+nz;if(!visited.has(key)&&sandbox.neverlandWorld.interiorValid(nx,nz)){visited.add(key);todo.push([nx,nz]);}}}
  for(const [name,p]of [['exit',d.exit],['seat',d.seat],['control',d.control],['finish',d.finish]])if(p)test(todo.some(([x,z])=>Math.hypot(x-p[0],z-p[1])<1.6),'interior path '+i+' '+name);
  test(!sandbox.neverlandWorld.interiorValid(100,100),'interior bounds '+i);
- run(`test(world3d.leaveRide(),'return from interior ${i}');test(worldQA.player.x===0&&worldQA.player.z===24,'return to saved park location ${i}');`);
+ run(`test(world3d.leaveRide(),'return from interior ${i}');test(worldQA.player.x===0&&worldQA.player.z===parkZ,'return to saved park location ${i}');`);
 }
 let interiorClock=80000;const rideFrames=n=>{for(let j=0;j<n;j++)frame(interiorClock+=1000/60);};
 for(let i=0;i<5;i++){
