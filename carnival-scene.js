@@ -41,7 +41,7 @@ sky.visible=false;
 // The environment light keeps gilt readable while the visible sky stays nearly black.
 const environment=new T.PMREMGenerator(renderer);scene.environment=environment.fromScene(scene,.08).texture;environment.dispose();
 const plazaTexture=pavement();plazaTexture.repeat.set(1,1);const groundmat=new T.MeshStandardMaterial({map:stoneTexture(),roughness:.6,color:0xf3e4c6});
-const grassmat=new T.MeshStandardMaterial({color:'#112e2a',roughness:.9});const ground=mesh(new T.PlaneGeometry(78,90),grassmat);ground.rotation.x=-Math.PI/2;ground.position.set(0,-.025,-17);ground.receiveShadow=true;
+const grassmat=new T.MeshStandardMaterial({color:'#112e2a',roughness:.9});const ground=mesh(new T.PlaneGeometry(106,112),grassmat);ground.rotation.x=-Math.PI/2;ground.position.set(0,-.025,-17);ground.receiveShadow=true;
 const outerGround=mesh(new T.PlaneGeometry(230,220),new T.MeshStandardMaterial({color:'#060b16',roughness:1}));outerGround.rotation.x=-Math.PI/2;outerGround.position.set(0,-.45,-25);
 function pathStrip(points,width=4){const c=new T.CatmullRomCurve3(points.map(([x,z])=>new T.Vector3(x,.015,z))),pos=[],uv=[];for(let i=0;i<50;i++){const a=c.getPoint(i/50),b=c.getPoint((i+1)/50),dir=new T.Vector3().subVectors(b,a).normalize(),side=new T.Vector3(-dir.z,0,dir.x).multiplyScalar(width/2);const v=[a.clone().add(side),a.clone().sub(side),b.clone().add(side),a.clone().sub(side),b.clone().sub(side),b.clone().add(side)];for(const p of v){pos.push(...p.toArray());uv.push(p.x/10,p.z/10);}}const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(pos,3));g.setAttribute('uv',new T.Float32BufferAttribute(uv,2));g.computeVertexNormals();const o=mesh(g,groundmat);o.material.side=T.DoubleSide;}
 pathStrip([[0,28],[0,13],[0,-8]],8);
@@ -66,14 +66,15 @@ for(const sign of[-1,1]){const pts=[];for(let i=0;i<=16;i++){const t=i/16;pts.pu
 kiosk(-11,10);kiosk(11,10);flagline([-6.6,9.2,13],[-31,5,5]);flagline([6.6,9.2,13],[31,5,5]);
 // Arrival cabin is outside the front entrance, with an open doorway toward the park.
 cube(-4.4,0,24,.3,4.2,8,'green');cube(4.4,0,24,.3,4.2,8,'green');cube(0,0,28,9,4.2,.3,'green');for(const x of[-3,3])cube(x,0,20,3,4.2,.3,'green');cube(0,3.3,20,3,.9,.3,'green');cube(0,4.2,24,9.4,.2,8.4,'green');cube(-2.8,.2,25,2,.55,3,'wood');cube(-2.8,.75,25,2,.2,3,'cream');for(const x of[-1.5,1.5])beam([x,0,19.8],[x,3.3,19.8],.06);lamp(-3.5,20);lamp(3.5,20);
-// A-frame and articulated pirate ship at the exact center.
-for(const x of[-5.8,5.8]){for(const z of[-27,-21])beam([x,0,z],[x,9,-24],.22,'green');beam([x,8.9,-24],[x,9.3,-24],.3);ball(x,9.4,-24,.3);}
-beam([-5.8,9,-24],[5.8,9,-24],.27,'gold');
-const boatPivot=new T.Group();boatPivot.position.set(0,9,-24);scene.add(boatPivot);activeGroups.push(boatPivot);const boat=new T.Group();boat.position.y=-7.6;boatPivot.add(boat);
+const updateCastle=window.NEVERLAND_CASTLE({T,scene,stat,cube,cylinder,ball,mesh});
+// A-frame and articulated pirate ship outside the castle.
+for(const x of[-5.8,5.8]){for(const z of[-7,-1])beam([x,0,z],[x,9,-4],.22,'green');beam([x,8.9,-4],[x,9.3,-4],.3);ball(x,9.4,-4,.3);}
+beam([-5.8,9,-4],[5.8,9,-4],.27,'gold');
+const boatPivot=new T.Group();boatPivot.position.set(0,9,-4);scene.add(boatPivot);activeGroups.push(boatPivot);const boat=new T.Group();boat.position.y=-7.6;boatPivot.add(boat);
 const hullShape=new T.Shape();hullShape.moveTo(-5,1.5);hullShape.bezierCurveTo(-4,-.8,3.8,-.8,5,1.5);hullShape.lineTo(4.4,1.75);hullShape.bezierCurveTo(1.3,.85,-1.3,.85,-4.4,1.75);hullShape.closePath();const hull=mesh(new T.ExtrudeGeometry(hullShape,{depth:2.8,bevelEnabled:true,bevelThickness:.15,bevelSize:.16,bevelSegments:2,steps:1}),'red',boat);hull.position.z=-1.4;
 for(const z of[-1.5,1.5]){curve([[-5,1.5,z],[-3,.9,z],[0,.7,z],[3,.9,z],[5,1.5,z]],.1,'gold',boat);for(let x=-4;x<=4;x+=.5){beam([x,1,z],[x,2,z],.035,'green',boat);ball(x,2,z,.05,'gold',boat);}curve([[-4.5,2.2,z],[-2,1.8,z],[0,1.7,z],[2,1.8,z],[4.5,2.2,z]],.07,'gold',boat);for(let x=-4;x<=4;x+=.5)bulb(x,1.1,z+.04,.065,boat);}
 for(let x=-3.5;x<=3.5;x+=1.2){cube(x,1.05,0,.65,.4,2.5,'green',boat);cube(x,1.45,-1,.65,.65,.14,'cream',boat);}
-beam([0,1.4,0],[0,5,0],.08,'gold',boat);const sailG=new T.BufferGeometry();sailG.setAttribute('position',new T.Float32BufferAttribute([.1,4.8,0,2.7,4.1,0,.1,2.8,0,.1,2.8,0,2.7,4.1,0,2.2,2.65,0],3));sailG.computeVertexNormals();mesh(sailG,'red',boat);for(const x of[-4,4])for(const z of[-1.3,1.3])beam([x,1.7,z],[x*.8,7.6,0],.025,'gold',boat);railCircle(0,-24,9,.2);
+beam([0,1.4,0],[0,5,0],.08,'gold',boat);const sailG=new T.BufferGeometry();sailG.setAttribute('position',new T.Float32BufferAttribute([.1,4.8,0,2.7,4.1,0,.1,2.8,0,.1,2.8,0,2.7,4.1,0,2.2,2.65,0],3));sailG.computeVertexNormals();mesh(sailG,'red',boat);for(const x of[-4,4])for(const z of[-1.3,1.3])beam([x,1.7,z],[x*.8,7.6,0],.025,'gold',boat);
 // Ferris wheel: double rim, 24 spokes, detailed upright emerald/red gondolas.
 const wx=23,wz=-44;for(const dx of[-4.6,4.6])for(const dz of[-2,2])beam([wx+dx,0,wz+dz],[wx,10,wz],.24,'green');const wheel=new T.Group();wheel.position.set(wx,10,wz);scene.add(wheel);activeGroups.push(wheel);
 for(const z of[-.45,.45]){torus(0,0,z,8,.14,'gold',wheel);torus(0,0,z,7.45,.07,'red',wheel);for(let i=0;i<24;i++){const a=i/24*6.283;beam([0,0,z],[Math.cos(a)*8,Math.sin(a)*8,z],.035,'gold',wheel);for(let k=1;k<=5;k++)bulb(Math.cos(a)*k*1.5,Math.sin(a)*k*1.5,z,.075,wheel);}}sunburst(0,0,.5,.9,wheel);
@@ -96,7 +97,7 @@ for(const [x,z,a]of [[-12,5,0],[12,5,Math.PI],[-12,-42,0],[12,-42,Math.PI],[-32,
 for(let z=-58;z<=17;z+=5)for(const x of[-36.7,36.7])tree(x,z,4+random()*2);for(let x=-32;x<=32;x+=5){tree(x,-58,4+random()*2);if(Math.abs(x)>13)tree(x,17,3.5+random());}
 for(let z=-70;z<=30;z+=7)for(const x of[-45,45])tree(x+(random()-.5)*5,z,5+random()*3);for(let x=-40;x<=40;x+=6)tree(x,-68-random()*5,6+random()*3);
 for(const [x,z]of [[-54,-20],[54,-20],[-35,-81],[20,-83]]){const hill=ball(x,-2,z,10,'leaf');hill.scale.set(1.7,.7,1.3);}
-for(const z of[5,-18,-39,-54])flagline([-33,5,z],[33,5,z]);for(let z=-58;z<17;z+=2){railing([-37,z],[-37,z+2]);railing([37,z],[37,z+2]);}for(let x=-37;x<37;x+=2)railing([x,-59],[x+2,-59]);
+for(const z of[5,-18,-39,-54])flagline([-33,5,z],[33,5,z]);for(let z=-72;z<38;z+=2){railing([-52,z],[-52,z+2]);railing([52,z],[52,z+2]);}for(let x=-52;x<52;x+=2)railing([x,-72],[x+2,-72]);
 for(let i=0;i<40;i++){const a=i/40*6.283;if(Math.abs(Math.sin(a))<.24||Math.abs(Math.cos(a))<.24)continue;flowerbed(Math.cos(a)*20.2,-24+Math.sin(a)*20.2,.8);}
 for(const r of L.rides){if(r.id==='captain')continue;for(let i=0;i<12;i++){const a=i/12*6.283;if(Math.sin(a)>.72)continue;flowerbed(r.x+Math.cos(a)*8.2,r.z+Math.sin(a)*8.2,.7);}}
 for(const [x,z]of [[-6,16],[6,16],[-6,5],[6,5],[-8,-53],[8,-53]]){flowerbed(x,z,1.5);for(let j=0;j<3;j++)ball(x,1.2+j*.55,z,.65-j*.12,j%2?'leaf':'leafLight');}
@@ -131,6 +132,7 @@ function renderBloom(w,h){const rw=Math.floor(w*renderer.getPixelRatio()),rh=Mat
 function render(){requestAnimationFrame(render);const t=clock.getElapsedTime(),state=window.neverlandWorld?.state;if(!state)return;
  const w=root.clientWidth,h=root.clientHeight;if(renderer.domElement.width!==Math.floor(w*renderer.getPixelRatio())||renderer.domElement.height!==Math.floor(h*renderer.getPixelRatio())){renderer.setSize(w,h,false);camera.aspect=w/h;camera.fov=w/h<.7?78:65;camera.updateProjectionMatrix();}
  const desiredFov=state.passage?(w/h<.85?98:75):overview?(w/h<.7?78:48):(w/h<.7?78:65);if(camera.fov!==desiredFov){camera.fov=desiredFov;camera.updateProjectionMatrix();}const p=state.player;if(overview){const a=.12,fit=Math.max(1,.72/(w/h));camera.position.set(Math.sin(a)*90*fit,67*fit,Math.cos(a)*90*fit-20);camera.lookAt(0,0,-20);}else{camera.position.set(p.x,p.eye+L.terrain(p.x,p.z),p.z);camera.rotation.order='YXZ';camera.rotation.set(p.pitch,p.yaw,0);}
+ updateCastle(t,!!state.interior||!!state.passage||!!state.config.epilogue||window.NEVERLAND_TOOLS?.settings.reduced||matchMedia('(prefers-reduced-motion: reduce)').matches);
  const moving=id=>(state.running?.[id]||0)>state.elapsed;boatPivot.rotation.z=moving('captain')?Math.sin(t*1.4)*.34:Math.sin(t*.55)*.018;
  const angle=t*(moving('wheel')?.15:.018);wheel.rotation.z=angle;for(let i=0;i<gondolas.length;i++){const a=i/gondolas.length*Math.PI*2;gondolas[i].position.set(Math.cos(a)*8,Math.sin(a)*8,0);gondolas[i].rotation.z=-angle;}
  carousel.rotation.y=t*(moving('carousel')?.38:.045);for(let i=0;i<horses.length;i++)horses[i].position.y=1.4+Math.sin(t*1.6+i)*.2;tea.rotation.y=t*(moving('tea')?.5:.04);for(let i=0;i<cups.length;i++)cups[i].rotation.y=t*.3+i;

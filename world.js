@@ -61,7 +61,7 @@ function updateProgress(){
   const angle=Math.atan2(-dx,-dz)-player.yaw,delta=Math.atan2(Math.sin(angle),Math.cos(angle));
   caption((Math.abs(delta)<.35?'↑':Math.abs(delta)>2.5?'↶':delta>0?'←':'→')+' 목적지 '+Math.round(distance)+'m · 물길은 다리를 따라 건너세요.',2);
  }
- if(config.intro&&player.z<-7){config.paused=true;actionCallback({type:'intro',ride:0});return;}
+ if(config.intro&&player.z>-11&&player.z<-7&&Math.abs(player.x)<5){config.paused=true;actionCallback({type:'intro',ride:0});return;}
  if(!config.free)return;
  let nextZone=0,best=Infinity;
  for(let i=0;i<rides.length;i++){let d=Math.hypot(player.x-rides[i].control[0],player.z-rides[i].control[1]);if(d<best){best=d;nextZone=i;}}
@@ -82,6 +82,7 @@ function nearest(){
   return null;
  }
  const i=config.ride||0,r=rides[i];
+ if(layout.castleDistance(player.x,player.z)<4)return{type:'castle',label:'E · 달빛 성에 들어가기'};
  if(config.exit&&i===config.exitRide&&Math.hypot(player.x-(r.control[0]+4),player.z-(r.control[1]+2))<2.6)return{type:'exit',ride:i,label:'E · 새벽의 출구에서 키퍼와 마주한다'};
  if(config.keeperIntroduced&&Math.hypot(player.x-keeper.x,player.z-keeper.z)<3.2)return{type:'keeper',ride:i,label:'E · 키퍼에게 말 걸기'};
  if(Math.hypot(player.x-r.control[0],player.z-r.control[1])<2.65)return{type:'control',ride:i,label:'E · '+r.name+' 안으로 들어가기'};
@@ -113,6 +114,7 @@ function drawMarkers(){
 }
 window.neverlandWorld={
  unlockFracture(){fractureUnlocked=true;},
+ placeAtCastleGate(){const [x,z]=layout.castleExit;Object.assign(player,{x,z,yaw:Math.PI,pitch:0,eye:1.65});keys.clear();},
  jumpToPark(x,z){interior=null;parkReturn=null;passage=null;passageReturn=null;config={...config,epilogue:0,forcedRide:-1};Object.assign(player,{x,z,yaw:0,pitch:0,eye:1.65});keys.clear();runUntil={};document.exitPointerLock?.();},
  enterEpilogue(id){interior=null;parkReturn=null;passage=null;config={...config,paused:false,free:true,exit:false,keeperRed:0,confronting:false,forcedRide:-1,epilogue:id,storyPhase:'epilogue'};Object.assign(player,{x:0,z:id===3?-8:5,yaw:0,pitch:0,eye:1.65});keys.clear();document.exitPointerLock?.();},
  finishEpilogue(){config={...config,paused:true,epilogue:0,storyPhase:'ending'};keys.clear();},
@@ -127,6 +129,7 @@ window.neverlandWorld={
  leaveRide(){if(!interior||interior.running||config.forcedRide>=0)return false;Object.assign(player,parkReturn);interior=null;parkReturn=null;keys.clear();return true;},
  sit(){if(!interior||interior.running||interior.ride===3)return false;const d=window.NEVERLAND_INTERIORS[interior.ride];if(Math.hypot(player.x-d.seat[0],player.z-d.seat[1])>1.8)return false;interior.seated=true;player.x=d.seat[0];player.z=d.seat[1];player.eye=1.35;keys.clear();return true;},
  stand(){if(!interior||interior.running||config.forcedRide>=0)return false;interior.seated=false;player.eye=1.65;keys.clear();return true;},
+ scriptedWheelHazard(on){if(!interior||interior.ride!==1)return false;interior.scriptedHazard=!!on;interior.seated=true;interior.running=false;interior.progress=on?.07:0;interiorLast=elapsed;keys.clear();return true;},
  startRide(seconds){if(!interior||!interior.seated||interior.running)return false;interior.running=true;interior.time=0;interior.progress=0;interior.duration=seconds||window.NEVERLAND_INTERIORS[interior.ride].duration;interiorLast=elapsed;keys.clear();return true;},
  unlockInterior(){if(interior)interior.solved=true;},
  setRidePower(value){if(interior)interior.power=Math.max(0,Math.min(100,Number(value)||0));},
@@ -149,7 +152,7 @@ canvas.addEventListener('click',()=>{if(started&&!blocked()&&matchMedia('(pointe
 document.addEventListener('mousemove',e=>{if(document.pointerLockElement===canvas&&started&&!blocked()){player.yaw-=e.movementX*.0022;player.pitch=Math.max(-.7,Math.min(.7,player.pitch-e.movementY*.0018));}});
 canvas.addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY,id:e.pointerId};canvas.setPointerCapture(e.pointerId);});canvas.addEventListener('pointermove',e=>{if(drag&&document.pointerLockElement!==canvas&&started&&!blocked()){player.yaw-=(e.clientX-drag.x)*.005;player.pitch=Math.max(-.7,Math.min(.7,player.pitch-(e.clientY-drag.y)*.003));drag.x=e.clientX;drag.y=e.clientY;}});canvas.addEventListener('pointerup',()=>drag=null);canvas.addEventListener('pointercancel',()=>drag=null);
 document.querySelectorAll('[data-key]').forEach(b=>{b.onpointerdown=e=>{e.preventDefault();b.setPointerCapture(e.pointerId);keys.add(b.dataset.key);};b.onpointerup=b.onpointercancel=()=>keys.delete(b.dataset.key);b.onlostpointercapture=()=>keys.delete(b.dataset.key);});
-function valid(x,z){if(config.epilogue)return window.NEVERLAND_ENDING.valid(x,z);if(interior)return window.neverlandWorld.interiorValid(x,z);const b=layout.bounds;if(x<b.minX||x>b.maxX||z<b.minZ||z>b.maxZ||layout.water(x,z))return false;if(!config.free&&(z<-18||Math.abs(x)>11))return false;if(config.exit){const r=rides[config.exitRide];if(Math.abs(x-r.control[0]-4)<1.55&&Math.abs(z-r.control[1]-2)<.4)return false;}return !colliders.some(c=>x>c.a&&x<c.b&&z>c.l&&z<c.r);}
+function valid(x,z){if(config.epilogue)return window.NEVERLAND_ENDING.valid(x,z);if(interior)return window.neverlandWorld.interiorValid(x,z);const b=layout.bounds;if(x<b.minX||x>b.maxX||z<b.minZ||z>b.maxZ||layout.water(x,z))return false;if(!config.free&&Math.abs(x)>21)return false;if(config.exit){const r=rides[config.exitRide];if(Math.abs(x-r.control[0]-4)<1.55&&Math.abs(z-r.control[1]-2)<.4)return false;}return !colliders.some(c=>x>c.a&&x<c.b&&z>c.l&&z<c.r);}
 function resize(){const scale=Math.min(devicePixelRatio,1.3),w=Math.floor(innerWidth*scale),h=Math.floor(innerHeight*scale);if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;gl.viewport(0,0,w,h);}}
 function landmarks(){const m=cameraMatrix();for(const r of rides){const el=$('label-'+r.id);el.textContent=r.name+(config.cleared?.includes(rides.indexOf(r))?' ✓':'');const p=[r.control[0],2,r.control[1],1],q=[0,0,0,0];for(let row=0;row<4;row++)for(let k=0;k<4;k++)q[row]+=m[k*4+row]*p[k];const visible=(currentMap==='park'||r.id==='captain')&&started&&!blocked()&&phase>=1&&player.z<7&&q[3]>1&&Math.abs(q[0]/q[3])<.94&&Math.abs(q[1]/q[3])<.8&&Math.hypot(player.x-p[0],player.z-p[2])<55;el.style.display=visible?'block':'none';if(visible){el.style.left=(q[0]/q[3]*.5+.5)*innerWidth+'px';el.style.top=(-q[1]/q[3]*.5+.5)*innerHeight+'px';}}}
 function frame(ms){let dt=Math.min((ms-lastTime)/1000,.05);lastTime=ms;elapsed+=dt;resize();if(started&&!blocked()&&passage){passageStep(dt,keys.has('w')||keys.has('arrowup')?1:0);}else if(started&&!blocked()){if(!interior)glitchRemaining=Math.max(0,glitchRemaining-dt);let forward=(keys.has('w')||keys.has('arrowup')?1:0)-(keys.has('s')||keys.has('arrowdown')?1:0),strafe=(keys.has('d')?1:0)-(keys.has('a')?1:0);player.yaw+=((keys.has('arrowleft')?1:0)-(keys.has('arrowright')?1:0))*dt*1.6;const norm=Math.hypot(forward,strafe)||1,speed=(keys.has('shift')?5:3)*dt;const dx=(-Math.sin(player.yaw)*forward+Math.cos(player.yaw)*strafe)/norm*speed,dz=(-Math.cos(player.yaw)*forward-Math.sin(player.yaw)*strafe)/norm*speed;if(valid(player.x+dx,player.z))player.x+=dx;if(valid(player.x,player.z+dz))player.z+=dz;player.eye=(interior?.seated?1.35:1.65)+(forward||strafe?Math.sin(elapsed*7)*.025:0);updateProgress();}gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.uniformMatrix4fv(vpLoc,false,cameraMatrix());drawData(fixed);drawData(dynamicScene(elapsed));billboard();drawMarkers();landmarks();if(started){active=nearest();$('interact').hidden=!active;$('interact').textContent=active?.label||'';if(elapsed>captionUntil)$('caption').textContent='';}requestAnimationFrame(frame);}

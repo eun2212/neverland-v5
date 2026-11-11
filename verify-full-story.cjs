@@ -26,13 +26,26 @@ function frames(n){for(let i=0;i<n;i++)frame((i+1)*1000/60);}
 frames(2);test(draws>0,'renderer keeps scheduling frames');
 const layout=sandbox.NEVERLAND_LAYOUT;
 test(layout.entry[1]>layout.rides[0].z,'grand entry is in front of central ship');
-test(layout.rides[0].x===0&&layout.rides[0].z===-24,'captain is central hub');
+test(layout.rides[0].x===0&&layout.rides[0].z>layout.castleExit[1],'captain is in front of the castle');
 test(layout.rides[2].x<0&&layout.rides[2].z<-24,'carousel upper left');
 test(layout.rides[1].x>0&&layout.rides[1].z<-24,'wheel upper right');
 test(layout.rides[3].x<0&&layout.rides[3].z>-24,'mirror lower left');
 test(layout.rides[4].x>0&&layout.rides[4].z>-24,'tea lower right');
 test(layout.water(8,-16)&&!layout.water(0,-12),'lagoon blocks water but cardinal bridge is open');
 test(layout.terrain(0,-12)>0,'bridge has curved raised walking surface');
+run(`
+newGame();free3d=true;explore3d();
+for(const [x,z,farX,farZ] of [[0,-16,0,-14],[0,-32,0,-34],[8,-24,11,-24],[-8,-24,-11,-24]]){
+ world3d.jumpToPark(x,z);
+ test(worldQA.valid(x,z)&&worldQA.nearest()?.type==='castle','castle approachable from '+x+','+z);
+ world3d.jumpToPark(farX,farZ);
+ test(worldQA.valid(farX,farZ)&&worldQA.nearest()?.type!=='castle','castle out of range at '+farX+','+farZ);
+}
+test(!worldQA.valid(0,-24)&&!worldQA.valid(5.8,-21),'castle core and towers block walking');
+test(worldQA.valid(48,-66)&&!worldQA.valid(53,-66),'expanded park boundaries');
+world3d.placeAtCastleGate();
+test(worldQA.valid(worldQA.player.x,worldQA.player.z)&&worldQA.player.yaw===Math.PI,'gate exit is walkable and faces the park');newGame();
+`);
 run(`
 test(s.phase==='profile'&&!s.keeperIntroduced,'profile and hidden keeper');
 function drain(){let guard=0;while(queue.length||after){if(++guard>100)throw Error('story loop');next();}}
