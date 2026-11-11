@@ -9,14 +9,12 @@
   <div class="castle-illustration">
    <div class="castle-bedroom">
     <button type="button" class="room-door" data-room="leave" aria-label="침실 문을 열고 성 정문으로 나가기"></button>
-    <div class="castle-moon-window" aria-hidden="true">☾</div>
-    <div class="castle-bed" aria-hidden="true"></div>
-    <div class="castle-desk" aria-hidden="true"></div>
-    <button type="button" class="room-book" data-room="book"><span aria-hidden="true">📖</span>책</button>
-    <button type="button" class="room-record" data-room="record"><span aria-hidden="true">◉</span>레코드 플레이어</button>
-    <button type="button" class="room-photo" data-room="photo"><span aria-hidden="true">▣</span>사진</button>
-    <button type="button" class="room-letter" data-room="letter"><span aria-hidden="true">✉</span>새 편지</button>
-    <button type="button" class="room-window" data-room="window">창가에 앉기</button>
+    <i class="room-starlight" aria-hidden="true"></i>
+    <button type="button" class="room-window" data-room="window" aria-label="창가에 앉기"></button>
+    <button type="button" class="room-letter" data-room="letter" aria-label="새 편지 읽기"></button>
+    <button type="button" class="room-book" data-room="book" aria-label="책에서 엔딩 기록 보기"></button>
+    <button type="button" class="room-record" data-room="record" aria-label="레코드 플레이어"></button>
+    <button type="button" class="room-photo" data-room="photo" aria-label="사진과 앨범 보기"></button>
    </div>
    <div class="castle-window-view" hidden>
     <canvas width="960" height="450" role="img" aria-label="별빛 아래 천천히 도는 관람차와 불 켜진 회전목마"></canvas>
@@ -41,10 +39,22 @@
   const el=document.createElement('button');
   el.type='button';el.textContent=label;el.onclick=action;copy.append(el);
  }
+ // Draw the wax marks once so the grain stays fixed as the rides move.
+ const grain=document.createElement('canvas');
+ grain.width=960;grain.height=450;
+ const wax=grain.getContext('2d');
+ let seed=173;
+ function random(){seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;}
+ for(let i=0;i<19000;i++){
+  const x=random()*960,y=random()*450,length=2+random()*13;
+  wax.strokeStyle=i%3?'#a897ff18':'#08071c33';
+  wax.lineWidth=.4+random()*1.4;
+  wax.beginPath();wax.moveTo(x,y);wax.lineTo(x+length,y-length*.55);wax.stroke();
+ }
  function draw(now){
   const t=media.matches||window.NEVERLAND_TOOLS?.settings.reduced?0:(now-windowStart)/1000;
   const sky=ctx.createLinearGradient(0,0,0,450);
-  sky.addColorStop(0,'#161631');sky.addColorStop(.76,'#706283');sky.addColorStop(1,'#f0a5a7');
+  sky.addColorStop(0,'#131027');sky.addColorStop(.76,'#282655');sky.addColorStop(1,'#785595');
   ctx.fillStyle=sky;ctx.fillRect(0,0,960,450);
   for(let i=0;i<73;i++){
    ctx.fillStyle=i%4?'#c9bddb':'#ffe4b6';
@@ -55,9 +65,17 @@
   function disk(x,y,r,color){
    ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();
   }
-  disk(746,85,34,'#ffdcad');disk(759,73,31,'#2a2545');
+  disk(746,85,34,'#ffdcad');disk(759,73,31,'#1b1738');
   for(let i=0;i<12;i++)disk(i*88,441,125+(i%4)*15,i%2?'#574e72':'#615677');
-  ctx.fillStyle='#3d405f';ctx.fillRect(0,363,960,87);
+  ctx.fillStyle='#211c42';ctx.fillRect(0,363,960,87);
+  // Tents and the low park midway sit behind the moving attractions.
+  for(const [x,y,w] of [[55,348,77],[144,359,78],[456,350,72],[527,359,49],[827,350,91],[908,366,53]]){
+   ctx.fillStyle='#373064';ctx.fillRect(x-w/2,y,w,38);
+   ctx.beginPath();ctx.moveTo(x-w*.58,y);ctx.quadraticCurveTo(x-11,y-13,x,y-41);
+   ctx.quadraticCurveTo(x+11,y-13,x+w*.58,y);ctx.fillStyle='#9176c8';ctx.fill();
+   ctx.fillStyle='#da9abc';ctx.fillRect(x,y-41,15,5);
+   for(let j=-2;j<=2;j++)disk(x+j*w/6,y+9,2.2,'#f3c899');
+  }
   ctx.lineWidth=5;ctx.strokeStyle='#e1b6a9';
   ctx.beginPath();ctx.moveTo(245,365);ctx.lineTo(312,222);ctx.lineTo(380,365);ctx.stroke();
   ctx.beginPath();ctx.arc(312,222,106,0,Math.PI*2);ctx.stroke();
@@ -68,14 +86,26 @@
    disk(x,y-6,3,'#ffdf9d');
   }
   disk(312,222,12,'#f9cd9a');
-  for(let i=0;i<7;i++){
-   const a=i*.91+t*.67,x=671+Math.cos(a)*65,y=329+Math.sin(a)*15;
+  ctx.fillStyle='#473168';ctx.beginPath();ctx.ellipse(671,352,85,23,0,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#b881bf';ctx.lineWidth=5;ctx.stroke();
+  const horses=Array.from({length:8},(_,i)=>({i,a:i*Math.PI/4+t*.5})).sort((a,b)=>Math.sin(a.a)-Math.sin(b.a));
+  for(const {i,a} of horses){
+   const x=671+Math.cos(a)*67,y=326+Math.sin(a)*15+Math.sin(a*2+i)*5;
    ctx.strokeStyle='#f5cb9b';ctx.beginPath();ctx.moveTo(x,278);ctx.lineTo(x,y+12);ctx.stroke();
-   ctx.fillStyle='#ebd2d6';ctx.fillRect(x-9,y,18,7);disk(x+8,y-3,5,'#ebd2d6');
+   ctx.fillStyle=i%2?'#e9bfd2':'#b8a6eb';
+   ctx.beginPath();ctx.moveTo(x-13,y);ctx.quadraticCurveTo(x-6,y-7,x+4,y-4);
+   ctx.lineTo(x+8,y-14);ctx.lineTo(x+15,y-11);ctx.lineTo(x+17,y-5);
+   ctx.lineTo(x+10,y-5);ctx.lineTo(x+6,y+6);ctx.lineTo(x-10,y+6);ctx.closePath();ctx.fill();
+   ctx.fillRect(x-8,y+4,3,8);ctx.fillRect(x+3,y+4,3,8);
   }
   ctx.fillStyle='#d98ca9';ctx.beginPath();ctx.moveTo(584,283);ctx.quadraticCurveTo(650,257,671,229);ctx.quadraticCurveTo(692,257,758,283);ctx.closePath();ctx.fill();
-  for(let i=0;i<17;i++)disk(589+i*10,283,3,'#ffdf9d');
+  for(let i=0;i<17;i++){
+   ctx.globalAlpha=.72+.28*Math.cos(i*.76-t*2);
+   disk(589+i*10,283,3,'#ffdf9d');
+  }
+  ctx.globalAlpha=1;
   for(let i=0;i<31;i++)disk(i*33,390+12*Math.sin(i*2.8),2.4,i%2?'#f3c093':'#d5acc7');
+  ctx.drawImage(grain,0,0);
   frame=requestAnimationFrame(draw);
  }
  function look(outside){
