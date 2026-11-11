@@ -86,6 +86,8 @@ for(const shop of L.shops){
  }
  for(const offset of [-2,2])bulb(x+offset,2.97,z+1.85,.1);
 }
+pathStrip([[-23,-53],[-20,-60],L.coaster.door],4.5);
+pathStrip([[0,-54],[-3,-61],L.coaster.door],4.5);
 const loop=mesh(new T.RingGeometry(14.4,19,100),groundmat);loop.rotation.x=-Math.PI/2;loop.position.set(0,.02,-24);
 for(const pts of [[[-12,-36],[-18,-36],[-23,-36]],[[12,-36],[18,-36],[23,-36]],[[-16,-14],[-18,-9],[-22,2]],[[16,-14],[18,-9],[22,2]],[[0,6],[-10,5],[-23,3]],[[0,6],[10,5],[23,3]],[[-23,-35],[-32,-29],[-32,-10],[-23,3]],[[23,-35],[32,-29],[32,-10],[23,3]],[[-23,-44],[-26,-53],[0,-54],[26,-53],[23,-44]]])pathStrip(pts,4.5);
 for(const r of L.rides){if(r.id==='captain')continue;const pl=mesh(new T.CircleGeometry(r.id==='mirror'?9:9.5,64),new T.MeshStandardMaterial({map:plazaTexture,roughness:.5,color:0xf0ddad}));pl.rotation.x=-Math.PI/2;pl.position.set(r.x,.025,r.z);torus(r.x,.04,r.z,r.id==='mirror'?9:9.5,.07,'gold',stat,true);}
@@ -149,6 +151,7 @@ for(const r of L.rides){const[x,z]=r.control;for(const dx of[-1.15,1.15])beam([x
 // Batch static meshes by material. Thousands of decorative pieces become a few dozen draw calls.
 function batch(group,excluded=[]){group.updateMatrixWorld(true);const inv=new T.Matrix4().copy(group.matrixWorld).invert(),bins=new Map(),remove=[];group.traverse(o=>{if(!o.isMesh||Array.isArray(o.material))return;for(let p=o.parent;p&&p!==group;p=p.parent)if(excluded.includes(p))return;const g=o.geometry.clone().applyMatrix4(new T.Matrix4().multiplyMatrices(inv,o.matrixWorld));const key=o.material.uuid;if(!bins.has(key))bins.set(key,{material:o.material,parts:[]});bins.get(key).parts.push(g);remove.push(o);});for(const o of remove)o.removeFromParent();for(const {material,parts}of bins.values()){const positions=[],normals=[],uvs=[];for(let g of parts){if(g.index)g=g.toNonIndexed();positions.push(g.attributes.position.array);normals.push(g.attributes.normal.array);uvs.push(g.attributes.uv?.array||new Float32Array(g.attributes.position.count*2));}const join=a=>{const b=new Float32Array(a.reduce((n,x)=>n+x.length,0));let k=0;for(const x of a){b.set(x,k);k+=x.length;}return b;};const g=new T.BufferGeometry();g.setAttribute('position',new T.BufferAttribute(join(positions),3));g.setAttribute('normal',new T.BufferAttribute(join(normals),3));g.setAttribute('uv',new T.BufferAttribute(join(uvs),2));g.computeBoundingSphere();const o=new T.Mesh(g,material);o.castShadow=material!==mats.bulb&&material!==mats.water;o.receiveShadow=true;group.add(o);}}
 const dreamStage=window.NEVERLAND_DREAM_STAGE({T,scene,stat,mats,mesh,cube,ball,cylinder,beam,torus,curve,bulb,batch});
+const coasterModel=window.NEVERLAND_COASTER.createModel({T,scene,cube,ball,cylinder,beam,curve,batch});
 batch(stat);batch(boat);for(const g of gondolas)batch(g);batch(wheel,gondolas);for(const g of horses)batch(g);for(const g of cups)batch(g);
 // Sprites are actual transparent textures for the established keeper artwork.
 const keeperArt=JSON.parse(document.getElementById('keeper-art').textContent),keeperTextures=new Map(),keeperLoader=new T.TextureLoader();
@@ -200,6 +203,7 @@ function render(){requestAnimationFrame(render);const t=clock.getElapsedTime(),s
  const revealed=state.config.exit;exitGroup.visible=particles.visible=revealed;if(revealed){const r=L.rides[state.config.exitRide],x=r.control[0]+4,z=r.control[1]+2,a=state.exitReveal.age;exitGroup.position.set(x,0,z);exitGroup.scale.y=Math.max(.015,Math.min(1,(a-.8)/3.2));for(let i=0;i<particleList.length;i++){const ang=t*.6+i*2.4,radius=a<4?3.5*(1-exitGroup.scale.y)+.7:1.5;particleList[i].position.set(x+Math.cos(ang)*radius,.2+(t*.7+i*.31)%5,z+Math.sin(ang)*radius);}}
  revealBeams.visible=revealed&&state.exitReveal.age<6&&!(window.NEVERLAND_TOOLS?.settings.reduced||matchMedia('(prefers-reduced-motion: reduce)').matches);if(revealBeams.visible){const r=L.rides[state.config.exitRide];revealBeams.position.set(r.control[0]+4,0,r.control[1]+2);beamMaterial.opacity=.13*(1-state.exitReveal.age/6);}
  waypoint.visible=!!state.config.target&&!overview;if(waypoint.visible)waypoint.position.set(state.config.target[0],2.8+Math.sin(t*2)*.12,state.config.target[1]);
+ coasterModel.update(camera,!!state.passage||!!state.interior||!!state.config.epilogue);
  const inPassage=!!state.passage,inside=!!state.interior||inPassage;for(const object of[stat,boatPivot,wheel,carousel,tea])object.visible=!inside;dreamStage.update(t,inside);
  if(inside){keeperSprite.visible=false;clueGroups.forEach(o=>o.visible=false);exitGroup.visible=particles.visible=revealBeams.visible=waypoint.visible=false;}
  if(inPassage){keeperSprite.visible=true;keeperSprite.position.set(0,1.5,state.player.z+4);keeperRedUniform.value=1;keeperSprite.material.fog=false;}else keeperSprite.material.fog=true;

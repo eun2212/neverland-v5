@@ -1,0 +1,13 @@
+#coaster-board{position:fixed;z-index:43;inset:auto max(1rem,calc((100% - 36rem)/2)) 4.6rem;padding:1rem;border:1px solid #c5a574;border-radius:.75rem;background:#24172eed;color:#fff0cd;max-height:67dvh;overflow:auto}
+#coaster-board[hidden],#coaster-board.coaster-running .coaster-gears,#coaster-board.coaster-running h2+p{display:none}
+#coaster-board h2,#coaster-board p{margin:0 0 .65rem}
+#coaster-board button{min-height:44px;border:1px solid #d8bc86;border-radius:.45rem;background:#422e4d;color:#fff0cd;padding:.4rem .65rem}
+#coaster-board button:focus-visible{outline:3px solid #ffe3a4;outline-offset:2px}
+.coaster-gear-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;align-items:center;margin-bottom:.45rem}
+.coaster-gear-row button{touch-action:none;position:relative;z-index:1;user-select:none}
+.coaster-gear-row button:disabled{opacity:.55}
+.coaster-gear-slot{text-align:center;border:1px dashed #c4aa82;border-radius:.45rem;padding:.45rem}
+.coaster-gear-slot.latched{border-style:solid;background:#385748}
+.coaster-active #world-mobile,.coaster-active #world-interact,.coaster-active #scenic-view{display:none!important}
+
+.coaster-active #walk-journal,.coaster-active #walking-map,.coaster-active #walking-help{display:none!important}

@@ -6,7 +6,7 @@ const T=lib.THREE;
 const ctx=new Proxy({createImageData:(w,h)=>({data:new Uint8ClampedArray(w*h*4)})},{get:(o,k)=>o[k]??(()=>{})});
 const canvas=()=>({width:1,height:1,style:{},getContext:()=>ctx});
 const root={children:[{},{}],insertBefore(){},clientWidth:800,clientHeight:600,classList:{toggle(){},add(){},remove(){}}};
-let next,draws=0,park;
+let next,draws=0,park,camera,now=0,reduced=false;
 class Renderer{
  constructor(){
   this.domElement=canvas();
@@ -18,7 +18,7 @@ class Renderer{
  getPixelRatio(){return this.ratio}
  setSize(w,h){this.domElement.width=w;this.domElement.height=h}
  setRenderTarget(){}
- render(scene){draws++;if(scene.children.length>10)park=scene;}
+ render(scene,view){draws++;if(scene.children.length>10){park=scene;camera=view;}}
 }
 const art={'00':{src:'mock'}};
 const document={
@@ -39,9 +39,9 @@ Object.assign(browser,{
  }}
 });
 const sandbox={window:browser,document,devicePixelRatio:1,innerWidth:800,innerHeight:600,
- s:{phase:'main'},newGame(){},matchMedia:()=>({matches:false}),requestAnimationFrame:fn=>{next=fn;return 1},performance};
+ s:{phase:'main'},newGame(){},matchMedia:()=>({matches:reduced}),requestAnimationFrame:fn=>{next=fn;return 1},performance:{now:()=>now}};
 vm.createContext(sandbox);
-for(const file of ['carnival-layout.js','castle-scene.js','carnival-scene.js','lost-boys.js']){
+for(const file of ['carnival-layout.js','castle-scene.js','coaster.js','carnival-scene.js','lost-boys.js']){
  vm.runInContext(fs.readFileSync(path.join(__dirname,file),'utf8'),sandbox,{filename:file});
 }
 assert(browser.carnivalScene);
@@ -59,3 +59,50 @@ browser.neverlandWorld.state.interior=null;
 browser.neverlandWorld.state.passage={};
 next();assert(dolls.every(doll=>!doll.visible),'ordinary park dolls stay outside the passage');
 console.log('PASS: real Three.js geometry builds and renders its first frame with a WebGL adapter.');
+
+function element(){
+ const handlers={},children=[];
+ return {
+  children,style:{},classList:{add(){},remove(){}},setAttribute(){},append(...nodes){children.push(...nodes);},
+  addEventListener(type,handler){handlers[type]=handler;},focus(){document.activeElement=this;},
+  fire(type,event){handlers[type](event);},setPointerCapture(id){this.captured=id;},
+  getBoundingClientRect(){return {left:120,right:200,top:20,bottom:70};}
+ };
+}
+const board=element(),tray=element(),status=element(),leave=element();
+const nodes={h2:element(),'.coaster-gears':tray,'[role=status]':status,'[data-coaster-leave]':leave};
+board.querySelector=key=>nodes[key];
+document.createElement=tag=>tag==='section'?board:element();
+document.body.append=()=>{};
+document.body.classList.add=()=>{};
+document.body.classList.remove=()=>{};
+browser.neverlandWorld.state.passage=null;
+let returns=0;
+browser.NEVERLAND_COASTER.open(()=>returns++);
+const [first,second,third]=tray.children.map(row=>row.children[0]);
+first.fire('pointerdown',{button:0,pointerId:11,clientX:10,clientY:30});
+assert.equal(first.captured,11);
+first.fire('pointermove',{pointerId:11,clientX:160,clientY:35});
+assert.equal(first.style.translate,'150px 5px');
+first.fire('pointerup',{pointerId:11,clientX:80,clientY:35});
+assert(!first.disabled,'incorrect target does not latch');
+first.fire('pointerdown',{button:0,pointerId:12,clientX:10,clientY:30});
+first.fire('pointerup',{pointerId:12,clientX:160,clientY:35});
+assert(first.disabled,'touch pointer drop latches the gear');
+second.fire('click',{detail:0});
+third.fire('click',{detail:0});
+assert.match(status.textContent,/출발/);
+next();
+const train=park.getObjectByName('north-coaster-train');
+assert.equal(train.children.length,3);
+const start=train.children[0].position.clone();
+now=5000;next();
+assert(train.children[0].position.distanceTo(start)>3,'train travels on the track');
+reduced=true;next();const fixedCamera=camera.position.clone();
+now=10000;next();
+assert(camera.position.equals(fixedCamera),'reduced motion keeps the camera still');
+now=30001;next();
+assert.match(status.textContent,/도착/);
+assert(train.children[0].position.distanceTo(start)<.001,'train stops at the station after one lap');
+leave.onclick();assert.equal(returns,1);assert(!browser.NEVERLAND_COASTER.active);
+console.log('PASS: captured gear drag, keyboard latching, three-car motion, station return, and reduced-motion camera.');

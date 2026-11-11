@@ -5,12 +5,15 @@ window.NEVERLAND_LAYOUT={
  keepers:[[-3,18],[13,-32],[-13,-32],[-13,5],[13,5]],
  spawn:{x:0,z:24,yaw:0},entry:[0,50],center:[0,-24],bounds:{minX:-74,maxX:74,minZ:-95,maxZ:61},castleExit:[0,-16],
  shops:[{id:"drinks",name:"별빛 음료 코너",x:-63,z:-24,door:[-63,-20.4]},{id:"candy",name:"달구름 솜사탕",x:63,z:-24,door:[63,-20.4]}],
+ coaster:{name:"별바람 롤러코스터",door:[-13,-67],bounds:[-25,25,-92,-70]},
  castleDistance(x,z){return Math.hypot(Math.max(0,Math.abs(x)-5.9),Math.max(0,Math.abs(z-this.center[1])-4.65));},
  terrain(x,z){const r=Math.hypot(x,z+24);if(r<9.8)return .28;if(r>=9.8&&r<=14.2&&(Math.abs(x)<2.8||Math.abs(z+24)<2.8)){const t=(r-9.8)/4.4;return .28+Math.sin(t*Math.PI)*.55;}return 0;},
  water(x,z){const r=Math.hypot(x,z+24);return r>10&&r<14&&Math.abs(x)>2.7&&Math.abs(z+24)>2.7;},
  colliders(){const c=[],b=(x,z,w,d)=>c.push({a:x-w/2-.2,b:x+w/2+.2,l:z-d/2-.2,r:z+d/2+.2});
   b(0,-24,11.8,9.3);b(this.rides[0].x,this.rides[0].z,12.1,6);for(const shop of this.shops){b(shop.x,shop.z+.45,4.8,1.4);for(const x of [-2.65,2.65])for(const z of [-1.75,1.75])b(shop.x+x,shop.z+z,.28,.28);}
   for(const x of[-6.6,6.6])b(x,this.entry[1],2.4,2.4);
+  const [left,right,back,front]=this.coaster.bounds;
+  b((left+right)/2,(back+front)/2,right-left,front-back);
   for(const r of this.rides)b(r.control[0],r.control[1],.7,.7);
   for(const x of[-29.6,-16.4])b(x,-6,.3,10);b(-23,-11,13,.3);for(const x of[-27,-23,-19])b(x,-7,.18,5);
   return c;

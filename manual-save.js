@@ -23,6 +23,7 @@
  }
  function reason(){
   const world=world3d.state;
+  if(window.NEVERLAND_COASTER?.active)return '롤러코스터에서 공원으로 돌아오면 저장할 수 있습니다.';
   if(window.carnivalScene?.castleEntering||window.NEVERLAND_ROOM?.transitioning)return '침실 장면이 끝나면 저장할 수 있습니다.';
   if(window.NEVERLAND_TOOLS?.testing)return '제작 테스트 중에는 저장할 수 없습니다.';
   if(forcedRide3d!==null||pendingRideResult||world.interior||world.passage)
@@ -39,7 +40,7 @@
  function capture(){
   const world=world3d.state;
   return {
-   version,time:Date.now(),parkRevision:3,
+   version,time:Date.now(),parkRevision:4,
    story:encode({
     dollMemories:{},dollKeeperAsked:false,
     cheshire:{met:false,separated:false,incident:false,choice:'',evidence:[]},
@@ -62,7 +63,12 @@
     return {x,z:z-3.7,yaw:Math.PI,pitch:0,eye:1.65};
    }
   }
-  return world3d.canRestorePark(player.x,player.z,config)?player:null;
+  if(world3d.canRestorePark(player.x,player.z,config))return player;
+  const coaster=window.NEVERLAND_LAYOUT.coaster;
+  const [left,right,back,front]=coaster.bounds;
+  if((save.parkRevision??1)<4&&progress.free&&player.x>left-.2&&player.x<right+.2&&player.z>back-.2&&player.z<front+.2)
+   return {...player,x:coaster.door[0],z:coaster.door[1]};
+  return null;
  }
  function validate(save){
   if(!object(save)||save.version!==version||!integer(save.time)||!Number.isFinite(new Date(save.time).getTime()))return false;
