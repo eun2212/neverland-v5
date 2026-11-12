@@ -66,6 +66,13 @@ test(s.cleared.has(1)&&s.clues.has(1)&&s.K===6&&keeperStoryState.responses.has('
 test(world3d.state.player.x===22&&world3d.state.player.z===-30&&world3d.state.player.yaw===1.2&&world3d.state.player.pitch===-.18,'position and camera restore exactly');
 test(s.dollMemories.test.met&&window.NEVERLAND_DIALOGUE.history.some(x=>x.text==='기억'),'cast memories and dialogue log restore');
 test(!world3d.state.config.paused&&!dialog.open,'restored park permits walking');
+const finaleSave=JSON.parse(localStorage.getItem(key+2));
+finaleSave.story.exit=true;
+finaleSave.story.survivedRides=3;
+localStorage.setItem(key+2,JSON.stringify(finaleSave));
+newGame();$('manual-save-load').onclick();button(2).onclick();
+test(world3d.state.config.exit&&world3d.state.config.keeperMelt===1&&$('keeper').src.includes('keeper-final-'),'loading a discovered exit restores the final appearance');
+
 s.phase='story';$('manual-save-menu').onclick();
 test(button(1).disabled&&button(2).disabled&&button(3).disabled,'dialogue blocks saving');
 dialog.close();explore3d();forcedRide3d=1;$('manual-save-menu').onclick();
