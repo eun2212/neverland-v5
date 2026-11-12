@@ -32,3 +32,56 @@ window.NEVERLAND_LAYOUT=(()=>{
  }
  };
 })();
+
+// The chase uses the same cell map for walls, movement and route finding.
+window.NEVERLAND_CHASE_MAZE=(()=>{
+ const rows=[
+  '#####E#####',
+  '#.....#...#',
+  '#.###.#.#.#',
+  '#...#...#.#',
+  '###..####.#',
+  '#...#.....#',
+  '#.###.###.#',
+  '#.....#...#',
+  '###.###.#.#',
+  '#...#...###',
+  '#.###.#####',
+  '#....S#####',
+  '#####.#####',
+  '#####.#####',
+  '#####M#####'
+ ];
+ const size=4, startRow=11, middle=5;
+ const point=(row,col)=>({x:(col-middle)*size,z:(row-startRow)*size});
+ const cell=(x,z)=>({row:Math.round(z/size)+startRow,col:Math.round(x/size)+middle});
+ const open=({row,col})=>Boolean(rows[row]?.[col]&&rows[row][col]!=='#');
+ const find=tag=>rows.flatMap((line,row)=>[...line].map((value,col)=>({value,row,col}))).find(item=>item.value===tag);
+ const start=find('S'),spawn=find('M'),exit=find('E');
+ const key=({row,col})=>row*rows[0].length+col;
+ function field(target){
+  const queue=[target],distance=new Map([[key(target),0]]);
+  for(let i=0;i<queue.length;i++){
+   const {row,col}=queue[i];
+   for(const next of [{row:row-1,col},{row,col:col-1},{row,col:col+1},{row:row+1,col}]){
+    if(!open(next)||distance.has(key(next)))continue;
+    distance.set(key(next),distance.get(key(queue[i]))+1);
+    queue.push(next);
+   }
+  }
+  return {distance,next(from){
+   const {row,col}=from,depth=distance.get(key(from));
+   return [{row:row-1,col},{row,col:col-1},{row,col:col+1},{row:row+1,col}].find(next=>open(next)&&distance.get(key(next))===depth-1);
+  }};
+ }
+ const toExit=field(exit);
+ const walls=rows.flatMap((line,row)=>[...line].flatMap((value,col)=>value==='#'?[point(row,col)]:[]));
+ const stars=[];
+ for(let at=start;at;at=toExit.next(at))stars.push(point(at.row,at.col));
+ return {size,rows,walls,stars,start,spawn,exit,point,cell,key,open,field,toExit,
+  valid(x,z){
+   const margin=.31;
+   return [-margin,margin].every(dx=>[-margin,margin].every(dz=>open(cell(x+dx,z+dz))));
+  }
+ };
+})();

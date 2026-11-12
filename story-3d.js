@@ -168,7 +168,7 @@ function finishFracture3d(){
 }
 
 world3d.connect(action=>{
- if(action.type==='mascot'){window.NEVERLAND_MASCOT.catDialogue();return;}
+ if(action.type==='mascot'){window.NEVERLAND_MASCOT.catDialogue(false,action.place);return;}
  if(action.type==='booth-game'){openShop3d(window.NEVERLAND_LAYOUT.games.find(game=>game.id===action.game));return;}
  if(action.type==='coaster'&&window.NEVERLAND_COASTER){
   world3d.configure({paused:true});

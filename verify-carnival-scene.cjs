@@ -123,9 +123,18 @@ assert(train.children[0].position.distanceTo(start)<.001,'train stops at the sta
 leave.onclick();assert.equal(returns,1);assert(!browser.NEVERLAND_COASTER.active);
 console.log('PASS: captured gear drag, keyboard latching, three-car motion, station return, and reduced-motion camera.');
 
+const transformation=browser.NEVERLAND_MASCOT_SCENE(T,new T.Scene());
+browser.NEVERLAND_MASCOT={reveal:{}};
+transformation.update(browser.neverlandWorld.state,10,false);
+assert(transformation.escape.getObjectByName('transforming-ragdoll').visible);
+assert(!transformation.escape.getObjectByName('neverland-pursuer').visible);
+transformation.update(browser.neverlandWorld.state,12,false);
+assert(!transformation.escape.getObjectByName('transforming-ragdoll').visible);
+assert(transformation.escape.getObjectByName('neverland-pursuer').visible);
+
 browser.NEVERLAND_MASCOT={active:true,chase:{monster:{x:.25,z:4}},catSpot:{x:3,z:3}};
 browser.neverlandWorld.state.player={x:0,z:0,yaw:0,pitch:0,eye:1.65};
 next();
-assert(park.getObjectByName('hooded-pursuer'),'dedicated chase scene renders hooded monster');
+assert(park.getObjectByName('neverland-pursuer'),'dedicated chase scene renders pursuer');
 assert(park.getObjectByName('broken-keeper-key'),'fixed exit has broken key geometry');
-console.log('PASS: Three.js chase scene renders the hooded pursuer and fixed exit.');
+console.log('PASS: Three.js chase scene renders the pursuer and fixed exit.');

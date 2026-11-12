@@ -331,6 +331,10 @@
   if(options.shop){
    const drinks=options.shop.id==='drinks';
    message(drinks?'별빛 소다 위로 레몬빛 거품이 톡톡 올라옵니다.':'솜사탕 기계에서 분홍색 설탕 실이 구름처럼 피어납니다.');
+   if(drinks&&window.NEVERLAND_MASCOT){
+    const pet=()=>{message(window.NEVERLAND_MASCOT.encounter('drinks'));button('고양이 쓰다듬기',pet);copy.querySelector('button').focus();};
+    button('고양이 쓰다듬기',pet);
+   }
    return;
   }
   if(action==='book'){

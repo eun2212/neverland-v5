@@ -81,6 +81,8 @@ function nearest(){
   if(interior.ride===3&&near(d.finish))return{type:interior.solved?'mirror-finish':'mirror-locked',ride:3,label:interior.solved?'E · 열린 빛의 출구로 나가기':'빛의 출구 · 먼저 장치를 풀어야 합니다'};
   if(near(d.exit))return{type:'interior-leave',ride:interior.ride,label:'E · 공원으로 돌아가기'};
   if(near(d.seat))return{type:'interior-seat',ride:interior.ride,label:'E · '+(interior.ride===2?'목마에 올라타기':'좌석에 앉기')};
+  const cat=window.NEVERLAND_MASCOT?.rideSpot(interior.ride);
+  if(config.free&&config.forcedRide<0&&cat&&Math.hypot(player.x-cat.x,player.z-cat.z)<1.35)return{type:'mascot',place:'ride',label:'E · 가르랑거리는 고양이 쓰다듬기'};
   if(interior.ride!==3&&near(d.control))return{type:'interior-control',ride:interior.ride,label:'E · '+(interior.ride===3?'거울 빛 장치 조작하기':'장치 살펴보기 · 탑승 후 작동')};
   return null;
  }
@@ -138,7 +140,7 @@ window.neverlandWorld={
  placeAtShopDoor(shop){Object.assign(player,layout.boothExit(shop),{pitch:0,eye:1.65});keys.clear();},
  placeAtCaptainStart(){const [x,z]=layout.rides[0].control;Object.assign(player,{x,z:z-3.7,yaw:Math.PI,pitch:0,eye:1.65});keys.clear();},
  placeAtCastleGate(){const [x,z]=layout.castleExit;Object.assign(player,{x,z,yaw:Math.PI,pitch:0,eye:1.65});keys.clear();},
- jumpToPark(x,z){interior=null;parkReturn=null;passage=null;passageReturn=null;config={...config,epilogue:0,forcedRide:-1};Object.assign(player,{x,z,yaw:0,pitch:0,eye:1.65});keys.clear();runUntil={};document.exitPointerLock?.();},
+ jumpToPark(x,z,yaw=0){interior=null;parkReturn=null;passage=null;passageReturn=null;config={...config,epilogue:0,forcedRide:-1};Object.assign(player,{x,z,yaw,pitch:0,eye:1.65});keys.clear();runUntil={};document.exitPointerLock?.();},
  enterEpilogue(id){interior=null;parkReturn=null;passage=null;config={...config,paused:false,free:true,exit:false,keeperMelt:0,confronting:false,forcedRide:-1,epilogue:id,storyPhase:'epilogue'};Object.assign(player,{x:0,z:id===3?-8:5,yaw:0,pitch:0,eye:1.65});keys.clear();document.exitPointerLock?.();},
  finishEpilogue(){config={...config,paused:true,epilogue:0,storyPhase:'ending'};keys.clear();},
  sitEpilogue(){if(config.epilogue!==5)return false;Object.assign(player,{x:-2,z:.2,yaw:-1.1,pitch:-.05,eye:1.1});keys.clear();return true;},

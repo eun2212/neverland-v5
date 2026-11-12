@@ -105,9 +105,11 @@
  }
  function build(){
   dialog=document.createElement('dialog');dialog.id='booth-game';dialog.setAttribute('aria-labelledby','booth-game-title');
-  dialog.innerHTML='<h2 id="booth-game-title"></h2><p role="status"></p><div class="booth-game-body"></div><button type="button" data-booth-close>공원으로 돌아가기</button>';
+  dialog.innerHTML='<h2 id="booth-game-title"></h2><p role="status"></p><div class="booth-game-body"></div><button type="button" data-booth-cat>고양이 안아 주기</button><p data-cat-response role="status"></p><button type="button" data-booth-close>공원으로 돌아가기</button>';
   document.body.append(dialog);
   title=dialog.querySelector('h2');status=dialog.querySelector('[role=status]');body=dialog.querySelector('.booth-game-body');
+  const cat=dialog.querySelector('[data-booth-cat]'),response=dialog.querySelector('[data-cat-response]');
+  cat.onclick=()=>{response.textContent=window.NEVERLAND_MASCOT?.encounter('game')||'';};
   dialog.querySelector('[data-booth-close]').onclick=()=>close(true);
   dialog.addEventListener('cancel',event=>{event.preventDefault();close(true);});
  }
@@ -125,6 +127,8 @@
    if(active||!booth)return;
    if(!dialog)build();
    active={onReturn,frame:0};
+   dialog.querySelector('[data-booth-cat]').hidden=!window.NEVERLAND_MASCOT;
+   dialog.querySelector('[data-cat-response]').textContent='';
    title.textContent=booth.name;dialog.showModal();start(id);
   },
   close

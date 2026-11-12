@@ -33,32 +33,40 @@ window.NEVERLAND_MASCOT_SCENE=function(T,park){
  mesh(cat,new T.CylinderGeometry(.27,.27,.045,16),gold,.06,.92,.43);
  star(cat,0,.49,.62,.093);
  const catLight=ball(park,gold,3,.6,3,.13);catLight.name='ragdoll-star-light';
- box(escape,floor,0,-.13,-32,8.8,.25,86);
- for(const side of [-1,1]){
-  box(escape,edge,side*4.47,1.17,-32,.35,2.35,86);
-  for(let z=5;z>-69;z-=5){
-   box(escape,purple,side*4.2,.9,z,.32,1.8,.36);
-   ball(escape,gold,side*4.16,1.86,z,.11);
-  }
+ const maze=window.NEVERLAND_CHASE_MAZE;
+ const {size,rows}=maze;
+ const {x:exitX,z:exitZ}=maze.point(maze.exit.row,maze.exit.col);
+ const rear=maze.point(rows.length-1,0).z;
+ box(escape,floor,0,-.13,(exitZ+rear)/2,size*rows[0].length,.25,size*rows.length);
+ for(const {x,z} of maze.walls){
+  box(escape,edge,x,1.55,z,size,3.1,size);
+  box(escape,purple,x,3.1,z,size,.14,size);
  }
- for(let z=-3;z>-64;z-=7){
-  const mark=star(escape,0,.012,z,.45);mark.rotation.x=-Math.PI/2;
+ for(const {x,z} of maze.stars.slice(1)){
+  const mark=star(escape,x,.018,z,.37);mark.rotation.x=-Math.PI/2;
  }
- for(const side of [-1,1])box(escape,gold,side*1.55,1.45,-69.9,.20,2.9,.28);
- box(escape,gold,0,2.91,-69.9,3.3,.19,.28);star(escape,0,3.55,-69.85,.71);
- box(escape,mat(0xffe6ad,true),0,1.37,-70.1,2.92,2.72,.06);
- const brokenKey=new T.Group();brokenKey.name='broken-keeper-key';brokenKey.position.set(1.55,1.18,-69.64);escape.add(brokenKey);
+ const doorZ=exitZ-1.8;
+ for(const side of [-1,1])box(escape,gold,exitX+side*1.55,1.45,doorZ,.20,2.9,.28);
+ box(escape,gold,exitX,2.91,doorZ,3.3,.19,.28);
+ star(escape,exitX,3.55,doorZ,.71);
+ box(escape,mat(0xffe6ad,true),exitX,1.37,doorZ-.2,2.92,2.72,.06);
+ const brokenKey=new T.Group();brokenKey.name='broken-keeper-key';brokenKey.position.set(exitX+1.55,1.18,doorZ+.26);escape.add(brokenKey);
  const ring=mesh(brokenKey,new T.TorusGeometry(.23,.046,8,20),gold,-.07,.39,0);
  ring.rotation.z=-.27;
  box(brokenKey,gold,-.03,.11,0,.105,.42,.10).rotation.z=-.24;
  box(brokenKey,gold,.14,-.21,0,.095,.32,.10).rotation.z=.36;
  box(brokenKey,gold,.19,-.32,0,.22,.085,.10).rotation.z=.36;
- const monster=new T.Group();monster.name='hooded-pursuer';escape.add(monster);
+ const changingCat=cat.clone();changingCat.name='transforming-ragdoll';escape.add(changingCat);
+ const monster=new T.Group();monster.name='neverland-pursuer';escape.add(monster);
  ball(monster,purple,0,1.63,-.53,.94,.72,1.27);
  ball(monster,pink,0,2.11,.37,.86,.69,.68);
  ball(monster,purple,0,2.1,.51,.75,.57,.64);
  ball(monster,dark,0,2.06,.94,.61,.47,.21);
  const eyes=[-.24,.24].map(x=>ball(monster,gold,x,2.13,1.128,.068));
+ for(const side of [-1,1]){
+  const ear=mesh(monster,new T.ConeGeometry(.24,.64,6),purple,side*.57,2.79,.49);
+  ear.rotation.z=-side*.22;
+ }
  const sleeves=[];
  for(const side of [-1,1]){
   const sleeve=ball(monster,purple,side*.78,1.0,.37,.35,1.1,.39);
@@ -67,19 +75,34 @@ window.NEVERLAND_MASCOT_SCENE=function(T,park){
   ball(monster,purple,side*.63,.59,-1.03,.23,.64,.34);
   ball(monster,pink,side*.62,.11,-1.28,.27,.12,.42);
  }
+ let revealStart=null;
  return {escape,update(state,t,still){
   const feature=window.NEVERLAND_MASCOT;
   const guide=feature?.guide,active=feature?.chase;
-  const visible=!!feature&&!state.config.epilogue&&!state.passage&&(guide||(!state.interior&&state.config.free));
+  const interior=state.interior;
+  const rideCat=interior&&!interior.running&&state.config.free&&state.config.forcedRide<0&&feature?.rideSpot(interior.ride);
+  const spot=guide||rideCat||(!interior&&state.config.free&&feature?.catSpot);
+  const visible=spot&&!state.config.epilogue&&!state.passage;
   cat.visible=!!visible;catLight.visible=!!visible&&!guide;
   if(visible){
-   const spot=guide||feature.catSpot,near=Math.hypot(state.player.x-spot.x,state.player.z-spot.z)<2.35;
+   const near=Math.hypot(state.player.x-spot.x,state.player.z-spot.z)<2.35;
    const rub=near&&!guide&&!still?Math.sin(t*3.4)*.25:0;
    cat.position.set(spot.x+rub,0,spot.z);
    cat.rotation.set(0,guide?Math.atan2(state.player.x-spot.x,state.player.z-spot.z):.45,rub*.22);
    catLight.position.set(spot.x+(guide?0:.42),.54,spot.z+(guide?0:.22));
    catLight.visible=!!visible&&(!!guide||near);
   }
+  const reveal=feature?.reveal;
+  if(reveal)revealStart??=t;
+  else revealStart=null;
+  const progress=reveal?(still?1:Math.min(1,(t-revealStart)/1.65)):1;
+  changingCat.visible=!!reveal&&progress<.64;
+  changingCat.position.set(-4,0,0);
+  changingCat.rotation.y=Math.PI/2;
+  changingCat.scale.set(1+progress*.8,1+progress*1.5,1+progress*.8);
+  monster.visible=!!active||!!reveal&&progress>=.42;
+  monster.scale.setScalar(reveal?Math.max(.3,progress):1);
+  if(reveal){monster.position.set(-4,0,0);monster.rotation.y=Math.PI/2;}
   if(active){
    const p=state.player,q=active.monster;
    monster.position.set(q.x,0,q.z);monster.lookAt(p.x,0,p.z);

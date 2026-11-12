@@ -213,6 +213,10 @@ function render(){requestAnimationFrame(render);const t=clock.getElapsedTime(),s
  const desiredFov=state.passage?(w/h<.85?98:75):overview?(w/h<.7?78:48):(w/h<.7?78:65);if(camera.fov!==desiredFov){camera.fov=desiredFov;camera.updateProjectionMatrix();}const p=state.player;if(overview){const a=.12,fit=Math.max(1,.72/(w/h));camera.position.set(Math.sin(a)*125*fit,95*fit,Math.cos(a)*125*fit-20);camera.lookAt(0,0,-20);}else{camera.position.set(p.x,p.eye+L.terrain(p.x,p.z),p.z);camera.rotation.order='YXZ';camera.rotation.set(p.pitch,p.yaw,0);}
  const reduced=window.NEVERLAND_TOOLS?.settings.reduced||matchMedia('(prefers-reduced-motion: reduce)').matches;
  mascotModels.update(state,t,reduced);
+ if(window.NEVERLAND_MASCOT?.reveal){
+  camera.position.set(0,1.55,0);camera.lookAt(-4,1.25,0);
+  renderBloom(w,h,mascotModels.escape);return;
+ }
  if(window.NEVERLAND_MASCOT?.active){
   camera.position.set(p.x,1.65,p.z);camera.rotation.order='YXZ';camera.rotation.set(p.pitch,p.yaw,0);
   renderBloom(w,h,mascotModels.escape);return;

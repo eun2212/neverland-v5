@@ -1,7 +1,14 @@
 'use strict';
 (function(){
- const exitZ=-69.5, limit=25.5;
- let run=null,mazeTime=0,mazeField=null,guide=null;
+ const maze=window.NEVERLAND_CHASE_MAZE,limit=64;
+ const center=({row,col})=>maze.point(row,col);
+ const startPoint=center(maze.start),exitPoint=center(maze.exit);
+ function turnHint(player,target){
+  const angle=Math.atan2(player.x-target.x,player.z-target.z)-player.yaw;
+  const turn=Math.atan2(Math.sin(angle),Math.cos(angle));
+  return Math.abs(turn)<.48?'↑':Math.abs(turn)>2.5?'↶':turn>0?'←':'→';
+ }
+ let run=null,mazeTime=0,mazeField=null,guide=null,reveal=null;
  const catSpot={x:3,z:3};
  const reduced=()=>window.NEVERLAND_TOOLS?.settings.reduced||matchMedia('(prefers-reduced-motion: reduce)').matches;
  const ui=document.createElement('div');
@@ -21,15 +28,16 @@
   voice.connect(envelope).connect(audio.destination);voice.start(now);voice.stop(now+.57);
  }
  function start(done,origin=world3d.state.player){
-  run={done,origin,age:0,started:false,failed:false,monster:{x:0,z:10},last:null};
-  close();explore3d('별이 빛나는 고정된 출구로 달리세요.');
-  world3d.jumpToPark(0,0);
+  reveal=null;
+  run={done,origin,age:0,started:false,failed:false,monster:center(maze.spawn),waypoint:null,targetKey:null,field:null};
+  close();explore3d('바닥의 별빛을 따라 출구로 달리세요. WASD 이동 · Shift 달리기');
+  world3d.jumpToPark(startPoint.x,startPoint.z,Math.PI/2);
   document.body.classList.add('chase-active');
-  ui.hidden=false;ui.textContent='W 또는 ↑로 전진 · 움직이면 제한 시간이 시작됩니다.';
+  ui.hidden=false;ui.textContent='별빛을 따라가세요 · 움직이면 제한 시간이 시작됩니다.';
  }
  function resetMaze(){mazeTime=0;guide=null;}
  function clear(){
-  run=null;resetMaze();ui.hidden=true;document.body.classList.remove('chase-active');
+  run=null;reveal=null;resetMaze();ui.hidden=true;document.body.classList.remove('chase-active');
  }
  function finish(){
   if(!run||run.failed)return;
@@ -44,21 +52,49 @@
   retry.onclick=()=>{const {done,origin}=run;start(done,origin);};
   retry.focus?.();
  }
+ function pursue(player,dt){
+  const targetCell=maze.cell(player.x,player.z),targetKey=maze.key(targetCell);
+  if(run.targetKey!==targetKey){
+   run.field=maze.field(targetCell);
+   run.targetKey=targetKey;
+  }
+  const monster=run.monster,cell=maze.cell(monster.x,monster.z);
+  if(!run.waypoint){
+   const from=center(cell);
+   if(Math.hypot(monster.x-from.x,monster.z-from.z)>.001&&maze.key(cell)!==targetKey){
+    run.waypoint=from;
+   }else{
+    const next=run.field.next(cell);
+    if(next)run.waypoint=center(next);
+   }
+  }
+  const target=run.waypoint||player;
+  const dx=target.x-monster.x,dz=target.z-monster.z,distance=Math.hypot(dx,dz);
+  const step=Math.min(distance,dt*(1.85+Math.min(.35,run.age*.008)));
+  if(distance){
+   monster.x+=dx/distance*step;
+   monster.z+=dz/distance*step;
+  }
+  if(distance<=step)run.waypoint=null;
+ }
  function tick(player,dt){
   if(!run||run.failed)return;
-  if(!run.last)run.last={x:0,z:0};
-  if(!run.started&&Math.hypot(player.x-run.last.x,player.z-run.last.z)>.001){
+  if(!run.started&&Math.hypot(player.x-startPoint.x,player.z-startPoint.z)>.001){
    run.started=true;scream();
   }
   if(!run.started)return;
   run.age+=dt;
-  if(player.z<=exitZ){finish();return;}
-  const dx=player.x-run.monster.x,dz=player.z-run.monster.z,distance=Math.hypot(dx,dz);
-  if(distance<1.15){fail('후드 괴물이 따라잡았습니다.');return;}
+  const cell=maze.cell(player.x,player.z);
+  if(Math.hypot(player.x-exitPoint.x,player.z-exitPoint.z)<1.35){finish();return;}
+  pursue(player,dt);
+  if(maze.key(cell)===maze.key(maze.cell(run.monster.x,run.monster.z))&&Math.hypot(player.x-run.monster.x,player.z-run.monster.z)<1.05){
+   fail('네버랜드가 당신을 따라잡았습니다.');return;
+  }
   if(run.age>=limit){fail('출구가 닫히기 전에 도착하지 못했습니다.');return;}
-  const step=dt*(2.75+Math.min(.40,run.age*.016));
-  run.monster.x+=dx/distance*step;run.monster.z+=dz/distance*step;
-  ui.textContent='출구까지 '+Math.ceil(player.z-exitZ)+'m · '+Math.ceil(limit-run.age)+'초';
+  const next=maze.toExit.next(cell);
+  const hint='키퍼의 별빛 '+turnHint(player,next?center(next):exitPoint);
+  const status=hint+' · '+Math.ceil(limit-run.age)+'초';
+  if(ui.textContent!==status)ui.textContent=status;
  }
  function mazeGuide(player,interior,dt,valid){
   if(interior?.ride!==3){resetMaze();return;}
@@ -91,9 +127,23 @@
   const angle=Math.atan2(-dx,-dz)-player.yaw,turn=Math.atan2(Math.sin(angle),Math.cos(angle));
   world3d.showGuide(Math.hypot(player.x-finish[0],player.z-finish[1])<1.7?'고양이가 흰 출구를 찾았습니다. E로 나가세요.':'고양이를 따라가세요 '+(Math.abs(turn)<.5?'↑':turn>0?'←':'→'));
  }
- function catDialogue(emergency=false){
-  const text=emergency?'고양이가 비상정지 손잡이를 당깁니다. 기구가 움직이기 전에 잠겼습니다. 장치를 다시 맞추세요.':'푸른 눈의 렉돌이 다리에 몸을 비비고 별 모양 전구를 켭니다.';
+ function rideSpot(ride){
+  const [x,z]=window.NEVERLAND_INTERIORS[ride].spawn;
+  return {x:x+2,z};
+ }
+ const encounters={
+  ride:'고양이가 안전바 아래에서 가르랑거립니다. 그 박자에 맞춰 멈춰 있던 기구의 전구가 하나씩 켜집니다.',
+  game:'고양이가 앞발을 들어 안아 달라는 듯 올려다봅니다. 품에 들자, 뒤쪽 점수판에 손님 한 명이 잠깐 더해집니다.',
+  drinks:'고양이가 발목에 몸을 비빕니다. 소다 거품 속 관람차 그림자가 고양이 꼬리가 흔들리는 쪽으로 함께 움직입니다.'
+ };
+ function encounter(place){
+  const text=encounters[place];
   window.NEVERLAND_DIALOGUE?.record('고양이',text);
+  return text;
+ }
+ function catDialogue(emergency=false,place=null){
+  const text=place?encounter(place):emergency?'고양이가 비상정지 손잡이를 당깁니다. 기구가 움직이기 전에 잠겼습니다. 장치를 다시 맞추세요.':'푸른 눈의 렉돌이 다리에 몸을 비비고 별 모양 전구를 켭니다.';
+  if(!place)window.NEVERLAND_DIALOGUE?.record('고양이',text);
   modal('<h1>별빛 고양이</h1><img class="mascot-portrait" src="assets/mascot-cat.png" alt="작은 모자와 금빛 장식을 한 렉돌"><p>'+text+'</p><button type="button" id="mascot-return">돌아가기</button>');
   $('mascot-return').onclick=()=>explore3d();
   $('mascot-return').focus?.();
@@ -111,14 +161,23 @@
  finishChoice=function(win,choice){
   const id=chooseEnding(win,choice);
   if(win&&(choice==='alone'||choice==='together')&&(id===2||id===5)){
-   story([['','후드를 쓴 형체가 길을 가로막는다. 키퍼는 열쇠를 꺾어 열린 출구를 고정한다.'],['키퍼','별빛이 보이는 쪽으로 가요. 문은 제가 붙잡고 있을게요.']],()=>start(()=>oldChoice(win,choice)));
+   const origin=world3d.state.player;
+   reveal={};
+   story([
+    ['','렉돌이 발치에 몸을 비빈다. 목에 달린 별이 꺼지자, 고양이의 등이 솟구치고 앞발이 바닥을 긁는다. 푸른 눈이 금빛으로 변한다.'],
+    ['네버랜드','내가 네버랜드야. 손님 발길이 끊긴 뒤로, 네가 처음이었어. 네가 나가면 또 아무도 없잖아.'],
+    ['키퍼','저도 손님이었어요. 나가려던 날, 이곳이 문을 삼켰죠. 그 뒤로 계속 여기 갇혀 있었어요.'],
+    ['','고양이가 있던 자리에서 거대한 형체가 일어선다. 난간이 솟아 길을 여러 갈래로 가른다. 키퍼가 열쇠를 꺾어 열린 문틈에 끼운다.'],
+    ['키퍼','제가 남긴 별을 따라가요. 문이 닫히기 전에 건너요!']
+   ],()=>start(()=>oldChoice(win,choice),origin));
    return;
   }
   return oldChoice(win,choice);
  };
  window.NEVERLAND_MASCOT={
-  catSpot,clear,resetMaze,tick,mazeGuide,catDialogue,
+  catSpot,rideSpot,clear,resetMaze,tick,mazeGuide,catDialogue,encounter,
+  get reveal(){return reveal;},
   get active(){return !!run;},get chase(){return run;},get guide(){return guide;},
-  valid(x,z){return Math.abs(x)<4.25&&z>=exitZ-1.4&&z<2;}
+  valid:maze.valid
  };
 })();
