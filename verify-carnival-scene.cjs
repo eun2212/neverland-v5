@@ -40,7 +40,7 @@ Object.assign(browser,{
 const sandbox={window:browser,document,devicePixelRatio:1,innerWidth:800,innerHeight:600,
  s:{phase:'main'},newGame(){},matchMedia:()=>({matches:reduced}),requestAnimationFrame:fn=>{next=fn;return 1},performance:{now:()=>now}};
 vm.createContext(sandbox);
-for(const file of ['carnival-layout.js','castle-scene.js','keeper-melt.js','coaster.js','carnival-scene.js','lost-boys.js']){
+for(const file of ['carnival-layout.js','castle-scene.js','keeper-melt.js','coaster.js','mascot-scene.js','carnival-scene.js','lost-boys.js']){
  vm.runInContext(fs.readFileSync(path.join(__dirname,file),'utf8'),sandbox,{filename:file});
 }
 assert(browser.carnivalScene);
@@ -122,3 +122,10 @@ assert.match(status.textContent,/도착/);
 assert(train.children[0].position.distanceTo(start)<.001,'train stops at the station after one lap');
 leave.onclick();assert.equal(returns,1);assert(!browser.NEVERLAND_COASTER.active);
 console.log('PASS: captured gear drag, keyboard latching, three-car motion, station return, and reduced-motion camera.');
+
+browser.NEVERLAND_MASCOT={active:true,chase:{monster:{x:.25,z:4}},catSpot:{x:3,z:3}};
+browser.neverlandWorld.state.player={x:0,z:0,yaw:0,pitch:0,eye:1.65};
+next();
+assert(park.getObjectByName('hooded-pursuer'),'dedicated chase scene renders hooded monster');
+assert(park.getObjectByName('broken-keeper-key'),'fixed exit has broken key geometry');
+console.log('PASS: Three.js chase scene renders the hooded pursuer and fixed exit.');

@@ -22,6 +22,7 @@
   return {...pick(value,fields),...Object.fromEntries(sets.map(key=>[key,new Set(value[key])]))};
  }
  function reason(){
+  if(window.NEVERLAND_MASCOT?.active)return '마지막 추격 중에는 저장할 수 없습니다.';
   const world=world3d.state;
   if(window.NEVERLAND_BOOTH_GAMES?.active)return '미니게임을 마치고 공원으로 돌아오면 저장할 수 있습니다.';
   if(window.NEVERLAND_COASTER?.active)return '롤러코스터에서 공원으로 돌아오면 저장할 수 있습니다.';
@@ -94,7 +95,7 @@
      !ride(story.ride)||!ride(story.exitRide)||!hasFields(story,storySets,v=>arrayOf(v,scalar))||
      !['visited','cleared','clues','eventChecks'].every(key=>arrayOf(story[key],ride))||
      !arrayOf(story.actions,a=>object(a)&&typeof a.kind==='string'&&ride(a.ride))||
-     !object(story.dollMemories))return false;
+     !object(story.dollMemories)||(story.catStopUsed!==undefined&&typeof story.catStopUsed!=='boolean'))return false;
   if(!hasFields(keeper,keeperNumbers,integer)||!hasFields(keeper,keeperFlags,v=>typeof v==='boolean')||
      keeper.orientation||typeof keeper.dream!=='string'||typeof keeper.stance!=='string'||
      !hasFields(keeper,keeperSets,v=>arrayOf(v,scalar)))return false;
@@ -115,7 +116,8 @@
   newGame();
   queue=[];after=null;puzzle=null;
   Object.assign(s,decode(story,['name','gender','temper','phase','actions','dollMemories',...storyNumbers,...storyFlags],storySets));
-  Object.assign(keeperStoryState,decode(keeper,['dream','stance',...keeperNumbers,...keeperFlags],keeperSets));
+  s.catStopUsed=story.catStopUsed===true;
+ Object.assign(keeperStoryState,decode(keeper,['dream','stance',...keeperNumbers,...keeperFlags],keeperSets));
   free3d=progress.free;intro3d=progress.intro;firstLever3d=progress.firstLever;target3d=progress.target;
   close();
   if(room?.first)sync3d();

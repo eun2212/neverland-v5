@@ -1,0 +1,4 @@
+#final-chase-status{position:fixed;top:12%;left:50%;transform:translateX(-50%);z-index:42;max-width:90%;padding:.65rem 1rem;background:#211733ed;color:#fff0c9;border:1px solid #b88ad1;border-radius:.55rem;text-align:center}
+#final-chase-status[hidden]{display:none}
+.chase-active #walking-map,.chase-active #walking-help,.chase-active #scenic-view,.chase-active #walk-journal{display:none!important}
+.mascot-portrait{display:block;width:min(100%,30rem);max-height:45dvh;object-fit:contain;margin:auto;border-radius:.6rem}

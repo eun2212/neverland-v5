@@ -46,7 +46,7 @@ leaveCastle3d(true);
 test(world3d.state.player.z===-16&&intro3d,'restored first room leaves to original intro');
 free3d=true;intro3d=false;s.keeperIntroduced=true;s.cleared.add(1);s.clues.add(1);s.K=4;s.ride=1;
 keeperStoryState.responses.add('question:1:keeper');
-s.dollMemories.test={met:true};
+s.dollMemories.test={met:true};s.catStopUsed=true;
 
 window.NEVERLAND_DIALOGUE.record('키퍼','기억');
 world3d.jumpToPark(22,-30);worldQA.player.yaw=1.2;worldQA.player.pitch=-.18;explore3d();
@@ -64,7 +64,7 @@ test(button(3).disabled&&slots.children[2].children[1].textContent.includes('버
 button(2).onclick();
 test(s.cleared.has(1)&&s.clues.has(1)&&s.K===6&&keeperStoryState.responses.has('question:1:keeper'),'scores, sets and Keeper progression restore');
 test(world3d.state.player.x===22&&world3d.state.player.z===-30&&world3d.state.player.yaw===1.2&&world3d.state.player.pitch===-.18,'position and camera restore exactly');
-test(s.dollMemories.test.met&&window.NEVERLAND_DIALOGUE.history.some(x=>x.text==='기억'),'cast memories and dialogue log restore');
+test(s.catStopUsed&&s.dollMemories.test.met&&window.NEVERLAND_DIALOGUE.history.some(x=>x.text==='기억'),'cast memories and dialogue log restore');
 test(!world3d.state.config.paused&&!dialog.open,'restored park permits walking');
 const finaleSave=JSON.parse(localStorage.getItem(key+2));
 finaleSave.story.exit=true;

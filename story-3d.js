@@ -73,7 +73,7 @@ say=function(...args){$('stage').classList.remove('walking');original3d.say(...a
 modal=function(html){original3d.modal(html);sync3d();};
 close=function(){original3d.close();sync3d();};
 scene=function(mode){original3d.scene(mode);sync3d();};
-newGame=function(){window.NEVERLAND_BOOTH_GAMES?.close();window.NEVERLAND_COASTER?.close();window.carnivalScene?.cancelCastleEntry?.();window.NEVERLAND_ROOM?.close();forcedRide3d=null;free3d=false;intro3d=false;firstLever3d=false;target3d=null;confronting3d=false;pendingRideResult=null;window.carnivalScene?.setOverview(false);$('scenic-view').textContent='전체 풍경';$('scenic-view').setAttribute('aria-pressed','false');world3d.reset();$('stage').classList.remove('walking');original3d.newGame();s.survivedRides=0;sync3d();};
+newGame=function(){window.NEVERLAND_MASCOT?.clear();window.NEVERLAND_BOOTH_GAMES?.close();window.NEVERLAND_COASTER?.close();window.carnivalScene?.cancelCastleEntry?.();window.NEVERLAND_ROOM?.close();forcedRide3d=null;free3d=false;intro3d=false;firstLever3d=false;target3d=null;confronting3d=false;pendingRideResult=null;window.carnivalScene?.setOverview(false);$('scenic-view').textContent='전체 풍경';$('scenic-view').setAttribute('aria-pressed','false');world3d.reset();$('stage').classList.remove('walking');original3d.newGame();s.survivedRides=0;sync3d();};
 intro=function(){
  world3d.audio();
  story([[s.name,'오랜만에 찾아온 네버랜드. 캡틴 훅을 기다리다가 졸음에 눈을 감았다.','warm'],[s.name,'눈을 뜨니 네버랜드 놀이공원이다. 텅 빈 승차 데크. 폐장했을 텐데 멀리서 음악이 들린다.']],()=>{world3d.placeAtCaptainStart();intro3d=true;target3d=controls3d[0];explore3d('캡틴 훅 앞에서 깨어났습니다. 배 쪽으로 몇 걸음 다가가세요.');});
@@ -168,6 +168,7 @@ function finishFracture3d(){
 }
 
 world3d.connect(action=>{
+ if(action.type==='mascot'){window.NEVERLAND_MASCOT.catDialogue();return;}
  if(action.type==='booth-game'){openShop3d(window.NEVERLAND_LAYOUT.games.find(game=>game.id===action.game));return;}
  if(action.type==='coaster'&&window.NEVERLAND_COASTER){
   world3d.configure({paused:true});

@@ -49,7 +49,9 @@ function setChapter(){}
 function stamps(){}
 const cluePoints=layout.clues;
 const keeperPoints=layout.keepers;
-function updateProgress(){
+function updateProgress(dt=0){
+ if(window.NEVERLAND_MASCOT?.active){window.NEVERLAND_MASCOT.tick(player,dt);return;}
+ window.NEVERLAND_MASCOT?.mazeGuide(player,interior,dt,(x,z)=>window.neverlandWorld.interiorValid(x,z));
  if(config.epilogue)return;
  if(passage)return;
  if(interior){
@@ -69,7 +71,7 @@ function updateProgress(){
  if(nextZone!==zone&&best<11){zone=nextZone;keys.clear();zoneCallback(zone);}
 }
 function nearest(){
- if(!started||blocked())return null;
+ if(!started||blocked()||window.NEVERLAND_MASCOT?.active)return null;
  if(config.epilogue)return window.NEVERLAND_ENDING?.nearest(player)||null;
  if(passage)return null;
  const castAction=window.NEVERLAND_CAST?.nearest(player,interior,config);if(castAction)return castAction;
@@ -92,6 +94,8 @@ function nearest(){
   const shop=layout.shops.find(item=>Math.hypot(player.x-item.door[0],player.z-item.door[1])<2.7);
   if(shop)return{type:'shop',shop:shop.id,label:'E · '+shop.name+' 들어가기'};
  }
+ const cat=window.NEVERLAND_MASCOT?.catSpot;
+ if(config.free&&config.forcedRide<0&&cat&&Math.hypot(player.x-cat.x,player.z-cat.z)<2.15)return{type:'mascot',label:'E · 고양이에게 다가가기'};
  if(layout.castleDistance(player.x,player.z)<4)return{type:'castle',label:'E · 달빛 성에 들어가기'};
  if(config.exit&&i===config.exitRide&&Math.hypot(player.x-(r.control[0]+4),player.z-(r.control[1]+2))<2.6)return{type:'exit',ride:i,label:'E · 새벽의 출구에서 키퍼와 마주한다'};
  if(config.keeperIntroduced&&Math.hypot(player.x-keeper.x,player.z-keeper.z)<3.2)return{type:'keeper',ride:i,label:'E · 키퍼에게 말 걸기'};
@@ -145,7 +149,7 @@ window.neverlandWorld={
  faceExit(){player.yaw=Math.atan2(player.x-keeper.x,player.z-keeper.z);player.pitch=-.04;keys.clear();},
  forceBoard(i){if(passage||i<0||i>4)return false;if(!interior&&!this.enterRide(i))return false;if(interior.ride!==i||interior.running)return false;const d=window.NEVERLAND_INTERIORS[i],p=d.seat||d.control;Object.assign(player,{x:p[0],z:p[1],yaw:0,pitch:0,eye:d.seat?1.35:1.65});interior.seated=!!d.seat;keys.clear();return true;},
  enterRide(i){if(passage||interior||i<0||i>4||(!config.free&&i!==0))return false;const d=window.NEVERLAND_INTERIORS[i];parkReturn={...player};interior={ride:i,seated:false,running:false,time:0,progress:0,duration:d.duration,solved:i===3,power:0};Object.assign(player,{x:d.spawn[0],z:d.spawn[1],yaw:0,pitch:0,eye:1.65});$('caption').textContent='';captionUntil=0;keys.clear();interiorLast=elapsed;return true;},
- leaveRide(){if(!interior||interior.running||config.forcedRide>=0)return false;Object.assign(player,parkReturn);interior=null;parkReturn=null;keys.clear();return true;},
+ leaveRide(){if(!interior||interior.running||config.forcedRide>=0)return false;Object.assign(player,parkReturn);interior=null;parkReturn=null;window.NEVERLAND_MASCOT?.resetMaze();keys.clear();return true;},
  sit(){if(!interior||interior.running||interior.ride===3)return false;const d=window.NEVERLAND_INTERIORS[interior.ride];if(Math.hypot(player.x-d.seat[0],player.z-d.seat[1])>1.8)return false;interior.seated=true;player.x=d.seat[0];player.z=d.seat[1];player.eye=1.35;keys.clear();return true;},
  stand(){if(!interior||interior.running||config.forcedRide>=0)return false;interior.seated=false;player.eye=1.65;keys.clear();return true;},
  scriptedWheelHazard(on){if(!interior||interior.ride!==1)return false;interior.scriptedHazard=!!on;interior.seated=true;interior.running=false;interior.progress=on?.07:0;interiorLast=elapsed;keys.clear();return true;},
@@ -157,7 +161,7 @@ window.neverlandWorld={
  animateRide(i){runUntil[rides[i].id]=elapsed+24;},
  audio(){initAudio();},
  mute(){muted=!muted;window.NEVERLAND_BGM?.mute(muted);if(audio)audio.master.gain.setTargetAtTime(muted?0:.18,audio.currentTime,.1);return muted;},
- notify:toast,
+ notify:toast,showGuide(text){caption(text,.15);},
  get state(){return{player:{...player},keeper:{...keeper},elapsed,passage:passage?{...passage}:null,reality:{unlocked:fractureUnlocked,glitchCount,glitch:glitchRemaining>0?(.5+.5*Math.sin(glitchRemaining*3.4)**2):0},interior:interior?{...interior}:null,running:{...runUntil},zone,config:{...config},exitReveal:{age:exitRevealAge,count:exitRevealCount,announced:exitRevealAnnounced},nearest:nearest(),glError:gl.getError()};}
 };
 
@@ -171,11 +175,11 @@ canvas.addEventListener('click',()=>{if(started&&!blocked()&&matchMedia('(pointe
 document.addEventListener('mousemove',e=>{if(document.pointerLockElement===canvas&&started&&!blocked()){player.yaw-=e.movementX*.0022;player.pitch=Math.max(-.7,Math.min(.7,player.pitch-e.movementY*.0018));}});
 canvas.addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY,id:e.pointerId};canvas.setPointerCapture(e.pointerId);});canvas.addEventListener('pointermove',e=>{if(drag&&document.pointerLockElement!==canvas&&started&&!blocked()){player.yaw-=(e.clientX-drag.x)*.005;player.pitch=Math.max(-.7,Math.min(.7,player.pitch-(e.clientY-drag.y)*.003));drag.x=e.clientX;drag.y=e.clientY;}});canvas.addEventListener('pointerup',()=>drag=null);canvas.addEventListener('pointercancel',()=>drag=null);
 document.querySelectorAll('[data-key]').forEach(b=>{b.onpointerdown=e=>{e.preventDefault();b.setPointerCapture(e.pointerId);keys.add(b.dataset.key);};b.onpointerup=b.onpointercancel=()=>keys.delete(b.dataset.key);b.onlostpointercapture=()=>keys.delete(b.dataset.key);});
-function valid(x,z){if(config.epilogue)return window.NEVERLAND_ENDING.valid(x,z);if(interior)return window.neverlandWorld.interiorValid(x,z);return parkValid(x,z,config,colliders);}
+function valid(x,z){if(window.NEVERLAND_MASCOT?.active)return window.NEVERLAND_MASCOT.valid(x,z);if(config.epilogue)return window.NEVERLAND_ENDING.valid(x,z);if(interior)return window.neverlandWorld.interiorValid(x,z);return parkValid(x,z,config,colliders);}
 function parkValid(x,z,config,colliders){const b=layout.bounds;if(x<b.minX||x>b.maxX||z<b.minZ||z>b.maxZ||layout.water(x,z))return false;if(!config.free&&Math.abs(x)>21)return false;if(config.exit){const r=rides[config.exitRide];if(Math.abs(x-r.control[0]-4)<1.55&&Math.abs(z-r.control[1]-2)<.4)return false;}return !colliders.some(c=>x>c.a&&x<c.b&&z>c.l&&z<c.r);}
 function resize(){const scale=Math.min(devicePixelRatio,1.3),w=Math.floor(innerWidth*scale),h=Math.floor(innerHeight*scale);if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;gl.viewport(0,0,w,h);}}
 function landmarks(){const m=cameraMatrix();for(const r of rides){const el=$('label-'+r.id);el.textContent=r.name+(config.cleared?.includes(rides.indexOf(r))?' ✓':'');const p=[r.control[0],2,r.control[1],1],q=[0,0,0,0];for(let row=0;row<4;row++)for(let k=0;k<4;k++)q[row]+=m[k*4+row]*p[k];const visible=(currentMap==='park'||r.id==='captain')&&started&&!blocked()&&phase>=1&&(player.z<7||r.id==='captain')&&q[3]>1&&Math.abs(q[0]/q[3])<.94&&Math.abs(q[1]/q[3])<.8&&Math.hypot(player.x-p[0],player.z-p[2])<55;el.style.display=visible?'block':'none';if(visible){el.style.left=(q[0]/q[3]*.5+.5)*innerWidth+'px';el.style.top=(-q[1]/q[3]*.5+.5)*innerHeight+'px';}}}
-function frame(ms){let dt=Math.min((ms-lastTime)/1000,.05);lastTime=ms;elapsed+=dt;resize();if(started&&!blocked()&&passage){passageStep(dt,keys.has('w')||keys.has('arrowup')?1:0);}else if(started&&!blocked()){if(!interior)glitchRemaining=Math.max(0,glitchRemaining-dt);let forward=(keys.has('w')||keys.has('arrowup')?1:0)-(keys.has('s')||keys.has('arrowdown')?1:0),strafe=(keys.has('d')?1:0)-(keys.has('a')?1:0);player.yaw+=((keys.has('arrowleft')?1:0)-(keys.has('arrowright')?1:0))*dt*1.6;const norm=Math.hypot(forward,strafe)||1,speed=(keys.has('shift')?5:3)*dt;const dx=(-Math.sin(player.yaw)*forward+Math.cos(player.yaw)*strafe)/norm*speed,dz=(-Math.cos(player.yaw)*forward-Math.sin(player.yaw)*strafe)/norm*speed;if(valid(player.x+dx,player.z))player.x+=dx;if(valid(player.x,player.z+dz))player.z+=dz;player.eye=(interior?.seated?1.35:1.65)+(forward||strafe?Math.sin(elapsed*7)*.025:0);updateProgress();}gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.uniformMatrix4fv(vpLoc,false,cameraMatrix());drawData(fixed);drawData(dynamicScene(elapsed));billboard();drawMarkers();landmarks();if(started){active=nearest();$('interact').hidden=!active;$('interact').textContent=active?.label||'';if(elapsed>captionUntil)$('caption').textContent='';}requestAnimationFrame(frame);}
+function frame(ms){let dt=Math.min((ms-lastTime)/1000,.05);lastTime=ms;elapsed+=dt;resize();if(started&&!blocked()&&passage){passageStep(dt,keys.has('w')||keys.has('arrowup')?1:0);}else if(started&&!blocked()){if(!interior)glitchRemaining=Math.max(0,glitchRemaining-dt);let forward=(keys.has('w')||keys.has('arrowup')?1:0)-(keys.has('s')||keys.has('arrowdown')?1:0),strafe=(keys.has('d')?1:0)-(keys.has('a')?1:0);player.yaw+=((keys.has('arrowleft')?1:0)-(keys.has('arrowright')?1:0))*dt*1.6;const norm=Math.hypot(forward,strafe)||1,speed=(keys.has('shift')?5:3)*dt;const dx=(-Math.sin(player.yaw)*forward+Math.cos(player.yaw)*strafe)/norm*speed,dz=(-Math.cos(player.yaw)*forward-Math.sin(player.yaw)*strafe)/norm*speed;if(valid(player.x+dx,player.z))player.x+=dx;if(valid(player.x,player.z+dz))player.z+=dz;player.eye=(interior?.seated?1.35:1.65)+(forward||strafe?Math.sin(elapsed*7)*.025:0);updateProgress(dt);}gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.uniformMatrix4fv(vpLoc,false,cameraMatrix());drawData(fixed);drawData(dynamicScene(elapsed));billboard();drawMarkers();landmarks();if(started){active=nearest();$('interact').hidden=!active;$('interact').textContent=active?.label||'';if(elapsed>captionUntil)$('caption').textContent='';}requestAnimationFrame(frame);}
 requestAnimationFrame(frame);
 // Read-only runtime state supports reproducible QA without altering play behavior.
 window.neverlandRenderer={get state(){return{currentMap,phase,started,keeperVisible,keeperLoaded,met,firstRide,cleared:[...cleared],player:{...player},active:active?.type,glError:gl.getError()};}};
