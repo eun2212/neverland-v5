@@ -216,6 +216,9 @@ run(`startMain();s.ride=1;s.talks=1;topic('keeper');$('choices').children[0].onc
 for(let i=0;i<1150;i++)frame(1000000+i*1000/60);
 run(`test(forcedRide3d===null&&world3d.state.config.forcedRide===-1,'physical completion releases forced ride');test(s.survivedRides===1&&s.talks===0,'successful forced ride counts once and clears question limit');drain();test(world3d.leaveRide(),'park return available after required ride');newGame();test(forcedRide3d===null,'restart clears boarding obligation');`);
 const melt=sandbox.NEVERLAND_KEEPER_MELT;
+for(const item of Object.values(JSON.parse(html.match(/id="keeper-art">([\s\S]*?)<\/script>/)[1])))
+ test(fs.existsSync(path.join(root,melt.finalSource(item.src))),'final pose asset exists '+item.name);
+
 let lastEdge=1,lastPool=0;
 for(const level of [.19,.38,.57,.76,.95,1]){
  const edge=melt.front(level,.5),pool=melt.poolScale(level);
@@ -224,7 +227,7 @@ for(const level of [.19,.38,.57,.76,.95,1]){
 }
 test(melt.front(.19,.5)>.8,'first stage starts at shoes and hem');
 test(melt.front(1,.5)>.3,'final stage keeps the face above the melt');
-run(`newGame();test(s.survivedRides===0&&keeperMeltLevel3d()===0,'new keeper starts in original colors');let previous=0;for(let i=1;i<=5;i++){s.survivedRides=i;const level=keeperMeltLevel3d();test(level>previous&&level<1,'survived ride raises melt '+i);previous=level;}s.exit=true;sync3d();test(keeperMeltLevel3d()===1&&world3d.state.config.keeperMelt===1,'exit reveals final melt');test(Number($('keeper-melt-pool').width)>.8,'portrait shows full puddle at confrontation');newGame();test(world3d.state.config.keeperMelt===0&&$('keeper-melt-image').href==='','restart clears keeper melt');startMain();operate(0);success(true);test(s.survivedRides===1,'survived assisted ride counts');success(false);test(s.survivedRides===2,'survived repeat ride counts');newGame();end(4);test(s.survivedRides===0,'death does not increase melt');newGame();`);
+run(`newGame();test(s.survivedRides===0&&keeperMeltLevel3d()===0,'new keeper starts in original colors');let previous=0;for(let i=1;i<=5;i++){s.survivedRides=i;const level=keeperMeltLevel3d();test(level>previous&&level<1,'survived ride raises melt '+i);previous=level;}s.exit=true;sync3d();test(keeperMeltLevel3d()===1&&world3d.state.config.keeperMelt===1,'exit reveals final melt');test($('keeper').src.includes('keeper-final-'),'exit swaps dialogue portrait to the half-face finale art');newGame();test(world3d.state.config.keeperMelt===0&&$('keeper-melt-image').href===''&&$('keeper').src.includes('keeper-v3-'),'restart restores original portrait and clears melt');startMain();operate(0);success(true);test(s.survivedRides===1,'survived assisted ride counts');success(false);test(s.survivedRides===2,'survived repeat ride counts');newGame();end(4);test(s.survivedRides===0,'death does not increase melt');newGame();`);
 test(!fs.readFileSync(path.join(root,'reality-fracture.js'),'utf8').includes('function eye('),'graveyard neon eye geometry removed');
 test(fs.readFileSync(path.join(root,'reality-fracture.js'),'utf8').includes("color:'#ff100a'"),'graveyard accent is scarlet');
 test(fs.readFileSync(path.join(root,'carnival-scene.js'),'utf8').includes(".replace('#include <map_fragment>'"),'sprite melt targets an existing shader chunk');

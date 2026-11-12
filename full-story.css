@@ -5,3 +5,4 @@ html,body{height:100%;overflow:hidden}header{position:relative;z-index:12;backgr
 
 /* Surviving rides drains every original color into one scarlet silhouette. */
 .keeper,.puzzle-portrait{filter:url(#keeper-melt-filter) drop-shadow(0 7px 14px #140d3066)}
+.keeper.keeper-final,.puzzle-portrait.keeper-final{filter:drop-shadow(0 7px 14px #140d3066)}

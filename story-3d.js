@@ -23,12 +23,27 @@ function requireRide3d(){
   close();world3d.forceBoard(forcedRide3d);atControl3d=true;try{original3d.openPuzzle();}finally{atControl3d=false;}sync3d();
  });
 }
+const originalKeeperPose3d=showKeeperPose;
+function syncKeeperPortrait3d(){
+ const final=!!s&&(s.exit||confronting3d);
+ const art=window.NEVERLAND_KEEPER_MELT;
+ for(const portrait of document.querySelectorAll('.keeper,.puzzle-portrait')){
+  if(!portrait.classList)continue;
+  portrait.classList.toggle('keeper-final',final);
+  if(!art)continue;
+  const source=(keeperArt[portrait.dataset.pose||keeperPose]||keeperArt['00']).src;
+  const next=final?art.finalSource(source):source;
+  if(portrait.getAttribute?.('src')!==next)portrait.src=next;
+ }
+}
+showKeeperPose=function(id){originalKeeperPose3d(id);syncKeeperPortrait3d();};
 let lastKeeperMelt=null;
 function sync3d(){
  if(!s)return;
  if(world3d.state.config.epilogue&&window.NEVERLAND_ENDING){window.NEVERLAND_ENDING.sync();return;}
  const keeperMelt=keeperMeltLevel3d(),art=window.NEVERLAND_KEEPER_MELT;
  $('keeper').dataset.corruption=String(keeperMelt);
+ syncKeeperPortrait3d();
  if(art&&lastKeeperMelt!==keeperMelt){
   lastKeeperMelt=keeperMelt;
   const coat=$('keeper-melt-image'),pool=$('keeper-melt-pool'),width=art.poolScale(keeperMelt)*.88;

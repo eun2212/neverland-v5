@@ -70,6 +70,7 @@ window.NEVERLAND_KEEPER_MELT=(function(){
  }
  return{
   front,
+  finalSource(source){return source.replace('keeper-v3-','keeper-final-').replace(/\.webp$/,'.png');},
   poolScale(level){return level<=0?0:.28+.72*level;},
   texture(T,level){
    const key=stage(level);

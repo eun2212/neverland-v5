@@ -20,7 +20,7 @@ class Renderer{
  setRenderTarget(){}
  render(scene,view){draws++;if(scene.children.length>10){park=scene;camera=view;}}
 }
-const art={'00':{src:'mock'}};
+const art={'00':{src:'assets/keeper-v3-01-basic.webp'},'08':{src:'assets/keeper-v3-10-stay.webp'}};
 const document={
  getElementById:id=>id==='world-root'?root:id==='keeper-art'?{textContent:JSON.stringify(art)}:{dataset:{}},
  createElement:canvas,body:{classList:{contains:()=>false}}
@@ -28,7 +28,7 @@ const document={
 Object.assign(browser,{
  THREE:{...T,WebGLRenderer:Renderer,
   PMREMGenerator:class{fromScene(){return{texture:new T.Texture()}}dispose(){}},
-  TextureLoader:class{load(){return new T.Texture()}}},
+  TextureLoader:class{load(src){const texture=new T.Texture();texture.name=src;return texture;}}},
  NEVERLAND_DREAM_STAGE:()=>({update(){}}),
  NEVERLAND_INTERIOR_SCENES:{create:()=>({update(){}})},
  NEVERLAND_FRACTURE:{create:()=>({update(){}})},
@@ -66,6 +66,14 @@ assert(shader.uniforms.keeperMeltMap.value?.isTexture);
 assert(shader.fragmentShader.includes('diffuseColor.rgb=mix(diffuseColor.rgb,melt.rgb,melt.a)'));
 browser.neverlandWorld.state.passage=null;
 next();assert(!puddle.visible,'puddle resets when melt is zero');
+Object.assign(browser.neverlandWorld.state.config,{exit:true,exitRide:1,confronting:true,keeperMelt:1});
+next();
+assert.match(keeper.material.map.name,/keeper-final-10-stay/);
+assert(!puddle.visible,'final effect replaces the pastel puddle');
+reduced=true;next();assert.equal(shader.uniforms.keeperGlitch.value,0,'reduced motion keeps the final glitch static');
+reduced=false;Object.assign(browser.neverlandWorld.state.config,{exit:false,confronting:false,keeperMelt:0});
+next();assert.match(keeper.material.map.name,/keeper-v3-01-basic/);
+
 console.log('PASS: real Three.js geometry builds and renders its first frame with a WebGL adapter.');
 
 function element(){

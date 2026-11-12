@@ -173,15 +173,16 @@ const coasterModel=window.NEVERLAND_COASTER.createModel({T,scene,cube,ball,cylin
 batch(stat);batch(boat);for(const g of gondolas)batch(g);batch(wheel,gondolas);for(const g of horses)batch(g);for(const g of cups)batch(g);
 // Sprites are actual transparent textures for the established keeper artwork.
 const keeperArt=JSON.parse(document.getElementById('keeper-art').textContent),keeperTextures=new Map(),keeperLoader=new T.TextureLoader();
-function keeperTexture(id){const src=(keeperArt[id]||keeperArt['00']).src;if(!keeperTextures.has(src)){const texture=keeperLoader.load(src);texture.colorSpace=T.SRGBColorSpace;keeperTextures.set(src,texture);}return keeperTextures.get(src);}
+function keeperTexture(id,final=false){const base=(keeperArt[id]||keeperArt['00']).src,src=final?window.NEVERLAND_KEEPER_MELT.finalSource(base):base;if(!keeperTextures.has(src)){const texture=keeperLoader.load(src);texture.colorSpace=T.SRGBColorSpace;keeperTextures.set(src,texture);}return keeperTextures.get(src);}
 const keeperSprite=new T.Sprite(new T.SpriteMaterial({map:keeperTexture('00'),alphaTest:.08}));
 const keeperMelt=window.NEVERLAND_KEEPER_MELT,keeperMeltMap={value:keeperMelt.texture(T,0)};
 let displayedMelt=0,lastKeeperPose='00';
+const keeperGlitch={value:0};
 keeperSprite.material.onBeforeCompile=shader=>{
- shader.uniforms.keeperMeltMap=keeperMeltMap;
+ shader.uniforms.keeperMeltMap=keeperMeltMap;shader.uniforms.keeperGlitch=keeperGlitch;
  shader.fragmentShader=shader.fragmentShader
-  .replace('#include <common>','#include <common>\nuniform sampler2D keeperMeltMap;')
-  .replace('#include <map_fragment>','#include <map_fragment>\nvec4 melt=texture2D(keeperMeltMap,vMapUv);diffuseColor.rgb=mix(diffuseColor.rgb,melt.rgb,melt.a);');
+  .replace('#include <common>','#include <common>\nuniform sampler2D keeperMeltMap;uniform float keeperGlitch;')
+  .replace('#include <map_fragment>','#include <map_fragment>\nvec4 melt=texture2D(keeperMeltMap,vMapUv);diffuseColor.rgb=mix(diffuseColor.rgb,melt.rgb,melt.a);float red=step(.22,diffuseColor.r-max(diffuseColor.g,diffuseColor.b))*step(vMapUv.y,.83);diffuseColor.r*=1.-keeperGlitch*red*.23;');
 };
 keeperSprite.material.customProgramCacheKey=()=> 'keeper-crayon-melt';
 keeperSprite.scale.set(2,3,1);scene.add(keeperSprite);
@@ -228,7 +229,7 @@ function render(){requestAnimationFrame(render);const t=clock.getElapsedTime(),s
  carousel.rotation.y=t*(moving('carousel')?.38:.045);for(let i=0;i<horses.length;i++)horses[i].position.y=1.4+Math.sin(t*1.6+i)*.2;tea.rotation.y=t*(moving('tea')?.5:.04);for(let i=0;i<cups.length;i++)cups[i].rotation.y=t*.3+i;
  water.material.color.setHSL(.49,.47,.36+Math.sin(t*.8)*.015);
  ripple.offset.set(t*.008,t*.014);fallTexture.offset.y=t*.5;
- const nextKeeperPose=state.config.confronting?'08':document.getElementById('keeper')?.dataset.pose||'00';if(nextKeeperPose!==lastKeeperPose){keeperSprite.material.map=keeperTexture(nextKeeperPose);keeperSprite.material.needsUpdate=true;lastKeeperPose=nextKeeperPose;}
+ const nextKeeperPose=state.config.confronting?'08':document.getElementById('keeper')?.dataset.pose||'00';const finalKeeper=!!(state.config.exit||state.config.confronting),textureKey=nextKeeperPose+(finalKeeper?'final':'');if(textureKey!==lastKeeperPose){keeperSprite.material.map=keeperTexture(nextKeeperPose,finalKeeper);keeperSprite.material.needsUpdate=true;lastKeeperPose=textureKey;}
  keeperSprite.visible=state.config.keeperIntroduced&&document.body.classList.contains('exploring');if(state.keeper){keeperSprite.position.set(state.keeper.x,1.5+L.terrain(state.keeper.x,state.keeper.z),state.keeper.z);}
  clueGroups.forEach((g,i)=>g.visible=state.config.free);
  const revealed=state.config.exit;exitGroup.visible=particles.visible=revealed;if(revealed){const r=L.rides[state.config.exitRide],x=r.control[0]+4,z=r.control[1]+2,a=state.exitReveal.age;exitGroup.position.set(x,0,z);exitGroup.scale.y=Math.max(.015,Math.min(1,(a-.8)/3.2));for(let i=0;i<particleList.length;i++){const ang=t*.6+i*2.4,radius=a<4?3.5*(1-exitGroup.scale.y)+.7:1.5;particleList[i].position.set(x+Math.cos(ang)*radius,.2+(t*.7+i*.31)%5,z+Math.sin(ang)*radius);}}
@@ -241,7 +242,8 @@ function render(){requestAnimationFrame(render);const t=clock.getElapsedTime(),s
  const rideCamera=rideModels.update(state,t);if(rideCamera){camera.position.copy(rideCamera.position);camera.rotation.order='YXZ';camera.rotation.set(rideCamera.pitch,rideCamera.yaw,rideCamera.roll);}
  const fractureView=fracture.update(state,t);combineMat.uniforms.vision.value=state.interior?.ride===3?1:fractureView?fractureView.vision:-1;combineMat.uniforms.aspect.value=w/h;combineMat.uniforms.mazeLight.value=state.interior?.ride===3?((window.NEVERLAND_TOOLS?.settings.reduced||matchMedia('(prefers-reduced-motion: reduce)').matches)?.6:(t%4.8<.65?1:.045)):-1;
  if(fractureView){camera.position.copy(fractureView.position);camera.rotation.order='YXZ';camera.rotation.set(fractureView.pitch,fractureView.yaw,0);}
- const level=inPassage?1:state.config.keeperMelt||0;
+ const level=finalKeeper?0:inPassage?1:state.config.keeperMelt||0;
+ keeperGlitch.value=finalKeeper&&!reduced?.5+.5*Math.sin(Math.floor(t*7)*2.37):0;
  if(level!==displayedMelt){displayedMelt=level;keeperMeltMap.value=keeperMelt.texture(T,level);}
  keeperPool.visible=level>0&&keeperSprite.visible&&!state.config.epilogue;
  if(keeperPool.visible){
