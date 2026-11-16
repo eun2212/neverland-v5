@@ -13,18 +13,21 @@ sandbox.AudioContext=class{
  createGain(){return {gain:{setValueAtTime(){},linearRampToValueAtTime(){},exponentialRampToValueAtTime(){}},connect(){},disconnect(){}};}
  createOscillator(){return {frequency:{setValueAtTime(){},exponentialRampToValueAtTime(){}},connect(node){return node;},disconnect(){},start(){sound.started++;},stop(at){if(at===undefined)sound.stops++;}};}
 };
-sandbox.driveChase=()=>{
+let chaseClock=2e8;
+sandbox.driveChase=(sprint=false)=>{
  const pet=sandbox.NEVERLAND_MASCOT,maze=sandbox.NEVERLAND_CHASE_MAZE,player=sandbox.worldQA.player;
  let frames=0;
+ if(sprint)handlers.keydown({key:'Shift',repeat:false,preventDefault(){}});
  for(const target of maze.stars.slice(1)){
   player.yaw=Math.atan2(player.x-target.x,player.z-target.z);
   handlers.keydown({key:'w',repeat:false,preventDefault(){}});
   while(pet.active&&!pet.chase.failed&&Math.hypot(player.x-target.x,player.z-target.z)>.07&&frames<64*60){
-   frame(2e8+(++frames)*1000/60);
+   frames++;frame(chaseClock+=1000/60);
    if(pet.active&&!maze.valid(pet.chase.monster.x,pet.chase.monster.z))throw Error('pursuer crossed a wall');
   }
   handlers.keyup({key:'w'});
  }
+ if(sprint)handlers.keyup({key:'Shift'});
  return frames/60;
 };
 run('let completedChoice=null;finishChoice=(win,choice)=>{completedChoice=chooseEnding(win,choice);};');
@@ -73,8 +76,11 @@ test(maze.open(maze.cell(deadEnd.x,deadEnd.z))&&!maze.valid(deadEnd.x,deadEnd.z+
 test(pet.encounter('ride').includes('가르랑')&&pet.encounter('game').includes('안아')&&pet.encounter('drinks').includes('몸을 비빕니다'),'three locations have distinct interactions');
 test(pet.active&&pet.chase.age===0&&worldQA.player.z===0,'escape choice opens chase checkpoint');
 test(Math.abs(worldQA.player.yaw-Math.PI)<.01&&pet.chase.monster.z>0,'checkpoint faces the pursuer down the open corridor');
-worldQA.updateProgress(.05);test(pet.chase.age===0,'timer waits for actual movement');
-worldQA.player.z=-.08;worldQA.updateProgress(.05);
+const idleMonsterZ=pet.chase.monster.z;
+worldQA.updateProgress(.05);
+test(pet.chase.age===0&&pet.chase.monster.z<idleMonsterZ,'pursuer approaches even while the timer waits for actual movement');
+worldQA.player.z=-.08;worldQA.updateProgress(.05,true);
+test(pet.chase.age===.05&&idleMonsterZ-pet.chase.monster.z>.2,'first movement starts the timer and accelerates the pursuer');
 for(let i=0;i<170&&!pet.chase.failed;i++)worldQA.updateProgress(.05);
 test(window.sound.started>3,'chase emits proximity sounds before capture');
 test(pet.chase.failed&&pet.chase.scare,'capture opens the close-up before game over');
@@ -91,16 +97,20 @@ test(window.sound.started===startedVoices,'muting suppresses the checkpoint scre
 window.NEVERLAND_BGM=previousBgm;
 test(pet.active&&!pet.chase.failed&&pet.chase.age===0&&worldQA.player.z===0,'retry restores chase checkpoint');
 pet.chase.age=63.98;
-worldQA.player.z=-.08;
+worldQA.player.z=-.08;worldQA.updateProgress(.05,true);
 for(let i=0;i<530&&!pet.chase.failed;i++)worldQA.updateProgress(.05);
 test(pet.chase.failed&&$('overlay').innerHTML.includes('도착하지 못했습니다'),'time limit gives game over');
 $('chase-retry').onclick();
-const seconds=driveChase();
-test(completedChoice===2&&seconds>25&&seconds<35,'normal walking leaves time to navigate and retains solo ending');console.log('Normal walking run: '+seconds.toFixed(2)+'s');
+driveChase();
+test(pet.chase?.failed&&completedChoice===null,'normal walking is too slow to escape');
+finishScare();$('chase-retry').onclick();
+const seconds=driveChase(true);
+test(completedChoice===2&&seconds<25,'sprinting reaches the exit and retains the solo ending');
+console.log('Sprint run: '+seconds.toFixed(2)+'s');
 startMain();Object.assign(s,{K:8,M:4,N:10,I:4,cleared:new Set([0,1,2])});
 finishChoice(true,'together');drain();
 test(pet.active,'qualified together ending enters chase');
-Object.assign(worldQA.player,maze.point(maze.exit.row,maze.exit.col));worldQA.updateProgress(.05);
+Object.assign(worldQA.player,maze.point(maze.exit.row,maze.exit.col));worldQA.updateProgress(.05,true);
 test(completedChoice===5&&!pet.active,'together chase retains ending five');
 \`);
 console.log('PASS: cat intervention, real maze navigation, chase timing, capture, timeout, retry, and original exit endings.');

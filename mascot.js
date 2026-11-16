@@ -56,19 +56,39 @@
   tone('triangle',65+near*30,29,.24,.026+near*.10);
   tone('sawtooth',116,62,.16,.013+near*.024,.14);
  }
+ const touchKeys=new Map(), controls=document.createElement('div');
+ controls.id='chase-touch-controls';
+ controls.setAttribute('role','group');
+ controls.setAttribute('aria-label','미로 이동');
+ for(const [key,label] of [['arrowleft','왼쪽 보기'],['w','전진'],['arrowright','오른쪽 보기'],['a','왼쪽 이동'],['s','후진'],['d','오른쪽 이동'],['shift','달리기']]){
+  const button=document.createElement('button');
+  button.type='button';button.textContent=label;
+  button.addEventListener('pointerdown',event=>{
+   if(!run||run.failed||event.pointerType==='mouse')return;
+   event.preventDefault();
+   button.setPointerCapture(event.pointerId);
+   touchKeys.set(event.pointerId,key);
+  });
+  for(const type of ['pointerup','pointercancel','lostpointercapture']){
+   button.addEventListener(type,event=>touchKeys.delete(event.pointerId));
+  }
+  controls.append(button);
+ }
+ document.body.append(controls);
+ window.addEventListener('blur',()=>touchKeys.clear());
  function start(done,origin=world3d.state.player){
   clear();
   run={done,origin,age:0,started:false,failed:false,monster:{...spawnPoint},soundDelay:.5,waypoint:null,targetKey:null,field:null};
-  close();explore3d('바닥의 별빛을 따라 출구로 달리세요. WASD 이동 · Shift 달리기');
+  close();explore3d('바닥의 별빛을 따라 출구로 달리세요. WASD 이동 · Shift 달리기 · 터치에서는 이동과 달리기를 함께 누르세요.');
   world3d.jumpToPark(startPoint.x,startPoint.z,Math.PI);
   document.body.classList.add('chase-active');
-  ui.hidden=false;ui.textContent='네버랜드가 앞에 있습니다. 뒤를 돌아 별빛을 따라가세요. · 이동하면 추격 시작';
+  ui.hidden=false;ui.textContent='네버랜드가 앞에 있습니다. 뒤를 돌아 별빛을 따라가세요.';
   scream(.065);
  }
  function resetMaze(){mazeTime=0;guide=null;}
  function clear(){
   clearTimeout(scareTimer);scareTimer=null;stopSound();
-  run=null;reveal=null;resetMaze();ui.hidden=true;document.body.classList.remove('chase-active');
+  touchKeys.clear();run=null;reveal=null;resetMaze();ui.hidden=true;document.body.classList.remove('chase-active');
  }
  function finish(){
   if(!run||run.failed)return;
@@ -84,13 +104,13 @@
   retry.focus?.();
  }
  function fail(reason,caught=false){
-  run.failed=true;ui.hidden=true;world3d.configure({paused:true});
+  run.failed=true;touchKeys.clear();document.body.classList.remove('chase-active');ui.hidden=true;world3d.configure({paused:true});
   document.exitPointerLock?.();stopSound();
   if(!caught){gameOver(reason);return;}
   run.scare=true;scream(.16);
   scareTimer=setTimeout(()=>gameOver(reason),reduced()?750:900);
  }
- function pursue(player,dt){
+ function pursue(player,dt,moving){
   const targetCell=maze.cell(player.x,player.z),targetKey=maze.key(targetCell);
   if(run.targetKey!==targetKey){
    run.field=maze.field(targetCell);
@@ -108,23 +128,20 @@
   }
   const target=run.waypoint||player;
   const dx=target.x-monster.x,dz=target.z-monster.z,distance=Math.hypot(dx,dz);
-  const step=Math.min(distance,dt*(2.65+Math.min(.25,run.age*.009)));
+  const step=Math.min(distance,dt*(moving?4.6:0.9));
   if(distance){
    monster.x+=dx/distance*step;
    monster.z+=dz/distance*step;
   }
   if(distance<=step)run.waypoint=null;
  }
- function tick(player,dt){
-  if(!run||run.failed)return;
-  if(!run.started&&Math.hypot(player.x-startPoint.x,player.z-startPoint.z)>.001){
-   run.started=true;
-  }
-  if(!run.started)return;
-  run.age+=dt;
+ function tick(player,dt,moving){
+  if(!run||run.failed||!dt)return;
+  if(moving)run.started=true;
+  if(run.started)run.age+=dt;
   const cell=maze.cell(player.x,player.z);
   if(Math.hypot(player.x-exitPoint.x,player.z-exitPoint.z)<1.35){finish();return;}
-  pursue(player,dt);
+  pursue(player,dt,moving);
   if(maze.key(cell)===maze.key(maze.cell(run.monster.x,run.monster.z))&&Math.hypot(player.x-run.monster.x,player.z-run.monster.z)<1.05){
    fail('네버랜드가 당신을 따라잡았습니다.',true);return;
   }
@@ -134,7 +151,7 @@
   approachSound(Math.max(distance,(path??Infinity)*maze.size-maze.size),dt);
   const next=maze.toExit.next(cell);
   const hint='키퍼의 별빛 '+turnHint(player,next?center(next):exitPoint);
-  const status=hint+' · '+Math.ceil(limit-run.age)+'초';
+  const status=hint+' · '+(run.started?Math.ceil(limit-run.age)+'초':'이동하면 제한 시간이 시작됩니다.');
   if(ui.textContent!==status)ui.textContent=status;
  }
  function mazeGuide(player,interior,dt,valid){
@@ -219,6 +236,7 @@
   catSpot,rideSpot,clear,resetMaze,tick,updateSound,mazeGuide,catDialogue,encounter,
   get reveal(){return reveal;},
   get active(){return !!run;},get chase(){return run;},get guide(){return guide;},
+  touchKey:key=>Array.from(touchKeys.values()).includes(key),
   valid:maze.valid
  };
 })();

@@ -60,14 +60,19 @@ window.NEVERLAND_MASCOT_SCENE=function(T,park){
  const changingCat=cat.clone();changingCat.name='transforming-ragdoll';escape.add(changingCat);
  const monster=new T.Group();monster.name='neverland-pursuer';escape.add(monster);
  ball(monster,purple,0,1.63,-.53,.94,.72,1.27);
- ball(monster,pink,0,2.11,.37,.86,.69,.68);
- ball(monster,purple,0,2.1,.51,.75,.57,.64);
- ball(monster,dark,0,2.06,.94,.61,.47,.21);
- const eyes=[-.24,.24].map(x=>ball(monster,gold,x,2.13,1.128,.068));
- for(const side of [-1,1]){
-  const ear=mesh(monster,new T.ConeGeometry(.24,.64,6),purple,side*.57,2.79,.49);
-  ear.rotation.z=-side*.22;
- }
+ const head=new T.Group();head.position.set(0,2.15,.6);monster.add(head);
+ ball(head,mat(0x091735),0,-.04,-.18,.81,.64,.52);
+ const faceMaterial=new T.MeshBasicMaterial({alphaTest:.4,toneMapped:false});
+ const face=mesh(head,new T.PlaneGeometry(2.2,1.76),faceMaterial,0,.09,.40);
+ face.visible=false;
+ new T.TextureLoader().load('assets/mascot-pursuer-face.png',texture=>{
+  texture.colorSpace=T.SRGBColorSpace;
+  faceMaterial.map=texture;faceMaterial.needsUpdate=true;face.visible=true;
+ });
+ const mouth=new T.Group();
+ mouth.position.set(.015,-.31,.42);mouth.visible=false;head.add(mouth);
+ mesh(mouth,new T.CircleGeometry(1,40),mat(0xe8dad1,true),0,0,0);
+ mesh(mouth,new T.CircleGeometry(1,40),mat(0x030208,true),0,.017,.004).scale.set(.94,.86,1);
  const sleeves=[];
  for(const side of [-1,1]){
   const sleeve=ball(monster,purple,side*.78,1.0,.37,.35,1.1,.39);
@@ -78,9 +83,9 @@ window.NEVERLAND_MASCOT_SCENE=function(T,park){
  }
  let revealStart=null,scareStart=null;
  return {escape,scareCamera(camera,t,still){
-  const progress=still?1:Math.min(1,(t-scareStart)/.29);
-  camera.position.set(scarePose.x,2.10,scarePose.z+3.25-progress*1.65);
-  camera.lookAt(scarePose.x,2.10,scarePose.z+.99);
+  const lunge=still?0:T.MathUtils.smoothstep(t-scareStart,.18,.68);
+  camera.position.set(scarePose.x+.015,T.MathUtils.lerp(2.16,1.84,lunge),scarePose.z+2.96-lunge*1.79);
+  camera.lookAt(scarePose.x+.015,1.84,scarePose.z+1.02);
  },update(state,t,still){
   const feature=window.NEVERLAND_MASCOT;
   const guide=feature?.guide,active=feature?.chase;
@@ -107,20 +112,32 @@ window.NEVERLAND_MASCOT_SCENE=function(T,park){
   changingCat.scale.set(1+progress*.8,1+progress*1.5,1+progress*.8);
   monster.visible=!!active||!!reveal&&progress>=.42;
   monster.scale.setScalar(reveal?Math.max(.3,progress):1);
-  if(reveal){monster.position.set(-4,0,0);monster.rotation.y=Math.PI/2;}
+  monster.rotation.z=0;
+  head.position.x=0;head.rotation.set(0,0,0);head.scale.set(1,1,1);
+  mouth.visible=!!active?.scare;
+  sleeves.forEach(sleeve=>{sleeve.rotation.x=0;});
+  if(reveal){monster.position.set(-4,0,0);monster.rotation.set(0,Math.PI/2,0);}
   if(active?.scare){
    scareStart??=t;
    monster.position.set(scarePose.x,0,scarePose.z);monster.rotation.set(0,0,0);
-   eyes.forEach(eye=>{eye.visible=true;});
-   sleeves.forEach(sleeve=>{sleeve.rotation.x=-.42;});
+   const open=still?.65:T.MathUtils.smoothstep(t-scareStart,.06,.48);
+   mouth.visible=open>0;
+   mouth.scale.set(.62+open*.14,.035+open*.57,1);
+   if(!still)sleeves.forEach(sleeve=>{sleeve.rotation.x=-.42;});
    return;
   }
   scareStart=null;
   if(active){
    const p=state.player,q=active.monster;
    monster.position.set(q.x,0,q.z);monster.lookAt(p.x,0,p.z);
-   eyes.forEach((eye,i)=>{eye.visible=still||!active.started||Math.sin(t*(i?2.6:3.7)+i)*Math.sin(t*5.8+i*3)>-.83;});
-   sleeves.forEach((sleeve,i)=>{sleeve.rotation.x=still?0:Math.sin(t*6+i*Math.PI)*.34;});
+   if(!still&&active.started&&!active.failed){
+    const sway=Math.sin(t*7.1),twitch=Math.sin(t*11.3+.9);
+    monster.rotation.z=sway*.10;
+    head.position.x=sway*.21+twitch*.065;
+    head.rotation.set(twitch*.08,sway*.18,-sway*.22+twitch*.09);
+    head.scale.set(1+twitch*.075,1-twitch*.065,1);
+    sleeves.forEach((sleeve,i)=>{sleeve.rotation.x=Math.sin(t*6+i*Math.PI)*.34;});
+   }
   }
  }};
 };

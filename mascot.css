@@ -2,3 +2,9 @@
 #final-chase-status[hidden]{display:none}
 .chase-active #walking-map,.chase-active #walking-help,.chase-active #scenic-view,.chase-active #walk-journal{display:none!important}
 .mascot-portrait{display:block;width:min(100%,30rem);max-height:45dvh;object-fit:contain;margin:auto;border-radius:.6rem}
+#chase-touch-controls{display:none}
+@media (any-pointer:coarse){
+ .chase-active #chase-touch-controls{position:fixed;z-index:43;bottom:max(1rem,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);display:grid;grid-template-columns:repeat(3,auto);gap:.3rem;touch-action:none;user-select:none}
+ #chase-touch-controls button{min-height:44px;padding:.4rem .65rem;touch-action:none;white-space:nowrap}
+ #chase-touch-controls button:last-child{grid-column:1/-1}
+}
