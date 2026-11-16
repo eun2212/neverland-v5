@@ -47,12 +47,13 @@
   else if(where==='park'){s.ride=id;world3d.jumpToPark(controls3d[id][0],controls3d[id][1]+5);explore3d('공원으로 돌아왔습니다. 제작 메뉴에서 다음 장면으로 이동할 수 있습니다.');}
   else if(where==='exit'){late();world3d.jumpToPark(controls3d[1][0]+4,controls3d[1][1]+6);explore3d('출구가 나타난 직후 · 앞의 출구에서 E를 누르면 고백이 시작됩니다.');world3d.faceExit();}
   else if(where==='branch'){late();confronting3d=true;keeperStoryState.confessed=true;world3d.jumpToPark(controls3d[1][0]+4,controls3d[1][1]+6);sync3d();world3d.faceExit();keeperFinalChoices();}
+  else if(where==='chase'){late();window.NEVERLAND_MASCOT.start(()=>end(2));}
   else if(where==='outside'){late();s.phase='final';end(2);}
   else if(where==='ending'){late();s.phase='final';end(id);}
   sync3d();world3d.audio();
  }
  function jumps(){const host=show('장면 이동 · 제작');node('p','선택하면 현재 진행을 테스트 상태로 교체합니다. 이름·성별·성향은 유지하며, 테스트에서 본 앨범과 엔딩은 수집 기록에 저장하지 않습니다. 일반 플레이로 돌아가려면 타이틀부터 다시 시작하세요.',host);
-  const grid=node('div','',host);grid.className='jump-grid';for(const [label,id]of [['처음 · 키퍼 안내','start'],['첫 놀이기구 사고 후 · 꿈 대사','first'],['출구 등장 후 · 공원','exit'],['엔딩 분기점 · 최종 선택','branch'],['출구를 통과한 후 · 현실','outside']])action(grid,label,()=>jump(id));
+  const grid=node('div','',host);grid.className='jump-grid';for(const [label,id]of [['처음 · 키퍼 안내','start'],['첫 놀이기구 사고 후 · 꿈 대사','first'],['출구 등장 후 · 공원','exit'],['엔딩 분기점 · 최종 선택','branch'],['마지막 추격 · 바로 시작','chase'],['출구를 통과한 후 · 현실','outside']])action(grid,label,()=>jump(id));
   node('h3','놀이기구로 바로 이동',host);const ridesGrid=node('div','',host);ridesGrid.className='jump-grid';rides.forEach((ride,id)=>action(ridesGrid,ride.name+' 내부',()=>jump('ride',id)));
   action(host,'현재 기구에서 나와 공원으로',()=>jump('park',s.ride||0));node('h3','엔딩 공간 미리보기',host);const endingsGrid=node('div','',host);endingsGrid.className='jump-grid';for(let id=1;id<=5;id++)action(endingsGrid,id+' · '+endingData[id][0],()=>jump('ending',id));
   action(host,'타이틀 · 일반 플레이 새로 시작',()=>jump('title'));

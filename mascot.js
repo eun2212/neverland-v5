@@ -83,6 +83,8 @@
   world3d.jumpToPark(startPoint.x,startPoint.z,Math.PI);
   document.body.classList.add('chase-active');
   ui.hidden=false;ui.textContent='네버랜드가 앞에 있습니다. 뒤를 돌아 별빛을 따라가세요.';
+  window.NEVERLAND_BGM?.update(world3d.state);
+  window.NEVERLAND_BGM?.start?.();
   scream(.065);
  }
  function resetMaze(){mazeTime=0;guide=null;}
@@ -233,7 +235,7 @@
   return oldChoice(win,choice);
  };
  window.NEVERLAND_MASCOT={
-  catSpot,rideSpot,clear,resetMaze,tick,updateSound,mazeGuide,catDialogue,encounter,
+  start,catSpot,rideSpot,clear,resetMaze,tick,updateSound,mazeGuide,catDialogue,encounter,
   get reveal(){return reveal;},
   get active(){return !!run;},get chase(){return run;},get guide(){return guide;},
   touchKey:key=>Array.from(touchKeys.values()).includes(key),
