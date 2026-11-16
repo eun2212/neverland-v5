@@ -132,9 +132,32 @@ transformation.update(browser.neverlandWorld.state,12,false);
 assert(!transformation.escape.getObjectByName('transforming-ragdoll').visible);
 assert(transformation.escape.getObjectByName('neverland-pursuer').visible);
 
-browser.NEVERLAND_MASCOT={active:true,chase:{monster:{x:.25,z:4}},catSpot:{x:3,z:3}};
-browser.neverlandWorld.state.player={x:0,z:0,yaw:0,pitch:0,eye:1.65};
+const maze=browser.NEVERLAND_CHASE_MAZE;
+const spawn=maze.point(maze.spawn.row,maze.spawn.col);
+const chase={monster:{...spawn}};
+browser.NEVERLAND_MASCOT={active:true,chase,catSpot:{x:3,z:3}};
+browser.neverlandWorld.state.player={x:0,z:0,yaw:Math.PI,pitch:0,eye:1.65};
 next();
 assert(park.getObjectByName('neverland-pursuer'),'dedicated chase scene renders pursuer');
 assert(park.getObjectByName('broken-keeper-key'),'fixed exit has broken key geometry');
-console.log('PASS: Three.js chase scene renders the pursuer and fixed exit.');
+function faceInFrame(){
+ park.updateMatrixWorld(true);camera.updateMatrixWorld(true);
+ const face=park.getObjectByName('neverland-pursuer').localToWorld(new T.Vector3(0,2.13,1.128));
+ const uv=face.clone().project(camera);
+ assert(Math.abs(uv.x)<1&&Math.abs(uv.y)<1&&uv.z>0&&uv.z<1,'pursuer face is in the camera frustum');
+ const sight=face.sub(camera.position);
+ const ray=new T.Raycaster(camera.position,sight.clone().normalize(),.09,sight.length());
+ const walls=park.children.filter(o=>o.geometry?.parameters?.width===maze.size&&o.geometry.parameters.height===3.1);
+ assert.equal(ray.intersectObjects(walls,false).length,0,'walls do not occlude the visible face');
+}
+faceInFrame();
+chase.started=true;
+chase.monster.z=3;
+next();faceInFrame();
+chase.scare=true;
+reduced=true;
+next();faceInFrame();
+const scareDistance=camera.position.distanceTo(park.getObjectByName('neverland-pursuer').position);
+next();
+assert(Math.abs(scareDistance-camera.position.distanceTo(park.getObjectByName('neverland-pursuer').position))<.001,'reduced-motion scare holds a close-up');
+console.log('PASS: unobstructed initial and nearby pursuer, capture close-up, reduced motion and fixed exit.');

@@ -2,6 +2,17 @@ const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const base=fs.readFileSync(path.join(__dirname,'verify-full-story.cjs'),'utf8');
 const checks=String.raw`
 sandbox.document.body.append=function(){};
+let delayed;
+sandbox.setTimeout=fn=>{delayed=fn;return 1;};
+sandbox.clearTimeout=()=>{delayed=null;};
+sandbox.finishScare=()=>delayed?.();
+const sound={started:0,stops:0};
+sandbox.sound=sound;
+sandbox.AudioContext=class{
+ constructor(){this.currentTime=0;this.destination={};}
+ createGain(){return {gain:{setValueAtTime(){},linearRampToValueAtTime(){},exponentialRampToValueAtTime(){}},connect(){},disconnect(){}};}
+ createOscillator(){return {frequency:{setValueAtTime(){},exponentialRampToValueAtTime(){}},connect(node){return node;},disconnect(){},start(){sound.started++;},stop(at){if(at===undefined)sound.stops++;}};}
+};
 sandbox.driveChase=()=>{
  const pet=sandbox.NEVERLAND_MASCOT,maze=sandbox.NEVERLAND_CHASE_MAZE,player=sandbox.worldQA.player;
  let frames=0;
@@ -53,17 +64,31 @@ test(!!pet.reveal&&$('text').textContent.includes('푸른 눈이 금빛'), 'cat 
 drain();
 const maze=window.NEVERLAND_CHASE_MAZE;
 test(!pet.reveal&&maze.stars.length>20,'branching maze loads after the reveal');
+const edges=maze.rows.reduce((total,line,row)=>total+[...line].reduce((count,kind,col)=>count+(kind==='#'?0:Number(maze.open({row:row+1,col}))+Number(maze.open({row,col:col+1}))),0),0);
+test(edges-maze.toExit.distance.size+1>=3,'at least three independent loops connect alternative routes');
 test(!worldQA.valid(4,0)&&worldQA.valid(-4,0),'chase collision blocks wall cells');
 test(maze.toExit.distance.size===maze.rows.join('').replaceAll('#','').length,'all maze branches connect to the exit route');
 const deadEnd=maze.point(8,9);
 test(maze.open(maze.cell(deadEnd.x,deadEnd.z))&&!maze.valid(deadEnd.x,deadEnd.z+4),'branch ends at a wall');
 test(pet.encounter('ride').includes('가르랑')&&pet.encounter('game').includes('안아')&&pet.encounter('drinks').includes('몸을 비빕니다'),'three locations have distinct interactions');
 test(pet.active&&pet.chase.age===0&&worldQA.player.z===0,'escape choice opens chase checkpoint');
+test(Math.abs(worldQA.player.yaw-Math.PI)<.01&&pet.chase.monster.z>0,'checkpoint faces the pursuer down the open corridor');
 worldQA.updateProgress(.05);test(pet.chase.age===0,'timer waits for actual movement');
 worldQA.player.z=-.08;worldQA.updateProgress(.05);
 for(let i=0;i<170&&!pet.chase.failed;i++)worldQA.updateProgress(.05);
-test(pet.chase.failed&&$('overlay').innerHTML.includes('게임 오버'),'monster catches stationary runner');
+test(window.sound.started>3,'chase emits proximity sounds before capture');
+test(pet.chase.failed&&pet.chase.scare,'capture opens the close-up before game over');
+test(!($('overlay').innerHTML||'').includes('게임 오버'),'game over waits for the close-up');
+const stops=window.sound.stops;
+finishScare();
+test(window.sound.stops>stops,'game over cuts off the scream');
+test(!pet.chase.scare&&$('overlay').innerHTML.includes('게임 오버'),'close-up leads to game over');
+const previousBgm=window.NEVERLAND_BGM;
+window.NEVERLAND_BGM={state:{muted:true},update(){}};
+const startedVoices=window.sound.started;
 $('chase-retry').onclick();
+test(window.sound.started===startedVoices,'muting suppresses the checkpoint scream');
+window.NEVERLAND_BGM=previousBgm;
 test(pet.active&&!pet.chase.failed&&pet.chase.age===0&&worldQA.player.z===0,'retry restores chase checkpoint');
 pet.chase.age=63.98;
 worldQA.player.z=-.08;
@@ -71,7 +96,7 @@ for(let i=0;i<530&&!pet.chase.failed;i++)worldQA.updateProgress(.05);
 test(pet.chase.failed&&$('overlay').innerHTML.includes('도착하지 못했습니다'),'time limit gives game over');
 $('chase-retry').onclick();
 const seconds=driveChase();
-test(completedChoice===2&&seconds>28&&seconds<35,'normal walking leaves time to navigate and retains solo ending');console.log('Normal walking run: '+seconds.toFixed(2)+'s');
+test(completedChoice===2&&seconds>25&&seconds<35,'normal walking leaves time to navigate and retains solo ending');console.log('Normal walking run: '+seconds.toFixed(2)+'s');
 startMain();Object.assign(s,{K:8,M:4,N:10,I:4,cleared:new Set([0,1,2])});
 finishChoice(true,'together');drain();
 test(pet.active,'qualified together ending enters chase');

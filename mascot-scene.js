@@ -56,6 +56,7 @@ window.NEVERLAND_MASCOT_SCENE=function(T,park){
  box(brokenKey,gold,-.03,.11,0,.105,.42,.10).rotation.z=-.24;
  box(brokenKey,gold,.14,-.21,0,.095,.32,.10).rotation.z=.36;
  box(brokenKey,gold,.19,-.32,0,.22,.085,.10).rotation.z=.36;
+ const scarePose=maze.point(maze.spawn.row,maze.spawn.col);
  const changingCat=cat.clone();changingCat.name='transforming-ragdoll';escape.add(changingCat);
  const monster=new T.Group();monster.name='neverland-pursuer';escape.add(monster);
  ball(monster,purple,0,1.63,-.53,.94,.72,1.27);
@@ -75,8 +76,12 @@ window.NEVERLAND_MASCOT_SCENE=function(T,park){
   ball(monster,purple,side*.63,.59,-1.03,.23,.64,.34);
   ball(monster,pink,side*.62,.11,-1.28,.27,.12,.42);
  }
- let revealStart=null;
- return {escape,update(state,t,still){
+ let revealStart=null,scareStart=null;
+ return {escape,scareCamera(camera,t,still){
+  const progress=still?1:Math.min(1,(t-scareStart)/.29);
+  camera.position.set(scarePose.x,2.10,scarePose.z+3.25-progress*1.65);
+  camera.lookAt(scarePose.x,2.10,scarePose.z+.99);
+ },update(state,t,still){
   const feature=window.NEVERLAND_MASCOT;
   const guide=feature?.guide,active=feature?.chase;
   const interior=state.interior;
@@ -103,10 +108,18 @@ window.NEVERLAND_MASCOT_SCENE=function(T,park){
   monster.visible=!!active||!!reveal&&progress>=.42;
   monster.scale.setScalar(reveal?Math.max(.3,progress):1);
   if(reveal){monster.position.set(-4,0,0);monster.rotation.y=Math.PI/2;}
+  if(active?.scare){
+   scareStart??=t;
+   monster.position.set(scarePose.x,0,scarePose.z);monster.rotation.set(0,0,0);
+   eyes.forEach(eye=>{eye.visible=true;});
+   sleeves.forEach(sleeve=>{sleeve.rotation.x=-.42;});
+   return;
+  }
+  scareStart=null;
   if(active){
    const p=state.player,q=active.monster;
    monster.position.set(q.x,0,q.z);monster.lookAt(p.x,0,p.z);
-   eyes.forEach((eye,i)=>{eye.visible=still||Math.sin(t*(i?2.6:3.7)+i)*Math.sin(t*5.8+i*3)>-.83;});
+   eyes.forEach((eye,i)=>{eye.visible=still||!active.started||Math.sin(t*(i?2.6:3.7)+i)*Math.sin(t*5.8+i*3)>-.83;});
    sleeves.forEach((sleeve,i)=>{sleeve.rotation.x=still?0:Math.sin(t*6+i*Math.PI)*.34;});
   }
  }};

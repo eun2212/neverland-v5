@@ -214,11 +214,15 @@ function render(){requestAnimationFrame(render);const t=clock.getElapsedTime(),s
  const reduced=window.NEVERLAND_TOOLS?.settings.reduced||matchMedia('(prefers-reduced-motion: reduce)').matches;
  mascotModels.update(state,t,reduced);
  if(window.NEVERLAND_MASCOT?.reveal){
+  combineMat.uniforms.vision.value=-1;combineMat.uniforms.mazeLight.value=-1;
   camera.position.set(0,1.55,0);camera.lookAt(-4,1.25,0);
   renderBloom(w,h,mascotModels.escape);return;
  }
  if(window.NEVERLAND_MASCOT?.active){
+  window.NEVERLAND_MASCOT.updateSound?.();
+  combineMat.uniforms.vision.value=-1;combineMat.uniforms.mazeLight.value=-1;
   camera.position.set(p.x,1.65,p.z);camera.rotation.order='YXZ';camera.rotation.set(p.pitch,p.yaw,0);
+  if(window.NEVERLAND_MASCOT.chase.scare)mascotModels.scareCamera(camera,t,reduced);
   renderBloom(w,h,mascotModels.escape);return;
  }
  const hiddenCastle=!!state.interior||!!state.passage||!!state.config.epilogue;

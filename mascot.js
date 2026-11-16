@@ -2,7 +2,7 @@
 (function(){
  const maze=window.NEVERLAND_CHASE_MAZE,limit=64;
  const center=({row,col})=>maze.point(row,col);
- const startPoint=center(maze.start),exitPoint=center(maze.exit);
+ const startPoint=center(maze.start),exitPoint=center(maze.exit),spawnPoint=center(maze.spawn);
  function turnHint(player,target){
   const angle=Math.atan2(player.x-target.x,player.z-target.z)-player.yaw;
   const turn=Math.atan2(Math.sin(angle),Math.cos(angle));
@@ -13,30 +13,61 @@
  const reduced=()=>window.NEVERLAND_TOOLS?.settings.reduced||matchMedia('(prefers-reduced-motion: reduce)').matches;
  const ui=document.createElement('div');
  ui.id='final-chase-status';ui.hidden=true;ui.setAttribute('role','status');document.body.append(ui);
- let audio=null;
- function scream(){
-  if(window.NEVERLAND_BGM?.state.muted)return;
-  const gain=(window.NEVERLAND_TOOLS?.settings.volume??65)/100;
+ let audio=null,bus=null,scareTimer=null;
+ const voices=new Set();
+ function volume(){return window.NEVERLAND_BGM?.state.muted?0:(window.NEVERLAND_TOOLS?.settings.volume??65)/100;}
+ function stopSound(){
+  for(const voice of voices)voice.stop();
+  voices.clear();
+ }
+ function tone(type,from,to,duration,peak,delay=0){
   const Context=window.AudioContext||window.webkitAudioContext;
-  if(!Context||!gain)return;
-  audio??=new Context();audio.resume().catch(()=>{});
-  const now=audio.currentTime,voice=audio.createOscillator(),envelope=audio.createGain();
-  voice.type='triangle';
-  voice.frequency.setValueAtTime(740,now);voice.frequency.exponentialRampToValueAtTime(210,now+.55);
-  envelope.gain.setValueAtTime(.001,now);envelope.gain.linearRampToValueAtTime(.085*gain,now+.12);
-  envelope.gain.exponentialRampToValueAtTime(.001,now+.56);
-  voice.connect(envelope).connect(audio.destination);voice.start(now);voice.stop(now+.57);
+  if(!Context||!volume())return;
+  if(!audio){
+   audio=new Context();bus=audio.createGain();bus.connect(audio.destination);
+  }
+  if(audio.state==='suspended')audio.resume().catch(()=>{});
+  bus.gain.value=volume();
+  const now=audio.currentTime+delay,voice=audio.createOscillator(),envelope=audio.createGain();
+  voice.type=type;voice.frequency.setValueAtTime(from,now);
+  voice.frequency.exponentialRampToValueAtTime(to,now+duration);
+  envelope.gain.setValueAtTime(.001,now);
+  envelope.gain.linearRampToValueAtTime(peak,now+.045);
+  envelope.gain.exponentialRampToValueAtTime(.001,now+duration);
+  voice.connect(envelope).connect(bus);voices.add(voice);
+  voice.onended=()=>{voices.delete(voice);voice.disconnect();envelope.disconnect();};
+  voice.start(now);voice.stop(now+duration+.01);
+ }
+ function updateSound(){
+  if(bus)bus.gain.value=volume();
+  if(document.hidden||!volume()||(world3d.state.config.paused&&!run?.scare))stopSound();
+ }
+ document.addEventListener('visibilitychange',()=>{if(document.hidden)stopSound();});
+ function scream(peak){
+  tone('sawtooth',260,98,.50,peak*.43);
+  tone('triangle',510,185,.62,peak,.025);
+  tone('triangle',687,236,.48,peak*.57,.04);
+ }
+ function approachSound(distance,dt){
+  run.soundDelay-=dt;
+  if(run.soundDelay>0||distance>20)return;
+  const near=1-Math.min(1,distance/20);
+  run.soundDelay=1.4-near*.98;
+  tone('triangle',65+near*30,29,.24,.026+near*.10);
+  tone('sawtooth',116,62,.16,.013+near*.024,.14);
  }
  function start(done,origin=world3d.state.player){
-  reveal=null;
-  run={done,origin,age:0,started:false,failed:false,monster:center(maze.spawn),waypoint:null,targetKey:null,field:null};
+  clear();
+  run={done,origin,age:0,started:false,failed:false,monster:{...spawnPoint},soundDelay:.5,waypoint:null,targetKey:null,field:null};
   close();explore3d('바닥의 별빛을 따라 출구로 달리세요. WASD 이동 · Shift 달리기');
-  world3d.jumpToPark(startPoint.x,startPoint.z,Math.PI/2);
+  world3d.jumpToPark(startPoint.x,startPoint.z,Math.PI);
   document.body.classList.add('chase-active');
-  ui.hidden=false;ui.textContent='별빛을 따라가세요 · 움직이면 제한 시간이 시작됩니다.';
+  ui.hidden=false;ui.textContent='네버랜드가 앞에 있습니다. 뒤를 돌아 별빛을 따라가세요. · 이동하면 추격 시작';
+  scream(.065);
  }
  function resetMaze(){mazeTime=0;guide=null;}
  function clear(){
+  clearTimeout(scareTimer);scareTimer=null;stopSound();
   run=null;reveal=null;resetMaze();ui.hidden=true;document.body.classList.remove('chase-active');
  }
  function finish(){
@@ -45,12 +76,19 @@
   clear();world3d.jumpToPark(origin.x,origin.z);
   done();
  }
- function fail(reason){
-  run.failed=true;ui.hidden=true;world3d.configure({paused:true});scream();
+ function gameOver(reason){
+  scareTimer=null;run.scare=false;stopSound();
   modal('<h1>게임 오버</h1><p>'+reason+'</p><button id="chase-retry" type="button">추격 직전부터 다시</button>');
   const retry=$('chase-retry');
   retry.onclick=()=>{const {done,origin}=run;start(done,origin);};
   retry.focus?.();
+ }
+ function fail(reason,caught=false){
+  run.failed=true;ui.hidden=true;world3d.configure({paused:true});
+  document.exitPointerLock?.();stopSound();
+  if(!caught){gameOver(reason);return;}
+  run.scare=true;scream(.16);
+  scareTimer=setTimeout(()=>gameOver(reason),reduced()?750:900);
  }
  function pursue(player,dt){
   const targetCell=maze.cell(player.x,player.z),targetKey=maze.key(targetCell);
@@ -70,7 +108,7 @@
   }
   const target=run.waypoint||player;
   const dx=target.x-monster.x,dz=target.z-monster.z,distance=Math.hypot(dx,dz);
-  const step=Math.min(distance,dt*(1.85+Math.min(.35,run.age*.008)));
+  const step=Math.min(distance,dt*(2.65+Math.min(.25,run.age*.009)));
   if(distance){
    monster.x+=dx/distance*step;
    monster.z+=dz/distance*step;
@@ -80,7 +118,7 @@
  function tick(player,dt){
   if(!run||run.failed)return;
   if(!run.started&&Math.hypot(player.x-startPoint.x,player.z-startPoint.z)>.001){
-   run.started=true;scream();
+   run.started=true;
   }
   if(!run.started)return;
   run.age+=dt;
@@ -88,9 +126,12 @@
   if(Math.hypot(player.x-exitPoint.x,player.z-exitPoint.z)<1.35){finish();return;}
   pursue(player,dt);
   if(maze.key(cell)===maze.key(maze.cell(run.monster.x,run.monster.z))&&Math.hypot(player.x-run.monster.x,player.z-run.monster.z)<1.05){
-   fail('네버랜드가 당신을 따라잡았습니다.');return;
+   fail('네버랜드가 당신을 따라잡았습니다.',true);return;
   }
   if(run.age>=limit){fail('출구가 닫히기 전에 도착하지 못했습니다.');return;}
+  const path=run.field.distance.get(maze.key(maze.cell(run.monster.x,run.monster.z)));
+  const distance=Math.hypot(player.x-run.monster.x,player.z-run.monster.z);
+  approachSound(Math.max(distance,(path??Infinity)*maze.size-maze.size),dt);
   const next=maze.toExit.next(cell);
   const hint='키퍼의 별빛 '+turnHint(player,next?center(next):exitPoint);
   const status=hint+' · '+Math.ceil(limit-run.age)+'초';
@@ -175,7 +216,7 @@
   return oldChoice(win,choice);
  };
  window.NEVERLAND_MASCOT={
-  catSpot,rideSpot,clear,resetMaze,tick,mazeGuide,catDialogue,encounter,
+  catSpot,rideSpot,clear,resetMaze,tick,updateSound,mazeGuide,catDialogue,encounter,
   get reveal(){return reveal;},
   get active(){return !!run;},get chase(){return run;},get guide(){return guide;},
   valid:maze.valid
