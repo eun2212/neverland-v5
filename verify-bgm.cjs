@@ -10,6 +10,35 @@ assert.equal(b.cue({...state,passage:{progress:.1},interior:{ride:0},config:{con
 b.update({...state,interior:{ride:1}},'main');const count=audio.length;b.update({...state,interior:{ride:1}},'main');assert.equal(audio.length,count);now+=1000;timer();assert(audio[0].paused);assert.equal(audio.at(-1).volume,.65);
 b.mute(true);assert(audio.at(-1).paused);b.update({...state,passage:{}},'graveyard');assert(audio.at(-1).paused);b.mute(false);assert(!audio.at(-1).paused);assert.equal(b.state.current,'monochrome');
 context.document.hidden=true;events.visibilitychange();assert(audio.at(-1).paused);context.document.hidden=false;events.visibilitychange();assert(!audio.at(-1).paused);
+const chase={failed:false};
+context.window.NEVERLAND_MASCOT={chase};
+const finalState={...state,config:{confronting:true}};
+b.update(finalState,'final');
+assert.equal(b.state.current,'chase');
+assert.equal(audio.at(-1).src,b.tracks.chase);
+const firstChase=audio.at(-1);
+assert(firstChase.loop);
+b.setVolume(.32);
+now+=1000;timer();
+assert.equal(firstChase.volume,.32);
+b.mute(true);
+assert(firstChase.paused);
+b.mute(false);
+assert(!firstChase.paused);
+chase.failed=true;
+b.update(finalState,'final');
+assert.equal(b.state.current,'exit');
+now+=1000;timer();
+assert(firstChase.paused);
+assert.equal(firstChase.src,'');
+chase.failed=false;
+b.update(finalState,'final');
+assert.equal(b.state.current,'chase');
+assert.notEqual(audio.at(-1),firstChase);
+assert(audio.at(-1).loop);
+context.window.NEVERLAND_MASCOT.chase=null;
+b.update(finalState,'final');
+assert.equal(b.state.current,'exit');
 for(const [key,file]of Object.entries(b.tracks)){assert(fs.existsSync(__dirname+'/'+file),key);assert(fs.readFileSync(__dirname+'/'+file).toString('ascii',0,4)==='RIFF');}
 b.update(state,'profile');events.keydown();assert.equal(b.state.current,'profile');b.update(state,'main');assert.equal(b.state.current,'main');console.log('PASS: selected tracks, five map cues, main/profile/ending, passage priority, exit confrontation, start gesture, crossfade, deduplication, mute and background-tab pause.');
 
