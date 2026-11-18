@@ -7,7 +7,10 @@ s.name='테스터';s.gender='male';s.temper='timid';tools.jump('start');
 test(tools.testing&&s.name==='테스터'&&s.gender==='male'&&s.temper==='timid','jump retains profile');
 test(!free3d&&keeperStoryState.orientation,'start opens tutorial');
 tools.jump('first');test($('text').textContent.includes('눈을 떴네요')&&!world3d.state.passage,'first accident resumes dream scene');
-for(let i=0;i<5;i++){tools.jump('ride',i);test(world3d.state.interior.ride===i,'jump enters ride '+i);test(forcedRide3d===null&&pendingRideResult===null,'jump clears forced boarding and pending result');if(i===0)test(firstLever3d&&world3d.state.interior.seated,'first ship retains tutorial');}
+for(let i=0;i<5;i++){tools.jump('ride',i);test(world3d.state.interior.ride===i,'jump enters ride '+i);test(forcedRide3d===null,'jump clears forced boarding');if(i===3){test(pendingRideResult?.kind==='mirror'&&!world3d.state.interior.seated,'maze starts ready to walk');}else{test(pendingRideResult===null&&world3d.state.interior.seated,'ride starts seated '+i);if(i===0)test(firstLever3d,'first ship retains tutorial');else test(world3d.state.nearest?.type==='interior-control','ride can be operated immediately '+i);}}
+window.NEVERLAND_COASTER={active:false,open(callback){this.active=true;this.onReturn=callback;},close(){this.active=false;}};
+tools.jump('coaster');test(tools.testing&&window.NEVERLAND_COASTER.active,'coaster opens in test mode');test(world3d.state.player.x===NEVERLAND_LAYOUT.coaster.door[0]&&world3d.state.player.z===NEVERLAND_LAYOUT.coaster.door[1],'coaster return position is station');
+tools.jump('ride',1);test(!window.NEVERLAND_COASTER.active,'next jump closes coaster');
 tools.jump('ride',1);world3d.forceBoard(1);world3d.startRide();tools.jump('park',1);test(!world3d.state.interior&&!world3d.state.passage&&free3d,'can leave running test ride');
 tools.jump('exit');test(s.exit&&s.cleared.size===4&&world3d.state.config.exit,'exit checkpoint creates physical exit');
 tools.jump('branch');test(keeperStoryState.confessed&&confronting3d&&$('choices').children.length===3,'branch has real resolution callbacks');

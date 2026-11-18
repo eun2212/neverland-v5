@@ -2,8 +2,7 @@
 'use strict';
 // Dependency-free WebGL scene. All positions are world-space metres.
 const $=id=>document.getElementById('world-'+id),canvas=$('world');
-const gl=canvas.getContext('webgl',{alpha:false,antialias:false});
-if(!gl){$('start').disabled=true;$('start').textContent='WebGL을 지원하는 브라우저가 필요합니다.';throw Error('WebGL unavailable');}
+const gl=canvas.getContext('webgl',{alpha:false,antialias:false});if(!gl)throw Error('WebGL unavailable');
 const vs=`attribute vec3 p;attribute vec3 c;attribute vec2 uv;uniform mat4 vp;varying vec3 col;varying vec2 tex;varying float fog;void main(){gl_Position=vp*vec4(p,1.);col=c;tex=uv;fog=clamp((gl_Position.w-12.)/85.,0.,.91);}`;
 const fs=`precision mediump float;varying vec3 col;varying vec2 tex;varying float fog;uniform sampler2D image;uniform bool textured;void main(){vec4 t=textured?texture2D(image,tex):vec4(col,1.);if(t.a<.1)discard;gl_FragColor=vec4(mix(t.rgb,vec3(.23,.38,.40),fog),t.a);}`;
 function shader(type,src){let s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw Error(gl.getShaderInfoLog(s));return s;}

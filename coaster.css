@@ -11,3 +11,8 @@
 .coaster-active #world-mobile,.coaster-active #world-interact,.coaster-active #scenic-view{display:none!important}
 
 .coaster-active #walk-journal,.coaster-active #walking-map,.coaster-active #walking-help{display:none!important}
+
+#coaster-board.coaster-lever-open{inset:5dvh max(1rem,calc((100% - 62rem)/2)) auto;max-height:90dvh;background:transparent;border:0;padding:0}
+#coaster-board.coaster-lever-open>h2,#coaster-board.coaster-lever-open>p{display:none}
+#coaster-board .coaster-lever__handle{min-height:0;border:0;border-radius:0;background:transparent;padding:0}
+#coaster-board .coaster-lever__cancel{border:2px solid #756463;border-radius:7px;background:#f5dbb8;color:#403738;padding:.4rem .8rem}

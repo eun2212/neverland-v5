@@ -43,7 +43,8 @@
   if(parkState){s=parkState.story;keeperStoryState=parkState.keeper;s.phase='main';s.talks=0;}
   if(where==='start'){free3d=false;keeperOrientation3d();}
   else if(where==='first'){world3d.unlockFracture();s.visited=new Set([0]);keeperStoryState.dream='';finishFracture3d();}
-  else if(where==='ride'){s.ride=id;s.visited.add(id);s.talks=0;world3d.jumpToPark(controls3d[id][0],controls3d[id][1]+5);world3d.enterRide(id);if(id===0){free3d=false;firstLever3d=true;world3d.forceBoard(0);keeperFirstBoarding3d();}else explore3d(rides[id].name+' · 내부에서 테스트합니다.');}
+  else if(where==='ride'){s.ride=id;s.visited.add(id);s.talks=0;world3d.jumpToPark(controls3d[id][0],controls3d[id][1]+5);world3d.enterRide(id);if(id===0){free3d=false;firstLever3d=true;world3d.forceBoard(0);keeperFirstBoarding3d();}else if(id===3){pendingRideResult={kind:'mirror',help:false,risk:false};explore3d('거울 미로 출발점 · 반대편 흰 출구를 찾아가세요.');}else{world3d.forceBoard(id);explore3d(rides[id].name+' · 탑승했습니다. E 또는 기구 조작 버튼을 누르세요.');}}
+  else if(where==='coaster'){world3d.jumpToPark(...window.NEVERLAND_LAYOUT.coaster.door);explore3d('별바람 롤러코스터 · 승강장에서 테스트합니다.');window.NEVERLAND_COASTER.open(()=>{explore3d();$('walking-map').focus?.();});}
   else if(where==='park'){s.ride=id;world3d.jumpToPark(controls3d[id][0],controls3d[id][1]+5);explore3d('공원으로 돌아왔습니다. 제작 메뉴에서 다음 장면으로 이동할 수 있습니다.');}
   else if(where==='exit'){late();world3d.jumpToPark(controls3d[1][0]+4,controls3d[1][1]+6);explore3d('출구가 나타난 직후 · 앞의 출구에서 E를 누르면 고백이 시작됩니다.');world3d.faceExit();}
   else if(where==='branch'){late();confronting3d=true;keeperStoryState.confessed=true;world3d.jumpToPark(controls3d[1][0]+4,controls3d[1][1]+6);sync3d();world3d.faceExit();keeperFinalChoices();}
@@ -54,7 +55,7 @@
  }
  function jumps(){const host=show('장면 이동 · 제작');node('p','선택하면 현재 진행을 테스트 상태로 교체합니다. 이름·성별·성향은 유지하며, 테스트에서 본 앨범과 엔딩은 수집 기록에 저장하지 않습니다. 일반 플레이로 돌아가려면 타이틀부터 다시 시작하세요.',host);
   const grid=node('div','',host);grid.className='jump-grid';for(const [label,id]of [['처음 · 키퍼 안내','start'],['첫 놀이기구 사고 후 · 꿈 대사','first'],['출구 등장 후 · 공원','exit'],['엔딩 분기점 · 최종 선택','branch'],['마지막 추격 · 바로 시작','chase'],['출구를 통과한 후 · 현실','outside']])action(grid,label,()=>jump(id));
-  node('h3','놀이기구로 바로 이동',host);const ridesGrid=node('div','',host);ridesGrid.className='jump-grid';rides.forEach((ride,id)=>action(ridesGrid,ride.name+' 내부',()=>jump('ride',id)));
+  node('h3','놀이기구로 바로 이동',host);const ridesGrid=node('div','',host);ridesGrid.className='jump-grid';rides.forEach((ride,id)=>action(ridesGrid,ride.name+(id===3?' · 미로 출발':' · 탑승'),()=>jump('ride',id)));action(ridesGrid,window.NEVERLAND_LAYOUT.coaster.name+' · 승강장',()=>jump('coaster'));
   action(host,'현재 기구에서 나와 공원으로',()=>jump('park',s.ride||0));node('h3','엔딩 공간 미리보기',host);const endingsGrid=node('div','',host);endingsGrid.className='jump-grid';for(let id=1;id<=5;id++)action(endingsGrid,id+' · '+endingData[id][0],()=>jump('ending',id));
   action(host,'타이틀 · 일반 플레이 새로 시작',()=>jump('title'));
  }

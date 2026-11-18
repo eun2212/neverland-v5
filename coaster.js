@@ -80,11 +80,29 @@
   });
   batch(fixed);cars.forEach(car=>batch(car));
   const length=track.getLength();
+  // A complete barrel roll, eased at both ends so the train leaves and returns upright.
+  function roll(u){
+   const p=Math.max(0,Math.min(1,(u-.25)/.24));
+   return Math.PI*2*(p*p*(3-2*p));
+  }
+  const fireworks=new T.Group();fireworks.name='coaster-fireworks';scene.add(fireworks);
+  const bursts=[.18,.43,.69].map((u,index)=>{
+   const origin=track.getPointAt(u),direction=track.getTangentAt(u);
+   origin.addScaledVector(direction,11);origin.y+=8;
+   const group=new T.Group();group.position.copy(origin);fireworks.add(group);
+   const sparks=Array.from({length:24},(_,i)=>{
+    const spark=ball(0,0,0,.13,['bulb','redLight','gold'][index],group);
+    const angle=i*Math.PI*2/24;
+    return {spark,dx:Math.cos(angle),dy:Math.sin(angle),dz:Math.sin(i*2.4)*.35};
+   });
+   return {group,sparks,start:[.12,.37,.63][index]};
+  });
   function place(progress){
    cars.forEach((car,i)=>{
     const u=(progress+1-i*1.65/length)%1;
     car.position.copy(track.getPointAt(u));
     car.lookAt(car.position.clone().sub(track.getTangentAt(u)));
+    car.rotateZ(roll(u));
    });
   }
   place(0);
@@ -102,6 +120,21 @@
     }
    }
    place(progress);
+   const effectsOn=!!active&&!hidden&&active.startedAt!==null&&!active.completed&&!motionReduced();
+   fireworks.visible=effectsOn;
+   if(effectsOn){
+    const elapsed=(performance.now()-active.startedAt)/(duration*1000);
+    bursts.forEach(({group,sparks,start})=>{
+     const phase=(elapsed-start)/.16;
+     group.visible=phase>=0&&phase<1;
+     if(!group.visible)return;
+     const radius=1+phase*5,scale=Math.max(.05,1-phase);
+     sparks.forEach(({spark,dx,dy,dz},i)=>{
+      spark.position.set(dx*radius,dy*radius-phase*phase*1.5,dz*radius);
+      spark.scale.setScalar(.13*scale*(i%3===0?1.5:1));
+     });
+    });
+   }
    if(!active||hidden)return;
    if(motionReduced()){
     camera.position.set(-9,9,-63);camera.lookAt(-8,5,-77);return;
@@ -109,6 +142,7 @@
    const seat=track.getPointAt(progress),ahead=track.getPointAt((progress+.016)%1);
    camera.position.copy(seat);camera.position.y+=1.12;
    ahead.y+=1.02;camera.lookAt(ahead);
+   camera.rotateZ(-roll(progress));
   }};
  }
 
@@ -135,10 +169,20 @@
      if(document.activeElement===button)gears.find(g=>!g.button.disabled)?.button.focus();
      return;
     }
-    run.startedAt=performance.now();
-    shell.classList.add('coaster-running');
-    status.textContent='기어가 모두 체결됐습니다. 열차가 출발합니다.';
-    leave.focus();
+    tray.hidden=true;leave.hidden=true;shell.classList.add('coaster-lever-open');status.textContent='기어가 체결됐습니다. 출발 레버를 당기세요.';
+    ui.lever=window.NEVERLAND_COASTER_LEVER.mount(shell,{
+     onStart(){
+      ui.lever?.destroy();ui.lever=null;leave.hidden=false;shell.classList.remove('coaster-lever-open');
+      if(!run)return;
+      run.startedAt=performance.now();shell.classList.add('coaster-running');
+      status.textContent='열차가 출발합니다.';leave.focus();
+     },
+     onCancel(){
+      ui.lever=null;if(!run)return;run.count=0;
+      gears.forEach(gear=>gear.reset());tray.hidden=false;leave.hidden=false;shell.classList.remove('coaster-lever-open');
+      status.textContent='0 / '+gears.length+'개 체결';gears[0].button.focus();
+     }
+    });
    }
    function clear(){
     drag=null;button.style.translate='';
@@ -164,12 +208,13 @@
    gears.at(-1).reset=()=>{clear();button.disabled=false;slot.classList.remove('latched');slot.textContent=name+' 홈';};
   }
   leave.onclick=()=>close(true);
-  return {shell,status,leave,gears};
+  return {shell,status,leave,gears,tray,lever:null};
  }
  function close(returnToPark=false){
   if(!run)return;
   const {onReturn}=run;run=null;
-  ui.shell.hidden=true;ui.shell.classList.remove('coaster-running');
+  ui.lever?.destroy();ui.lever=null;ui.tray.hidden=false;ui.leave.hidden=false;
+  ui.shell.hidden=true;ui.shell.classList.remove('coaster-running','coaster-lever-open');
   document.body.classList.remove('coaster-active');
   if(returnToPark)onReturn();
  }
