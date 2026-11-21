@@ -22,6 +22,7 @@ tools.jump('park',3);test(!window.NEVERLAND_ENDING.state&&!world3d.state.config.
 tools.options();test(tools.open&&world3d.state.config.paused,'settings pause world');tools.hide();test(!tools.open&&!world3d.state.config.paused,'close restores movement');
 tools.album();test(tools.open,'album opens');tools.hide();tools.jumps();test(tools.open,'checkpoint menu opens');tools.hide();
 tools.jump('title');test(!tools.testing&&s.phase==='profile'&&!world3d.state.config.epilogue,'normal restart clears testing');
+$('player').value='새 여행자';$('gender').value='male';$('temper').value='timid';tools.jump('ride',1);test(s.name==='새 여행자'&&s.gender==='male'&&s.temper==='timid','title form profile is retained in ride jump');tools.jump('title');
 showKeeperPose('01');test(!localStorage.getItem('neverland-album-v1'),'title pose does not unlock album');s.phase='main';showKeeperPose('01');test(JSON.parse(localStorage.getItem('neverland-album-v1')).length===1,'normal play collects pose');
 tools.jump('branch');showKeeperPose('06');test(JSON.parse(localStorage.getItem('neverland-album-v1')).length===1,'test pose does not collect');
 \`);console.log('PASS: '+assertions+' assertions including authoring checkpoints, cleanup, real ending branches, profile, menus and collection isolation.');`;

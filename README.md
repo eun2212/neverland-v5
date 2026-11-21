@@ -1,52 +1,39 @@
-# 네버랜드 v2 · 키퍼의 놀이공원
+# 네버랜드 v5 · 키퍼의 놀이공원
 
-직접 걷고 다섯 놀이기구 안을 탐험·조작하는 3D 미스터리 게임입니다. 약한 로맨스와 함께, 주인공을 위험에 빠뜨리면서 구해 주는 키퍼의 집착을 다룹니다.
+직접 놀이공원을 돌아다니며 키퍼와 다섯 기구의 이야기를 발견하는 3D 판타지 미스터리 게임입니다. `index.html`이 현재 통합본입니다.
 
-플레이: https://neverland-v2-park.cometibex2.chatgpt.site/
+## 다른 컴퓨터에서 실행하기
 
-## 다른 컴퓨터에서 실행
-
-Git과 Node.js를 설치한 뒤 실행합니다. npm 설치와 API 키는 필요 없습니다.
+Git과 Node.js를 설치한 뒤 터미널에서 실행하세요. npm 설치나 API 키는 필요 없습니다.
 
 ```sh
-git clone https://github.com/eun2212/neverland-v2.git
-cd neverland-v2
+git clone https://github.com/eun2212/neverland-v5.git
+cd neverland-v5
 node server.cjs
 ```
 
-브라우저에서 http://127.0.0.1:8773/ 을 여세요. Windows에서는 START.cmd도 사용할 수 있습니다. 종료는 서버 터미널의 Ctrl+C입니다. Three.js와 게임 자산이 포함되어 있어 로컬 실행에는 인터넷이 필요 없습니다. WebGL 지원 데스크톱 브라우저를 권장합니다.
+브라우저에서 http://127.0.0.1:8773/ 을 엽니다. 종료하려면 터미널에서 Ctrl+C를 누릅니다. Windows에서는 `START.cmd`도 사용할 수 있습니다. WebGL을 지원하는 데스크톱 브라우저를 권장합니다.
 
-포트가 사용 중이면 PowerShell에서 `$env:PORT='8780'; node server.cjs`로 실행하고 8780 주소를 여세요. macOS/Linux는 `PORT=8780 node server.cjs`입니다.
+진행 저장과 엔딩 기록은 사용한 브라우저에 보관됩니다. GitHub로 코드를 옮겨도 다른 컴퓨터에 플레이 저장 데이터가 자동으로 옮겨지지는 않습니다.
 
-`play-full-story.html`은 최신 코드·이미지를 포함한 오프라인 단일 파일입니다. 로컬 서버 실행을 권장합니다. 진행 자동 저장은 없으며 엔딩 기록만 해당 브라우저에 남습니다. 클론해도 플레이 기록이 이동하지는 않습니다.
+## 현재 작업과 이어서 개발하기
 
-## 현재 게임
+- [최신 인수인계](HANDOFF.md)와 [v5 작업 기록](v5-hq/threads/README.md)을 먼저 확인하세요. Codex 대화 자체는 Git에 저장되지 않으며, 작업 기록 파일은 별도 보관본입니다.
+- 게임 내 **장면 이동 · 제작**에서 이야기 분기, 기구별 탑승·조작·키퍼 개입·운행, 미니게임과 엔딩을 테스트할 수 있습니다. 제작 테스트는 일반 플레이의 수집 기록에 저장되지 않습니다.
+- 기구 조작은 `coaster-lever.js`, `coaster-safetybar.js`, `ride-interactions.js`에 있습니다. 장면 이동 UI는 `game-tools.js`, 공원 외형과 간판은 `carnival-scene.js`에 있습니다.
+- `play.html`과 `game.js`는 예전 독립 데모입니다. `prepare-full-story.cjs`는 현재 통합본을 덮어쓸 수 있으므로 실행하지 마세요.
 
-- 검은 별 하늘과 레드·골드·그린 무대형 공원. 정문은 앞, 캡틴 훅은 중앙, 네 기구는 주변.
-- 현위치 지도, 기구별 내부 공간, 좌석 탑승·조작·실제 탑승 시점.
-- 첫 사고 전 단계별 안내·반복 질문·준비 확인.
-- 첫 사고 뒤 앞으로만 걷는 흑백 인형 무덤. 복귀하면 키퍼가 꿈이었다고 부정.
-- 정상 탑승마다 체크 글리치와 가면의 별에서 시작하는 단일 영역 레드 잠식. 출구에서는 공원 전체가 체크무늬, 키퍼는 완전한 단색 빨강.
-- 위험을 숨기고 구해 주는 다섯 기구 사건, 신뢰·불신·경계 선택, 증거, 출구의 악역 고백.
-- 일반 대화 답변 두 번 완료 뒤 강제 탑승. 초반 튜토리얼 질문은 제외.
-- 성향별 18개 응답, 퍼레이드·주사위, 다섯 퍼즐과 성별별 그림을 가진 다섯 엔딩.
-
-## 수정과 검증
+## 검증
 
 ```sh
-node verify-keeper-story.cjs
-node package-full-story.cjs
+node verify-full-story.cjs
+node verify-game-tools.cjs
+node verify-scene-lab.cjs
+node verify-ride-interactions.cjs
+node verify-coaster-safetybar.cjs
+node verify-coaster-entry.cjs
+node verify-ride-signs.cjs
+node verify-midway-signs.cjs
 ```
 
-현재 총 494개 검증입니다. 패키징은 단일 파일을 다시 만들고 저장소 옆 outputs 폴더에도 사본을 만듭니다.
-
-**다른 컴퓨터에서 이어 작업하기 전에 [HANDOFF.md](HANDOFF.md)를 읽으세요.**
-
-상세 문서: [키퍼 이야기](KEEPER-STORY.md), [흑백 세계](FRACTURE-REALM.md), [붉은 잠식](KEEPER-CORRUPTION.md), [강제 탑승](FORCED-BOARDING.md), [기구 내부](RIDE-INTERIORS.md).
-
-디자인 후보·프롬프트·검증 화면은 design-candidates에 보관합니다. original-2d는 초기 이야기 참고용입니다. 최신 진입점은 루트 index.html입니다.
-
-게임 내용과 그림의 권리는 원작자에게 있습니다. 플레이 링크 공유는 가능합니다. 저장소 공개가 무단 수정·복제·재배포에 대한 별도 허락을 뜻하지는 않습니다.
-
-## 대사 읽기
-화면 오른쪽 위의 대사 로그로 이전 대사를 다시 볼 수 있습니다. 스킵은 대사를 빠르게 넘기고 Auto는 읽을 시간을 둔 뒤 다음 대사로 진행합니다. 선택지는 직접 고르며 로그는 새 게임에서 초기화됩니다.
+자동 검사는 게임 로직과 일부 모의 화면을 확인합니다. 그래픽과 3D 화면, 기기별 조작은 실제 브라우저에서도 확인해야 합니다. GitHub 푸시는 공개 플레이 사이트의 자동 배포를 의미하지 않습니다.

@@ -45,15 +45,90 @@ const grassmat=new T.MeshStandardMaterial({color:'#112e2a',roughness:.9});const 
 const outerGround=mesh(new T.PlaneGeometry(230,220),new T.MeshStandardMaterial({color:'#060b16',roughness:1}));outerGround.rotation.x=-Math.PI/2;outerGround.position.set(0,-.45,-25);
 function pathStrip(points,width=4){const c=new T.CatmullRomCurve3(points.map(([x,z])=>new T.Vector3(x,.015,z))),pos=[],uv=[];for(let i=0;i<50;i++){const a=c.getPoint(i/50),b=c.getPoint((i+1)/50),dir=new T.Vector3().subVectors(b,a).normalize(),side=new T.Vector3(-dir.z,0,dir.x).multiplyScalar(width/2);const v=[a.clone().add(side),a.clone().sub(side),b.clone().add(side),a.clone().sub(side),b.clone().sub(side),b.clone().add(side)];for(const p of v){pos.push(...p.toArray());uv.push(p.x/10,p.z/10);}}const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(pos,3));g.setAttribute('uv',new T.Float32BufferAttribute(uv,2));g.computeVertexNormals();const o=mesh(g,groundmat);o.material.side=T.DoubleSide;}
 for(const side of [-1,1])pathStrip([[0,57],[0,43],[side*9,34],[side*9,18],[0,14],[0,2],[0,-8]],5);
-function shopSign(label,width,height,accent,parent){
- const canvas=document.createElement('canvas');canvas.width=640;canvas.height=128;
- const ink=canvas.getContext('2d');
- ink.fillStyle='#201328';ink.fillRect(0,0,640,128);
- ink.strokeStyle=accent;ink.lineWidth=10;ink.strokeRect(8,8,624,112);
- ink.fillStyle='#fff0c7';ink.textAlign='center';ink.font='bold 63px sans-serif';
- ink.fillText(label,320,88,600);
+// The frame is shared by all six signs; each canvas retains its own real text.
+// Paint a complete fallback first so a failed or delayed image request never
+// hides the name of a booth.
+const midwaySignPainters=[];
+const midwaySignFrames={game:null,food:null,rideVoyage:null,rideStarlight:null,rideLagoon:null};
+if(typeof Image!=='undefined'){
+ for(const [kind,src] of Object.entries({game:'assets/midway-sign-frame.png?v=20261121',food:'assets/midway-food-sign-frame.png?v=20261121',rideVoyage:'assets/ride-sign-voyage.png?v=20261121',rideStarlight:'assets/ride-sign-starlight.png?v=20261121',rideLagoon:'assets/ride-sign-lagoon.png?v=20261121'})){
+  const image=new Image();
+  image.onload=()=>{midwaySignFrames[kind]=image;for(const item of midwaySignPainters)if(item.kind===kind)item.paint();};
+  image.src=src;
+ }
+}
+function ornateMidwaySign({title,subtitle='',emblem='✦',width=5.35,height=1.28,parent,name,kind='game'}){
+ const canvas=document.createElement('canvas');canvas.width=1024;canvas.height=256;
+ const ctx=canvas.getContext('2d');
  const map=new T.CanvasTexture(canvas);map.colorSpace=T.SRGBColorSpace;
- return mesh(new T.PlaneGeometry(width,height),new T.MeshBasicMaterial({map,toneMapped:false,side:T.DoubleSide}),parent);
+ function paint(){
+  ctx.clearRect(0,0,1024,256);
+  if(midwaySignFrames[kind])ctx.drawImage(midwaySignFrames[kind],0,0,1024,256);
+  else{
+   ctx.fillStyle='#102c24';ctx.fillRect(0,0,1024,256);
+   ctx.strokeStyle='#e3bd6d';ctx.lineWidth=12;ctx.strokeRect(10,10,1004,236);
+   ctx.strokeStyle='#8a6a3d';ctx.lineWidth=3;ctx.strokeRect(25,25,974,206);
+  }
+  // Reserve a calm center so the generated ornament cannot interfere with text.
+  ctx.fillStyle='rgba(5,31,23,.80)';ctx.fillRect(137,65,750,135);
+  ctx.textAlign='center';ctx.shadowColor='#120c09';ctx.shadowBlur=7;
+  ctx.fillStyle='#fff3cd';ctx.font=subtitle?'bold 76px Georgia, serif':'bold 80px Georgia, "Malgun Gothic", serif';
+  ctx.fillText(title,512,subtitle?139:159,715);
+  if(subtitle){ctx.fillStyle='#efd08c';ctx.font='bold 24px Georgia, serif';ctx.fillText(subtitle,512,181,680);}
+  ctx.fillStyle='#ffe5a3';ctx.font='bold 42px Georgia, serif';ctx.fillText(emblem,93,153,75);ctx.fillText(emblem,931,153,75);
+  ctx.shadowBlur=0;map.needsUpdate=true;
+ }
+ midwaySignPainters.push({kind,paint});paint();
+ const sign=mesh(new T.PlaneGeometry(width,height),new T.MeshBasicMaterial({map,toneMapped:false,side:T.DoubleSide,transparent:true}),parent);
+ if(name)sign.name=name;
+ return sign;
+}
+function shopSign(label,width,height,accent,parent){
+ return ornateMidwaySign({title:label,width,height,parent,name:'food-sign-'+label,kind:'food'});
+}
+// Names on the physical signs are English; Korean location names in the shared
+// layout remain available to navigation and accessibility text.
+const foodSignNames={drinks:'STARLIGHT DRINKS',candy:'MOONCLOUD CANDY'};
+function lightMidwaySign(booth,y,height){
+ // Warm bulbs are outside the readable face, and are simple shared meshes.
+ const bottom=y-height/2-.075;
+ for(let i=0;i<9;i++)bulb(-2.4+i*.6,bottom,2.36,.065,booth);
+ for(const x of [-2.74,2.74]){
+  for(const dy of [-.35,0,.35])bulb(x,y+dy,2.36,.07,booth);
+  ball(x,y+height/2+.09,2.34,.11,'gold',booth);
+ }
+}
+// The midway games share a gilded carnival style, while their English titles and
+// emblems make each attraction readable at a glance. The Korean accessibility
+// labels and game IDs remain in the shared layout.
+const gameBoothArt={
+ rings:{title:'GOLDEN RINGS',subtitle:'RING TOSS',primary:'red',secondary:'cream',emblem:'◎'},
+ stars:{title:'STAR SHOT',subtitle:'AIM FOR THE STARS',primary:'green',secondary:'cream',emblem:'✦'},
+ pairs:{title:'MEMORY MATCH',subtitle:'FIND THE PAIRS',primary:'greenLight',secondary:'cream',emblem:'◇'},
+ timing:{title:'RHYTHM PARADE',subtitle:'FIND YOUR BEAT',primary:'redLight',secondary:'cream',emblem:'♪'}
+};
+function gameBoothSign(art,parent){
+ return ornateMidwaySign({title:art.title,subtitle:art.subtitle,emblem:art.emblem,parent,name:'game-sign-'+art.title.toLowerCase().replace(/\s+/g,'-')});
+}
+function gameBoothRoof(booth,art){
+ // A peaked striped canvas roof and a scalloped, lit valance replace the
+ // featureless flat roof. Each side faces the path into the midway.
+ for(let i=0;i<8;i++){
+  const x=-2.9+i*.725,x2=x+.725;
+  const g=new T.BufferGeometry();
+  g.setAttribute('position',new T.Float32BufferAttribute([x,3.26,2.25,x2,3.26,2.25,x,4.08,0,x2,3.26,2.25,x2,4.08,0,x,4.08,0,x,4.08,0,x2,4.08,0,x,3.26,-2.25,x2,4.08,0,x2,3.26,-2.25,x,3.26,-2.25],3));
+  g.computeVertexNormals();const o=mesh(g,i%2?art.secondary:art.primary,booth);o.material.side=T.DoubleSide;
+ }
+ beam([-2.95,3.28,2.27],[2.95,3.28,2.27],.055,'gold',booth);
+ for(let i=0;i<9;i++){
+  const x=-2.6+i*.65;bulb(x,3.2,2.3,.07,booth);
+  ball(x,3.11,2.27,.12,i%2?'gold':art.primary,booth);
+ }
+ for(const x of [-2.72,2.72]){
+  cylinder(x,.15,1.85,.20,3.13,'green',booth);
+  cylinder(x,.15,1.85,.27,.18,'gold',booth);
+  ball(x,3.36,1.85,.14,'gold',booth);
+ }
 }
 for(const side of [-1,1]){
  pathStrip([[side*13,-51],[side*15,-57],[side*15,-67]],3.2);
@@ -72,11 +147,34 @@ for(const shop of [...L.shops,...L.games]){
  for(const x of [-2.65,2.65])for(const z of [-1.75,1.75]){
   cube(x,.15,z,.28,3.1,.28,'green',booth);
  }
- for(let stripe=-3;stripe<=3;stripe++)cube(stripe*.84,3.25,0,.85,.25,4.5,stripe%2?'cream':accent,booth);
+ if(game)gameBoothRoof(booth,gameBoothArt[shop.id]);
+ else for(let stripe=-3;stripe<=3;stripe++)cube(stripe*.84,3.25,0,.85,.25,4.5,stripe%2?'cream':accent,booth);
  cube(0,.15,.45,4.8,1,1.4,accent,booth);
  cube(0,1.15,.45,4.95,.13,1.55,'cream',booth);
  const signColor=game?'#f3d391':drinks?'#9ee7d5':'#ffadd8';
- shopSign(shop.name,5.45,1.09,signColor,booth).position.set(0,3.86,2.28);
+ if(game){gameBoothSign(gameBoothArt[shop.id],booth).position.set(0,4.08,2.30);lightMidwaySign(booth,4.08,1.28);}
+ else{shopSign(foodSignNames[shop.id]||shop.id.toUpperCase(),5.45,1.09,signColor,booth).position.set(0,3.86,2.28);lightMidwaySign(booth,3.86,1.09);}
+ if(game){
+  // Gold-edged front panels make the four booths feel like permanent,
+  // handcrafted attractions instead of plain boxes.
+  cube(0,.25,1.17,4.55,.68,.10,'dark',booth);
+  for(const x of [-2.2,0,2.2])beam([x,.31,1.24],[x,.86,1.24],.025,'gold',booth);
+  beam([-2.2,.31,1.24],[2.2,.31,1.24],.025,'gold',booth);
+  beam([-2.2,.86,1.24],[2.2,.86,1.24],.025,'gold',booth);
+  for(const x of [-1.1,1.1]){torus(x,.58,1.25,.22,.025,'gold',booth);ball(x,.58,1.26,.065,'bulb',booth);}
+  // Each stand has its own silhouette and game-specific marquee ornament.
+  if(shop.id==='rings'){
+   for(const x of [-.72,0,.72])torus(x,4.82,2.31,.33,.06,'gold',booth);
+  }else if(shop.id==='stars'){
+   sunburst(0,4.84,2.31,.27,booth);
+   for(const x of [-.85,.85])ball(x,4.82,2.31,.1,'bulb',booth);
+  }else if(shop.id==='pairs'){
+   for(const x of [-.48,.48]){const card=cube(x,4.6,2.29,.57,.55,.08,'gold',booth);card.rotation.z=x<0?-.16:.16;ball(x,4.88,2.36,.08,'bulb',booth);}
+  }else if(shop.id==='timing'){
+   for(const x of [-.46,.46]){ball(x,4.66,2.31,.16,'gold',booth);beam([x+.13,4.66,2.31],[x+.13,5.08,2.31],.045,'gold',booth);}
+   beam([-.33,5.08,2.31],[.59,5.08,2.31],.055,'gold',booth);
+  }
+ }
  for(const x of [-1.5,0,1.5]){
   if(shop.id==='rings'){
    cylinder(x,1.28,.48,.055,.63,'green',booth);
@@ -166,6 +264,23 @@ for(const [x,z]of [[-6,16],[6,16],[-6,5],[6,5],[-8,-53],[8,-53]]){flowerbed(x,z,
 for(const [x,z]of [[0,12],[-23,-44],[23,-5],[0,-24]]){const light=new T.PointLight(0xffb54d,65,18,2);light.position.set(x,4.3,z);scene.add(light);}
 for(const r of L.rides){const [x,z]=r.control;cube(x,0,z,.75,.95,.7,'green');cube(x,.95,z,.9,.1,.8,'gold');sunburst(x,1.17,z+.38,.18);beam([x,1,z],[x+.2,1.5,z],.05,'red');ball(x+.2,1.55,z,.1,'red');torus(x,.025,z+1.25,.5,.035,'gold',stat,true);}
 for(const r of L.rides){const[x,z]=r.control;for(const dx of[-1.15,1.15])beam([x+dx,0,z-.6],[x+dx,3.1,z-.6],.08,'green');beam([x-1.15,3.1,z-.6],[x+1.15,3.1,z-.6],.1,'gold');sunburst(x,3.45,z-.6,.35);for(let i=0;i<9;i++)bulb(x-1+i*.25,3.08,z-.5,.07);}
+// Named boards are above the existing control arches, clear of walking paths.
+// The six titles are decorative; Korean navigation and ride logic stay intact.
+const rideSignSpecs=[
+ {id:'captain',title:"Hook's Last Voyage",kind:'rideVoyage'},
+ {id:'wheel',title:'Flight to Neverland',kind:'rideStarlight'},
+ {id:'carousel',title:"Lost Boys' Carousel",kind:'rideVoyage'},
+ {id:'mirror',title:'Mermaid Lagoon Mirrors',kind:'rideLagoon'},
+ {id:'tea',title:"Tinker Bell's Tea Party",kind:'rideLagoon'},
+ {id:'coaster',title:'Beyond the Second Star',kind:'rideStarlight'}
+];
+for(const spec of rideSignSpecs){
+ const anchor=spec.id==='coaster'?L.coaster.door:L.rides.find(r=>r.id===spec.id).control;
+ const board=ornateMidwaySign({title:spec.title,kind:spec.kind,width:5.4,height:1.28,parent:stat,name:'ride-sign-'+spec.id});
+ // Entrances face the park path (+Z); the double-sided material also keeps a
+ // visible board when approaching from the other side.
+ board.position.set(anchor[0],spec.id==='coaster'?5.8:4.3,anchor[1]-(spec.id==='coaster'?1.2:.45));
+}
 // Batch static meshes by material. Thousands of decorative pieces become a few dozen draw calls.
 function batch(group,excluded=[]){group.updateMatrixWorld(true);const inv=new T.Matrix4().copy(group.matrixWorld).invert(),bins=new Map(),remove=[];group.traverse(o=>{if(!o.isMesh||Array.isArray(o.material))return;for(let p=o.parent;p&&p!==group;p=p.parent)if(excluded.includes(p))return;const g=o.geometry.clone().applyMatrix4(new T.Matrix4().multiplyMatrices(inv,o.matrixWorld));const key=o.material.uuid;if(!bins.has(key))bins.set(key,{material:o.material,parts:[]});bins.get(key).parts.push(g);remove.push(o);});for(const o of remove)o.removeFromParent();for(const {material,parts}of bins.values()){const positions=[],normals=[],uvs=[];for(let g of parts){if(g.index)g=g.toNonIndexed();positions.push(g.attributes.position.array);normals.push(g.attributes.normal.array);uvs.push(g.attributes.uv?.array||new Float32Array(g.attributes.position.count*2));}const join=a=>{const b=new Float32Array(a.reduce((n,x)=>n+x.length,0));let k=0;for(const x of a){b.set(x,k);k+=x.length;}return b;};const g=new T.BufferGeometry();g.setAttribute('position',new T.BufferAttribute(join(positions),3));g.setAttribute('normal',new T.BufferAttribute(join(normals),3));g.setAttribute('uv',new T.BufferAttribute(join(uvs),2));g.computeBoundingSphere();const o=new T.Mesh(g,material);o.castShadow=material!==mats.bulb&&material!==mats.water;o.receiveShadow=true;group.add(o);}}
 const dreamStage=window.NEVERLAND_DREAM_STAGE({T,scene,stat,mats,mesh,cube,ball,cylinder,beam,torus,curve,bulb,batch});

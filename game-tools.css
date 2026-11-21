@@ -1,1 +1,25 @@
 :root{--dialogue-font:18px}.dialog #text{font-size:var(--dialogue-font)}#game-menu{position:fixed;right:14px;bottom:12px;z-index:45;display:flex;gap:5px;padding:6px;background:#102820ed;border:1px solid #bda371;border-radius:8px}#game-menu button{padding:9px 12px;font-size:13px}#game-tools{position:fixed;inset:0;z-index:110;display:grid;place-items:center;padding:20px;background:#061612d9;backdrop-filter:blur(7px)}#game-tools[hidden],#test-play-badge[hidden]{display:none!important}.tools-panel{width:min(820px,100%);max-height:88vh;overflow:auto;padding:26px;background:#152e27;border:1px solid #bea16b;border-radius:12px;color:#f5e8cf;box-shadow:0 24px 80px #0008}.tools-heading{display:flex;align-items:center;justify-content:space-between;gap:14px;border-bottom:1px solid #bda37155;padding-bottom:16px}.tools-heading h2{font-size:25px;font-weight:400;margin:0}#tools-content p{font-size:14px;line-height:1.8;color:#dfd1b7}#tools-content h3{font-size:17px;margin-top:26px;color:#e8c98e}#tools-content>button{margin:12px 8px 0 0}.jump-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:16px 0}.jump-grid button{text-align:left;padding:15px;line-height:1.5}.setting-row{display:grid;grid-template-columns:1fr auto;gap:12px;margin:24px 0}.setting-row input{grid-column:1/-1;width:100%;padding:0;accent-color:#d9bc81}.setting-check{display:flex;gap:12px;align-items:center;line-height:1.7}.setting-check input{width:auto}.album-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.album-grid article{background:#0d211b;border:1px solid #bda37155;border-radius:8px;padding:12px;text-align:center}.album-grid img{height:180px;width:100%;object-fit:contain}.album-lock{display:grid;place-items:center;height:180px;font-size:40px;color:#8c866e}#test-play-badge{position:fixed;left:12px;bottom:16px;z-index:44;background:#3c2320e8;border:1px solid #e3a48b;padding:9px 12px;font-size:12px;color:#ffe2ce}.reduce-motion *{scroll-behavior:auto!important;animation:none!important;transition:none!important}@media(max-width:650px){#game-menu{bottom:6px;right:6px;left:6px;justify-content:center}#game-menu button{padding:9px;font-size:12px}.tools-panel{padding:18px;max-height:85vh}.tools-heading h2{font-size:20px}.jump-grid{grid-template-columns:1fr}.album-grid{grid-template-columns:1fr 1fr}.album-grid img,.album-lock{height:140px}#test-play-badge{bottom:64px;left:8px;font-size:11px}#ride-panel{bottom:68px!important}}
+
+/* Scene lab: compact cards keep each real checkpoint and its variants together. */
+.tools-panel:has(.dev-console){width:min(1160px,100%);padding:0;background:#0c1719;border-color:#52736d;color:#e7eeeb}
+.tools-panel:has(.dev-console) .tools-heading{position:sticky;top:0;z-index:2;padding:16px 22px;background:#122322f5;border-bottom:1px solid #31504a}
+.tools-panel:has(.dev-console) .tools-heading h2{font:600 20px/1.2 'Segoe UI','Malgun Gothic',sans-serif;letter-spacing:.02em}
+.dev-console{padding:20px 22px 26px;font-family:'Segoe UI','Malgun Gothic',sans-serif}
+.dev-console__info{padding:14px 16px;border:1px solid #34534b;background:#142b28;border-radius:8px}
+.dev-console__info strong{font:700 12px/1.4 Consolas,monospace;letter-spacing:.12em;color:#a0dfbb}
+#tools-content.dev-console .dev-console__info p{margin:5px 0;font-size:12px;line-height:1.55;color:#c3d1cb}
+.dev-console__nav{display:flex;gap:7px;flex-wrap:wrap;margin:16px 0 8px}
+.dev-console__nav button{font-size:12px;padding:7px 12px;border-color:#456b60;background:#1b3531;color:#d8f3df}
+.dev-section{scroll-margin-top:75px;padding-top:4px}
+#tools-content.dev-console .dev-section h3{margin:22px 0 4px;color:#d2ead7;font-size:17px;font-weight:700}
+#tools-content.dev-console .dev-section__heading p{margin:0 0 12px;color:#a7beb4;font-size:12px;line-height:1.4}
+.dev-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.dev-card{min-width:0;padding:14px;border:1px solid #35514a;border-radius:8px;background:#132522}
+.dev-card h4{margin:0;color:#f4e8c9;font-size:15px;line-height:1.35}
+#tools-content.dev-console .dev-card p{margin:6px 0 11px;color:#a7bbb1;font-size:12px;line-height:1.45}
+.dev-card__actions{display:flex;gap:6px;flex-wrap:wrap}
+.dev-card__actions button,.dev-console__footer button{padding:7px 10px;font-size:12px;line-height:1.3;border-color:#59816e;background:#203e36;color:#e4f5e9}
+.dev-card__actions button:hover,.dev-console__nav button:hover,.dev-console__footer button:hover{background:#315449}
+.dev-console__footer{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px;padding-top:16px;border-top:1px solid #35514a}
+@media(max-width:850px){.dev-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.tools-panel:has(.dev-console) .tools-heading{padding:14px}.dev-console{padding:14px}.dev-grid{grid-template-columns:1fr}.dev-card__actions button{min-height:40px}}

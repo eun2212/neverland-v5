@@ -6,7 +6,7 @@
       if (!container || typeof options.onStart !== 'function') throw new TypeError('container and onStart are required');
       const root = document.createElement('section');
       root.className = 'coaster-lever';
-      root.innerHTML = '<h2>출발 레버</h2><p>레버를 오른쪽 끝까지 당기세요. 방향키로도 움직일 수 있습니다.</p><div class="coaster-lever__scene"><div class="coaster-lever__track"><div class="coaster-lever__rail-base" aria-hidden="true"></div><div class="coaster-lever__slot"></div><div class="coaster-lever__stop" aria-hidden="true">STOP</div><div class="coaster-lever__warning" aria-hidden="true"></div><div class="coaster-lever__go" aria-hidden="true">✦ GO! <small>♥</small></div><button type="button" class="coaster-lever__handle" role="slider" aria-label="출발 레버" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-valuetext="출발 전, 왼쪽 끝"><span aria-hidden="true"></span></button><div class="coaster-lever__hand" aria-hidden="true"></div></div><div class="coaster-lever__glitch" aria-hidden="true"></div></div><p class="coaster-lever__status" role="status" aria-live="polite">레버를 오른쪽으로 당기세요.</p><button type="button" class="coaster-lever__cancel">돌아가기</button>';
+      root.innerHTML = '<h2>출발 레버</h2><p role="status" class="coaster-lever__status" aria-live="polite">레버를 오른쪽 끝까지 당기세요. 방향키도 사용할 수 있어요.</p><div class="coaster-lever__scene"><div class="coaster-lever__track"><div class="coaster-lever__rail-base" aria-hidden="true"></div><div class="coaster-lever__slot"></div><div class="coaster-lever__stop" aria-hidden="true">STOP<img src="assets/captain-lever-sign-stop.png?v=20261119" alt="" onerror="this.remove()"></div><div class="coaster-lever__warning" aria-hidden="true"></div><div class="coaster-lever__go" aria-hidden="true">GO<img src="assets/captain-lever-sign-go.png?v=20261119" alt="" onerror="this.remove()"></div><button type="button" class="coaster-lever__handle" role="slider" aria-label="출발 레버" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-valuetext="출발 전, 왼쪽 끝"><span aria-hidden="true"></span></button><div class="coaster-lever__hand" aria-hidden="true"></div></div><div class="coaster-lever__glitch" aria-hidden="true"></div></div><button type="button" class="coaster-lever__cancel">돌아가기</button>';
       container.append(root);
       const track = root.querySelector('.coaster-lever__track');
       const handle = root.querySelector('.coaster-lever__handle');
@@ -14,7 +14,7 @@
       const status = root.querySelector('.coaster-lever__status');
       const cancel = root.querySelector('.coaster-lever__cancel');
       {
-        const handImage = options.handImage === undefined ? 'assets/keeper-coaster-hand.png' : options.handImage;
+        const handImage = options.handImage === undefined ? 'assets/keeper-captain-lever-hand-v2.png?v=20261119' : options.handImage;
         if (handImage) {
         const img = document.createElement('img');
         img.src = handImage; img.alt = '';
@@ -28,7 +28,9 @@
         : (typeof options.reducedMotion === 'function' ? !!options.reducedMotion() : !!options.reducedMotion);
       function paint() {
         root.style.setProperty('--lever-position', value + '%');
+        handle.style.left = value + '%';
         handle.setAttribute('aria-valuenow', String(Math.round(value)));
+        options.onChange?.(value);
         handle.setAttribute('aria-valuetext', value === 0 ? '출발 전, 왼쪽 끝' : value === 100 ? '출발, 오른쪽 끝' : Math.round(value) + '%');
       }
       function release() {
@@ -41,22 +43,28 @@
         if (state === 'destroyed' || state === 'started') return;
         state = 'started'; timer = null; value = 100; paint();
         handle.disabled = true; cancel.disabled = true;
-        status.textContent = '열차가 출발합니다.';
+        status.textContent = '놀이기구가 출발합니다.';
         options.onStart({ forced });
       }
       function force() {
         if (state !== 'ready') return;
-        state = 'forcing'; release();
-        root.classList.add('is-forcing');
-        if (reduced()) root.classList.add('is-reduced');
-        handle.disabled = true;
-        status.textContent = '키퍼의 손이 레버를 오른쪽으로 밀어 출발시킵니다.';
-        // Keep cancellation available until the start callback actually runs.
-        if (reduced()) { value = 100; paint(); timer = setTimeout(() => finish(true), 0); }
-        else {
-          // Separate frames allow the CSS transition to begin at the current position.
-          timer = setTimeout(() => { if (state !== 'forcing') return; value = 100; paint(); timer = setTimeout(() => finish(true), 700); }, 40);
-        }
+        state = 'advising'; release();
+        handle.setAttribute('aria-disabled', 'true');
+        status.textContent = '키퍼: “왼쪽이 아니라 오른쪽이에요. 천천히, 제가 도와드릴게요.”';
+        // Give the player time to read before the hand takes over, even with reduced motion.
+        timer = setTimeout(() => {
+          if (state !== 'advising') return;
+          state = 'forcing';
+          root.classList.add('is-forcing');
+          if (reduced()) root.classList.add('is-reduced');
+          if (reduced()) { value = 100; paint(); timer = setTimeout(() => finish(true), 1200); }
+          else {
+            timer = setTimeout(() => {
+              if (state !== 'forcing') return;
+              value = 100; paint(); timer = setTimeout(() => finish(true), 2500);
+            }, 40);
+          }
+        }, 3000);
       }
       function move(next) {
         if (state !== 'ready') return;

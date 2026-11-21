@@ -349,7 +349,7 @@
    message('바늘이 천천히 홈을 따라갑니다. 레코드에서 잔잔한 음악이 흐릅니다.');
    button(window.NEVERLAND_BGM?.state.muted?'음악 켜기':'음악 끄기',()=>{document.getElementById('sound').click();activate('record');copy.querySelector('button').focus();});
   }else{
-   const letter='밤에 눈을 뜨면 정문으로 나오세요. 캡틴 훅 옆에서 기다릴게요. — 키퍼';
+   const letter='밤에 눈을 뜨면 정문으로 나오세요. 후크의 마지막 항해 옆에서 기다릴게요. — 키퍼';
    message(letter);
    window.NEVERLAND_DIALOGUE?.record('창가의 편지',letter);
    window.NEVERLAND_DIALOGUE?.openLog();

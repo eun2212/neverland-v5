@@ -1,0 +1,23 @@
+.coaster-safetybar{--bar-position:0%;box-sizing:border-box;color:#fff0ca;text-align:center;padding:clamp(3rem,7vw,5rem) clamp(1.5rem,6vw,4rem) clamp(2rem,5vw,4rem);background:#06251a url('assets/captain-lever-frame-v2.png?v=20261119') center/100% 100% no-repeat;border-radius:12px;font-family:Georgia,'Malgun Gothic',serif}
+.coaster-safetybar *{box-sizing:border-box}.coaster-safetybar h2{margin:0 0 .35rem;font-size:clamp(1.25rem,3vw,1.8rem)}.coaster-safetybar p{margin:.3rem 0;font-size:.94rem}.safetybar__status{min-height:1.45em;color:#ffe19a}
+.safetybar__scene{position:relative;overflow:hidden;height:clamp(250px,42vh,380px);border:2px solid #b58c4b;border-radius:10px;background:radial-gradient(ellipse at 50% 18%,#47676b,#102c2c 58%,#061611);box-shadow:inset 0 0 32px #000b}
+.safetybar__seat{position:absolute;left:23%;right:23%;top:9%;bottom:-26%;border:8px ridge #d8ba80;border-radius:48% 48% 16% 16%;background:radial-gradient(ellipse at 50% 18%,#a82d3c,#471920 75%);box-shadow:0 0 0 7px #4a301e,0 10px 30px #000b}.safetybar__seat span{font-size:2rem;color:#e5c886}
+.safetybar__rails{position:absolute;inset:0 10%;border-left:6px solid #caa66c;border-right:6px solid #caa66c;opacity:.6;box-shadow:inset 3px 0 #5f492c,inset -3px 0 #5f492c}
+.safetybar__handle{position:absolute;left:11%;top:var(--bar-top,12%);width:78%;height:48px;min-height:44px!important;padding:0!important;border:5px ridge #e0bd78!important;border-radius:25px!important;background:linear-gradient(#9b2637 0 18%,#5c101a 23% 60%,#8f2530 75%,#d5a958 100%)!important;color:#f9e4ae!important;box-shadow:0 4px 4px #000a,inset 0 2px 5px #ffe7a16b;touch-action:none;cursor:grab;z-index:2;transform:translateY(-50%);user-select:none;letter-spacing:.18em}
+.safetybar__handle:active{cursor:grabbing}.safetybar__handle:focus-visible,.safetybar__actions button:focus-visible{outline:3px solid #fff1a8;outline-offset:4px}
+.safetybar__hands{position:absolute;z-index:3;pointer-events:none;left:12%;width:76%;height:45%;object-fit:contain;top:var(--hands-top,-31%);opacity:0}
+.coaster-safetybar.is-forcing .safetybar__handle,.coaster-safetybar.is-forcing .safetybar__hands{transition:top 2.1s ease-in-out}.coaster-safetybar.is-forcing .safetybar__hands{opacity:1}.safetybar__actions{display:flex;gap:.65rem;justify-content:center;margin-top:.7rem;flex-wrap:wrap}
+@media(max-width:600px){.coaster-safetybar{padding:3.8rem 1.2rem 2.3rem}.safetybar__scene{height:270px}.safetybar__seat{left:19%;right:19%}}
+@media(prefers-reduced-motion:reduce){.coaster-safetybar.is-forcing .safetybar__handle,.coaster-safetybar.is-forcing .safetybar__hands{transition:none}}
+/* Illustrated ride seat sits behind the independently movable restraint. */
+.safetybar__seat{inset:1% 4% -8%;border:0;border-radius:0;background:transparent url('assets/coaster-safety-seat.png?v=20261121') center/contain no-repeat;box-shadow:none;pointer-events:none}
+.safetybar__seat span{display:none}
+/* The illustrated restraint remains the interactive element, separate from the seat. */
+.safetybar__handle{height:64px;min-height:52px!important;border:0!important;border-radius:0!important;background:transparent url('assets/coaster-safety-handle.png?v=20261121') center/100% 300% no-repeat!important;box-shadow:none}
+.safetybar__handle span{display:none}
+
+/* A seated, faceless passenger matches the selected character profile. */
+.safetybar__rider{position:absolute;z-index:1;left:50%;top:-36%;height:165%;width:80%;object-fit:contain;object-position:center top;transform:translateX(-50%);pointer-events:none}
+
+/* Long sleeves extend above the scene while the hands follow the moving bar. */
+.safetybar__hands{top:var(--bar-top,12%);height:auto;min-height:110%;object-fit:fill;transform:translateY(-96%)}

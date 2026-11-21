@@ -121,7 +121,7 @@
   free3d=progress.free;intro3d=progress.intro;firstLever3d=progress.firstLever;target3d=progress.target;
   close();
   if(room?.first)sync3d();
-  else explore3d(intro3d?'성 정문에서 캡틴 훅 쪽으로 걸어가세요.':firstLever3d?'캡틴 훅 입구에서 E로 승선하세요.':undefined);
+  else explore3d(intro3d?'성 정문에서 후크의 마지막 항해 쪽으로 걸어가세요.':firstLever3d?'후크의 마지막 항해 입구에서 E로 승선하세요.':undefined);
   world3d.restorePark(player,progress);
   if((save.parkRevision??1)<3&&(progress.intro||progress.firstLever)){
    target3d=controls3d[0];sync3d();

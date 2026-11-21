@@ -5,7 +5,7 @@ window.NEVERLAND_LAYOUT=(()=>{
   return {id,name,x,z,inward,door:[x+inward*3.6,z],symbol};
  };
  return {
- rides:[{id:'captain',name:'캡틴 훅',x:0,z:24,control:[0,20.1],verb:'붉은 레버를 당긴다'},{id:'wheel',name:'별의 관람차',x:23,z:-44,control:[17,-35],verb:'별 모양 손잡이를 돌린다'},{id:'carousel',name:'장미 회전목마',x:-23,z:-44,control:[-17,-35],verb:'오르골 태엽을 감는다'},{id:'mirror',name:'거울 미로',x:-23,z:-5,control:[-16,1],verb:'거울의 각도를 바꾼다'},{id:'tea',name:'달빛 찻잔',x:23,z:-5,control:[16,1],verb:'보라색 찻잔의 손잡이를 돌린다'}],
+ rides:[{id:'captain',name:'후크의 마지막 항해',x:0,z:24,control:[0,20.1],verb:'붉은 레버를 당긴다'},{id:'wheel',name:'네버랜드로의 비행',x:23,z:-44,control:[17,-35],verb:'별자리를 잇는다'},{id:'carousel',name:'잃어버린 아이들의 회전목마',x:-23,z:-44,control:[-17,-35],verb:'오르골 태엽을 감는다'},{id:'mirror',name:'인어의 석호 거울',x:-23,z:-5,control:[-16,1],verb:'거울의 각도를 바꾼다'},{id:'tea',name:'팅커벨의 티파티',x:23,z:-5,control:[16,1],verb:'주전자로 차를 따른다'}],
  clues:[[-5,19.75],[30,-34],[-30,-34],[-30,3],[30,3]],
  keepers:[[-3,18],[13,-32],[-13,-32],[-13,5],[13,5]],
  spawn:{x:0,z:24,yaw:0},entry:[0,50],center:[0,-24],bounds:{minX:-74,maxX:74,minZ:-95,maxZ:61},castleExit:[0,-16],
@@ -16,7 +16,7 @@ window.NEVERLAND_LAYOUT=(()=>{
   booth('pairs','기억 짝맞추기',-1,-53.95,'◇'),
   booth('timing','박자 맞추기',1,-53.95,'♪')
  ],
- coaster:{name:"별바람 롤러코스터",door:[-13,-67],bounds:[-25,25,-92,-70]},
+ coaster:{name:"두 번째 별 너머",door:[-13,-67],bounds:[-25,25,-92,-70]},
  boothExit(booth){return {x:booth.door[0]+booth.inward,z:booth.door[1],yaw:-booth.inward*Math.PI/2};},
  castleDistance(x,z){return Math.hypot(Math.max(0,Math.abs(x)-5.9),Math.max(0,Math.abs(z-this.center[1])-4.65));},
  terrain(x,z){const r=Math.hypot(x,z+24);if(r<9.8)return .28;if(r>=9.8&&r<=14.2&&(Math.abs(x)<2.8||Math.abs(z+24)<2.8)){const t=(r-9.8)/4.4;return .28+Math.sin(t*Math.PI)*.55;}return 0;},

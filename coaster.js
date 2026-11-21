@@ -68,6 +68,24 @@
    star(px,.047,pz,r,true);
   }
   for(const offset of [-3.3,3.3])star(x+offset,3.65,z-.61,.28,false);
+  // The passenger is part of the leading car, so it follows every climb and roll.
+  // Face remains hidden behind the hair, as in the player's established design.
+  let passengerMale=null,passengerFemale=null;
+  function makePassenger(car,gender){
+   const person=new T.Group();person.name='coaster-passenger-'+gender;car.add(person);
+   cube(0,.33,.04,.50,.52,.28,'red',person); // red cardigan
+   cube(0,.39,-.108,.19,.37,.035,'cream',person); // white shirt
+   for(const side of [-1,1]){
+    cube(side*.31,.35,-.01,.13,.43,.15,'red',person);
+    ball(side*.31,.35,-.12,.075,'cream',person);
+    cube(side*.14,.13,-.26,.20,.16,.48,'dark',person); // seated legs
+   }
+   ball(0,.99,.04,.205,'cream',person);
+   ball(0,1.10,.08,.205,'dark',person);
+   cube(0,.96,.20,.38,.27,.16,'dark',person);
+   if(gender==='female') cube(0,.64,.21,.34,.42,.12,'dark',person);
+   return person;
+  }
   const cars=Array.from({length:3},(_,i)=>{
    const car=new T.Group();train.add(car);
    cube(0,.02,0,1.24,.24,1.45,i?'greenLight':'red',car);
@@ -76,9 +94,10 @@
     cube(side*.55,.23,0,.1,.39,1.4,'gold',car);
     ball(side*.45,.3,-.72,.08,'bulb',car);
    }
+   if(i===0){passengerMale=makePassenger(car,'male');passengerFemale=makePassenger(car,'female');}
    return car;
   });
-  batch(fixed);cars.forEach(car=>batch(car));
+  batch(fixed);cars.forEach(car=>batch(car,[passengerMale,passengerFemale].filter(Boolean)));
   const length=track.getLength();
   // A complete barrel roll, eased at both ends so the train leaves and returns upright.
   function roll(u){
@@ -109,6 +128,9 @@
   return {update(camera,hidden){
    fixed.visible=train.visible=!hidden;
    const active=run;
+   const selectedGender=active?.gender==='male'?'male':'female';
+   passengerMale.visible=!!active&&selectedGender==='male';
+   passengerFemale.visible=!!active&&selectedGender==='female';
    let progress=0;
    if(active?.startedAt!==null&&active?.startedAt!==undefined){
     const t=Math.min(1,(performance.now()-active.startedAt)/(duration*1000));
@@ -140,8 +162,9 @@
     camera.position.set(-9,9,-63);camera.lookAt(-8,5,-77);return;
    }
    const seat=track.getPointAt(progress),ahead=track.getPointAt((progress+.016)%1);
-   camera.position.copy(seat);camera.position.y+=1.12;
-   ahead.y+=1.02;camera.lookAt(ahead);
+   const backward=track.getTangentAt(progress).normalize();
+   camera.position.copy(seat).addScaledVector(backward,-3.1);camera.position.y+=2.35;
+   ahead.y+=.88;camera.lookAt(ahead);
    camera.rotateZ(-roll(progress));
   }};
  }
@@ -149,71 +172,17 @@
  function buildUI(){
   const shell=document.createElement('section');
   shell.id='coaster-board';shell.hidden=true;shell.setAttribute('aria-labelledby','coaster-title');
-  shell.innerHTML='<h2 id="coaster-title"></h2><p>왼쪽 기어를 오른쪽 홈으로 끌어 놓으세요. 키보드로는 기어에 포커스한 뒤 Enter 또는 Space를 누르세요.</p><div class="coaster-gears"></div><p role="status"></p><button type="button" data-coaster-leave>공원으로 돌아가기</button>';
+  shell.innerHTML='<h2 id="coaster-title"></h2><p role="status"></p><button type="button" data-coaster-leave>공원으로 돌아가기</button>';
   document.body.append(shell);
   shell.querySelector('h2').textContent=window.NEVERLAND_LAYOUT.coaster.name;
   const status=shell.querySelector('[role=status]'),leave=shell.querySelector('[data-coaster-leave]');
-  const tray=shell.querySelector('.coaster-gears');
-  const gears=[];
-  for(const name of ['금빛','자주','민트']){
-   const row=document.createElement('div');row.className='coaster-gear-row';
-   const button=document.createElement('button');button.type='button';button.textContent='⚙ '+name+' 기어';
-   const slot=document.createElement('span');slot.className='coaster-gear-slot';slot.textContent=name+' 홈';
-   row.append(button,slot);tray.append(row);gears.push({button,slot});
-   let drag=null;
-   function latch(){
-    if(!run||run.startedAt!==null||button.disabled)return;
-    button.disabled=true;slot.textContent='⚙ '+name+' 체결';slot.classList.add('latched');run.count++;
-    if(run.count<gears.length){
-     status.textContent=run.count+' / '+gears.length+'개 체결';
-     if(document.activeElement===button)gears.find(g=>!g.button.disabled)?.button.focus();
-     return;
-    }
-    tray.hidden=true;leave.hidden=true;shell.classList.add('coaster-lever-open');status.textContent='기어가 체결됐습니다. 출발 레버를 당기세요.';
-    ui.lever=window.NEVERLAND_COASTER_LEVER.mount(shell,{
-     onStart(){
-      ui.lever?.destroy();ui.lever=null;leave.hidden=false;shell.classList.remove('coaster-lever-open');
-      if(!run)return;
-      run.startedAt=performance.now();shell.classList.add('coaster-running');
-      status.textContent='열차가 출발합니다.';leave.focus();
-     },
-     onCancel(){
-      ui.lever=null;if(!run)return;run.count=0;
-      gears.forEach(gear=>gear.reset());tray.hidden=false;leave.hidden=false;shell.classList.remove('coaster-lever-open');
-      status.textContent='0 / '+gears.length+'개 체결';gears[0].button.focus();
-     }
-    });
-   }
-   function clear(){
-    drag=null;button.style.translate='';
-   }
-   button.addEventListener('pointerdown',event=>{
-    if(!run||button.disabled||drag||event.button!==0)return;
-    drag={id:event.pointerId,x:event.clientX,y:event.clientY};
-    button.setPointerCapture(event.pointerId);
-   });
-   button.addEventListener('pointermove',event=>{
-    if(drag?.id!==event.pointerId)return;
-    button.style.translate=(event.clientX-drag.x)+'px '+(event.clientY-drag.y)+'px';
-   });
-   button.addEventListener('pointerup',event=>{
-    if(drag?.id!==event.pointerId)return;
-    clear();
-    const r=slot.getBoundingClientRect();
-    if(event.clientX>=r.left&&event.clientX<=r.right&&event.clientY>=r.top&&event.clientY<=r.bottom)latch();
-    else status.textContent='기어를 오른쪽의 같은 색 홈에 놓으세요.';
-   });
-   for(const type of ['pointercancel','lostpointercapture'])button.addEventListener(type,clear);
-   button.addEventListener('click',event=>{if(event.detail===0)latch();});
-   gears.at(-1).reset=()=>{clear();button.disabled=false;slot.classList.remove('latched');slot.textContent=name+' 홈';};
-  }
   leave.onclick=()=>close(true);
-  return {shell,status,leave,gears,tray,lever:null};
+  return {shell,status,leave,lever:null};
  }
  function close(returnToPark=false){
   if(!run)return;
   const {onReturn}=run;run=null;
-  ui.lever?.destroy();ui.lever=null;ui.tray.hidden=false;ui.leave.hidden=false;
+  ui.lever?.destroy();ui.lever=null;ui.leave.hidden=false;
   ui.shell.hidden=true;ui.shell.classList.remove('coaster-running','coaster-lever-open');
   document.body.classList.remove('coaster-active');
   if(returnToPark)onReturn();
@@ -224,11 +193,20 @@
   open(onReturn){
    if(run)return;
    ui??=buildUI();
-   run={onReturn,count:0,startedAt:null,completed:false};
-   for(const gear of ui.gears)gear.reset();
-   ui.status.textContent='0 / '+ui.gears.length+'개 체결';
+   run={onReturn,startedAt:null,completed:false,gender:window.neverland?.state?.gender==='male'?'male':'female'};
+   ui.status.textContent='안전바를 아래로 당겨 출발하세요.';
    document.body.classList.add('coaster-active');
-   ui.shell.hidden=false;ui.gears[0].button.focus();
+   ui.shell.hidden=false;ui.leave.hidden=true;ui.shell.classList.add('coaster-lever-open');
+   ui.lever=window.NEVERLAND_COASTER_SAFETYBAR.mount(ui.shell,{
+    gender:run.gender,
+    onStart(){
+     ui.lever?.destroy();ui.lever=null;if(!run)return;
+     ui.leave.hidden=false;ui.shell.classList.remove('coaster-lever-open');
+     run.startedAt=performance.now();ui.shell.classList.add('coaster-running');
+     ui.status.textContent='열차가 출발합니다.';ui.leave.focus();
+    },
+    onCancel(){ui.lever=null;close(true);}
+   });
   },
   close
  };
