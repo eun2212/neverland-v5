@@ -22,7 +22,7 @@ function keeperOrientationMenu(){
  ]);
 }
 function keeperFirstBoarding3d(){
- close();keeperBeat([['키퍼','좌석에 앉으셨네요. 아직 출발하지 않았어요. 준비가 되기 전에는 레버를 움직일 필요 없어요.'],['키퍼','첫 연습은 붉은 레버를 STOP에서 GO까지 미는 거예요. 조명, 작은 흔들림, 출발 준비 순서로 반응해요. 오른쪽 끝까지 당기면 출발해요.'],['키퍼','다른 기구마다 작동하는 방법이 달라요. 안내를 보면서 천천히 조작해 주세요.']],keeperFirstBoardingMenu);
+ close();keeperBeat([['키퍼','좌석에 앉으셨네요. 아직 출발하지 않았어요. 준비가 되기 전에는 레버를 움직일 필요 없어요.'],['','손님은 나 혼자인데, 빈 좌석을 향해서도 출발 안내 방송이 흘러나온다. 멀리 회전목마의 불빛이 박자에 맞춰 켜진다.'],['키퍼','다들 즐거운 시간을 보내고 계신가 봐요. 자, 당신 자리도 천천히 준비해 볼까요?'],['키퍼','첫 연습은 붉은 레버를 STOP에서 GO까지 미는 거예요. 조명, 작은 흔들림, 출발 준비 순서로 반응해요. 오른쪽 끝까지 당기면 출발해요.'],['키퍼','다른 기구마다 작동하는 방법이 달라요. 안내를 보면서 천천히 조작해 주세요.']],keeperFirstBoardingMenu);
 }
 function keeperFirstBoardingMenu(){
  say('키퍼','출발은 당신이 준비된 다음에 해요.',[
@@ -37,6 +37,7 @@ function openFirstLever3d(){
  $('launch').onclick=()=>{close();keeperBeat([['키퍼','좋아요. 제 말대로만 하면 돼요.'],[s.name,'레버가 GO에 닿자 키퍼의 엄지가 정지 고리에서 미끄러져 나온다. 배가 한 번 크게 기운다.'],['키퍼','……앞을 보세요. 저를 부르는 건, 조금 뒤에도 할 수 있으니까.']],()=>{pendingRideResult={kind:'tutorial'};world3d.setRidePower(100);world3d.startRide(8);explore3d('첫 항해 · 사슬이 팽팽해집니다. 안전 손잡이를 잡으세요.');});};
 }
 finishFracture3d=function(){
+ if(window.NEVERLAND_CHAPTER?.present('awake',finishFracture3d))return;
  document.body.classList.remove('fracture-walk');$('stage').classList.remove('walking','cut');scene('warm');showKeeperPose('06');
  keeperBeat([['키퍼','……눈을 떴네요.'],[s.name,'내 팔을 붙잡은 손에 힘이 들어간다. 키퍼는 잠깐 말을 잃었다가 천천히 웃는다.'],['키퍼','무서운 꿈을 꾼 모양이에요. 배가 흔들려서 잠깐 정신을 잃으셨거든요. 여기 있어요. 제 목소리를 들어요.']],()=>say(s.name,'무너진 인형들과 뒤틀린 바닥. 정말 꿈이었을까?',[
   ['꿈이라고 하기에는 너무 선명했어요',()=>dreamAnswer('doubt')],
@@ -57,6 +58,25 @@ const keeperRideIncidents=[
  ['키퍼가 벽의 거울을 돌리자 돌아가는 문이 좁아진다. 그는 그제야 출구를 가리킨다.','저쪽의 빛만 따라가세요. 뒤를 보는 건 길을 더 어렵게 만들어요.'],
  ['찻잔에 차가 가득 차자 흔들림이 시작된다. 키퍼의 장갑이 주전자 손잡이를 놓지 않는다.','조금 더 빨라도 괜찮아요. 당신이 어지러워지기 전에는 제가 멈출 테니까.']
 ];
+// The opening Hook voyage is first, but is not included in survivedRides.
+// Existing saved counters count completed regular rides including repeat rides;
+// completed roller-coaster rides are stored as actions in the same save format.
+function keeperRideStoryOrder3d(ride,alreadyCounted=false){
+ const coasterRides=s.actions.filter(action=>action.kind==='coaster-story-complete').length;
+ return 2+(s.survivedRides||0)+coasterRides-(alreadyCounted?1:0);
+}
+function keeperRideBefore3d(ride){
+ const order=keeperRideStoryOrder3d(ride);if(!order)return [];
+ if(order===2)return [['','기구 입구의 스피커가 지직거리더니 낯선 손님의 이름을 부른다. 주변에는 아무도 없다.'],['고양이','오래전 손님이야. 즐거웠던 이름은 잊지 않는 게 좋잖아?'],['키퍼','……그 이름을 다시 부르지 마.'],[s.name,'고양이의 꼬리가 멈춘다. 키퍼는 내 시선을 알아채고 조작대 쪽으로 몸을 돌린다.'],['키퍼','오래된 방송이에요. 준비되면 천천히 들어가요.']];
+ if(order===3)return [['','입구의 낡은 운행 기록에는 같은 이름 옆에 몇 번이고 같은 서명이 이어진다. 마지막 칸은 비어 있다.'],[s.name,'앞에서 본 흔적들이 떠오른다. 키퍼의 서명은 손님이 떠난 뒤에도 계속 남아 있었다.'],['고양이','불을 켜 두면 언젠가 다들 돌아올 거야. 그렇지?'],['키퍼','기다리는 것과 문을 잠그는 건 달라. 그만 좀 해.'],['','잠깐 정적이 흐른다. 키퍼는 고양이에게서 눈을 떼고 내 쪽으로 돌아선다.'],['키퍼','저는 여기 있어야 해요. 당신이 돌아올 때까지 기다리고 있을게요.']];
+ return [['','이제는 다른 구역에서도 같은 서명과 긁힌 이름표가 눈에 들어온다. 빈자리마다 누군가를 기다리는 듯 불이 켜진다.'],['키퍼','그 기록들은 그냥 두세요. 당신까지 그 이름들처럼 사라지는 건…… 싫어요.'],[s.name,'내가 떠나면 그가 혼자 남는다는 두려움인지, 이곳이 그를 붙잡는 것인지 아직 알 수 없다.']];
+}
+function keeperRideAfter3d(ride,alreadyCounted=false){
+ const order=keeperRideStoryOrder3d(ride,alreadyCounted);if(!order)return [];
+ if(order===2)return [['',ride===3?'거울방 출구가 열렸는데, 아무도 없는 회랑 안쪽에서 문 하나가 철컥 잠긴다. 방송은 아까 들은 이름을 다시 부른다.':'기구가 멎었는데, 비어 있던 좌석의 안전바 하나가 철컥 잠긴 채로 남는다. 방송은 아까 들은 이름을 다시 부른다.'],[s.name,'방금 부른 사람은 누구였어요?'],['키퍼','……무사히 돌아왔어요. 그것만 확인하면 되잖아요.']];
+ if(order===3)return [['',ride===3?'거울방을 빠져나오자 벽 안쪽에서 사슬이 팽팽해지는 소리가 난다. 키퍼가 출구 쪽으로 반 걸음 내딛자 그의 그림자가 거울을 향해 잡아당겨진다.':'기구가 멎자 바닥 아래에서 사슬이 팽팽해지는 소리가 난다. 키퍼가 출구 쪽으로 반 걸음 내딛자 그의 그림자가 기구를 향해 잡아당겨진다.'],[s.name,'당신도 여기서 나갈 수 없는 건가요?'],['키퍼','그건…… 당신이 알면 떠나고 싶어질 이야기예요. 제 곁에 조금만 더 있어 주세요.'],['','그는 웃고 있었지만, 잠깐 떨린 손은 난간을 놓지 못했다.']];
+ return [['','불이 꺼지는 순간 키퍼의 발밑으로 가느다란 금빛 선이 뻗어 나와 공원의 다른 기구들과 이어진다. 그는 서둘러 발을 옮겨 선을 가린다.'],['키퍼','당신에게는 돌아갈 곳이 있죠. 저는 이 공원이 저를 놓아줄 때까지 이 자리를 지켜야 해요.'],['키퍼','그래도 당신이 곁에 있으면 조금 덜 무서워요. 그러니까…… 아직은 가지 말아 주세요.'],[s.name,'붙잡는 말 속에서 처음으로 그 자신의 두려움이 들린다.']];
+}
 success=function(help,risk=false){
  // A successful puzzle earns a real, safe ride; narrative danger never falsifies controls.
  const key=s.ride+':'+(s.survivedRides||0);
@@ -70,10 +90,11 @@ success=function(help,risk=false){
  ]));
 };
 function keeperSafeResult3d(help,risk=false){
+ const discovery=keeperRideAfter3d(s.ride,true);
  close();log(help?'help':'ride-success');if(!s.cleared.has(s.ride)){s.cleared.add(s.ride);s.N++;if(help){s.K++;s.help++;}else{s.I+=2;s.wins++;}}else if(help)s.help++;
  checkExit();const stage=keeperStage();
  const opening=help?'그의 손이 제동 장치를 붙든다. 멎지 않던 진동이 가라앉는다. 그가 이번에는 정말 나를 구했다.':risk?'간신히 안전장치가 맞물린다. 키퍼는 나보다 먼저 숨을 내쉰다.':'표시한 순서대로 기구가 멈췄다. 내 손으로 끝낸 항해다. 키퍼는 잠시 박수치는 것을 잊는다.';
- keeperBeat([['',opening],['키퍼',help?['무사해서 다행이에요. 다음에도 저부터 불러요.','제 손이 없었으면 어쩔 뻔했어요. 이제는 조금 믿어도 되겠죠?','아슬아슬할 때마다 제 이름을 부르네요. 그 목소리가 좋아요.','이렇게 잘 돌아오는데도, 계속 밖으로 가려는군요.'][stage]:['정확해요. 그런데 제 손은 한 번도 찾지 않으셨네요.','혼자서도 잘하시네요. ……기뻐해야 하는 일인데.','제가 필요하지 않아지는 게 이렇게 빠를 줄은 몰랐어요.','당신이 가는 길마다 제가 먼저 있었어요. 잊지 말아요.'][stage]],['',stage>0?'코트 밑단에서 분홍과 연보라의 줄무늬가 올라온다. 그 아래 옷자락은 흑백의 잘린 줄로 끊긴다.':'키퍼의 구두 아래에 작은 파스텔색 웅덩이가 고였다. 그는 발을 조용히 뒤로 뺀다.']],()=>say(s.name,'그의 걱정과 원망이 같은 목소리로 들린다.',[
+ keeperBeat([...discovery,['',opening],['키퍼',help?['무사해서 다행이에요. 다음에도 저부터 불러요.','제 손이 없었으면 어쩔 뻔했어요. 이제는 조금 믿어도 되겠죠?','아슬아슬할 때마다 제 이름을 부르네요. 그 목소리가 좋아요.','이렇게 잘 돌아오는데도, 계속 밖으로 가려는군요.'][stage]:['정확해요. 그런데 제 손은 한 번도 찾지 않으셨네요.','혼자서도 잘하시네요. ……기뻐해야 하는 일인데.','제가 필요하지 않아지는 게 이렇게 빠를 줄은 몰랐어요.','당신이 가는 길마다 제가 먼저 있었어요. 잊지 말아요.'][stage]],['',stage>0?'코트 밑단에서 분홍과 연보라의 줄무늬가 올라온다. 그 아래 옷자락은 흑백의 잘린 줄로 끊긴다.':'키퍼의 구두 아래에 작은 파스텔색 웅덩이가 고였다. 그는 발을 조용히 뒤로 뺀다.']],()=>say(s.name,'그의 걱정과 원망이 같은 목소리로 들린다.',[
   ['도와준 건 고마워요',()=>safeRideReply('thanks',()=>afterKeeperRide())],
   ['위험한 걸 알고 있었죠?',()=>safeRideReply('doubt',()=>afterKeeperRide())],
   ['다음에는 내 선택을 존중해줘요',()=>safeRideReply('boundary',()=>afterKeeperRide())]
@@ -147,8 +168,26 @@ finale=function(){
  if(!atExit3d){const p=controls3d[s.exitRide];target3d=[p[0]+4,p[1]+2];explore3d(rides[s.exitRide].name+' 구역의 출구까지 걸어가세요.');return;}
  confronting3d=true;keeperStoryState.confessed=true;target3d=null;sync3d();world3d.faceExit();
  const recall=keeperStoryState.dream==='accuse'?'처음부터 제 손을 보고 있었죠. 그때는 꿈이라고 하면 믿어 줄 줄 알았어요.':keeperStoryState.dream==='comfort'?'그날 제 곁에 있어 달라고 했죠. 저는 그 말이 끝나지 않기를 바랐어요.':'꿈이 아니었다고, 끝까지 생각하고 있었군요. 맞아요. 당신은 정말 그곳을 봤어요.';
- keeperBeat([['','공원은 흑백의 격자로 무너져 있다. 문 앞에 선 키퍼는 얼굴 한쪽에만 색이 남았다. 흑백의 코트 위로 붉은 줄이 끊겨 지나간다. 그가 손을 들자 봉인이 닫힌다.'],['키퍼','여기까지 오면 제가 비켜 줄 거라고 생각했어요?'],['키퍼',recall],['',keeperStoryState.evidence.size?'모아 둔 기록을 펼친다. 서명과 지워진 조항을 본 키퍼는 이번에는 꿈이라는 말을 하지 않는다.':'키퍼의 손목에서 정지 고리 모양의 열쇠가 떨어진다. 첫 배에서 본 바로 그 고리다.'],['키퍼','후크의 마지막 항해는 저절로 고장 난 게 아니에요. 제가 정지 장치를 놓았어요. 다른 기구의 경고도 알고 있었고요.'],['키퍼','무서워지면 저를 부를 줄 알았어요. 제가 구해 주면, 다음에도 제 손을 찾을 줄 알았고요.'],[s.name,'공원의 명령이 아니라, 당신이 선택한 거군요.'],['키퍼','네. 제 선택이에요. 좋아하는 마음까지 거짓은 아니었어요. 그래서 더, 당신이 저 없이 괜찮아지는 걸 견딜 수 없었어요.']],keeperConfessionChoices);
+ keeperBeat([['','공원은 흑백의 격자로 무너져 있다. 문 앞에 선 키퍼는 얼굴 한쪽에만 색이 남았다. 흑백의 코트 위로 붉은 줄이 끊겨 지나간다. 그가 손을 들자 봉인이 닫힌다.'],['키퍼','여기까지 오면 제가 비켜 줄 거라고 생각했어요?'],['키퍼',recall],['',keeperStoryState.evidence.size?'모아 둔 기록을 펼친다. 서명과 지워진 조항을 본 키퍼는 이번에는 꿈이라는 말을 하지 않는다.':'키퍼의 손목에서 정지 고리 모양의 열쇠가 떨어진다. 첫 배에서 본 바로 그 고리다.'],['키퍼','당신이 탄 후크의 마지막 항해에서 제가 정지 장치를 놓았어요. 다른 기구의 경고도 알고 있었고요.'],['키퍼','무서워지면 저를 부를 줄 알았어요. 제가 구해 주면, 다음에도 제 손을 찾을 줄 알았고요.'],[s.name,'공원의 명령이 아니라, 당신이 선택한 거군요.'],['키퍼','네. 제 선택이에요. 좋아하는 마음까지 거짓은 아니었어요. 그래서 더, 당신이 저 없이 괜찮아지는 걸 견딜 수 없었어요.']],keeperPastReveal);
 };
+function keeperPastReveal(){
+ const lines=[
+  ['','발치에 익숙한 고양이가 나타난다. 키퍼의 웃음이 사라진다.'],
+  ['고양이','그렇게까지 말하면 이 손님도 떠나잖아.'],['키퍼','이번에는 그 입구를 잠그게 두지 않을 거야.'],
+  ['고양이','나는 이 공원이야. 즐거웠던 기억과 조금만 더 놀고 싶다는 소원들이 모여 태어났어.'],
+  ['네버랜드','새로운 공원들이 생기고 손님이 줄었어. 불빛이 꺼질수록 내가 사라지는 것 같았어. 즐거운 시간이 끝나지 않으면 아무도 슬프지 않을 텐데.'],
+  ['키퍼','폐장하던 날 저는 마지막 손님이었어요. 놀이공원 설계자가 되고 싶어서 후크의 배를 마지막으로 타고 돌아가려 했죠.'],
+  ['키퍼','그날 배가 고장 났고 저는 거기서 죽었어요. 이곳이 저를 되살리고 출구를 없앴죠.'],
+  ['네버랜드','네가 떠나면 나 혼자잖아. 너는 이제 나와 하나야. 가지 마.'],
+  ['키퍼','나가려고 기구를 멈췄더니 공원 전체가 비명을 질렀어요. 저를 가둔 이곳이 사라질까 봐 두려워하는 모습을 외면할 수 없었죠.'],
+  ['네버랜드','네가 여기 남아 기구를 고치면 문을 열어 둘게. 손님들이 즐기고 놀이기구를 다 타면 보내 줄게. 내가 존재할 수 있을 정도로만.'],
+  ['키퍼','저는 공원을 고치고 손님들을 지키겠다고 약속했어요. 하지만 누군가 나가려 하면 당신은 다시 문을 닫았죠. 다치거나 돌아가지 못한 사람들도 있어요. 저는 그들을 지키지 못했어요.'],
+  ['키퍼','저는 이 공원을 좋아했어요. 하지만 이곳이 저를 죽지도 살지도 못한 채 붙잡아 둔 건 원망해요.'],
+  ['네버랜드','그래도 네가 곁에 있어 줬잖아. 이 손님도 남으면 셋이 함께 있을 수 있어.'],
+  [s.name,'즐거웠던 시간을 기억하는 것과 그 안에 갇혀 있는 것은 다르다. 내가 어디에 있을지는 내가 정한다.']
+ ];
+ (window.NEVERLAND_DUO?.play||story)(lines,keeperConfessionChoices);
+}
 function keeperConfessionChoices(){
  say(s.name,'구해 준 손과 위험에 밀어 넣은 손이 같았다.',[
   ['구해 준 것으로 위험을 만든 일이 없어지진 않아요',()=>keeperBeat([['키퍼','알아요. 그런데도 당신이 고맙다고 했던 순간을 자꾸 떠올리게 돼요.'],[s.name,'고마웠던 건 사실이에요. 나가고 싶은 것도 사실이고요.']],keeperFinalChoices)],

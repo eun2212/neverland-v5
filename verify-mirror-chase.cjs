@@ -1,0 +1,13 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert');
+let nextFrame, listeners={}, muted=false, muteCalls=[], removed=false, time=0, volume=.65, audioContexts=0, suspends=0, resumes=0;
+const ctx=new Proxy({}, {get(target,key){return target[key] || (()=>{});},set(target,key,val){target[key]=val;return true}});
+const canvas={getContext:()=>ctx};
+const caption={textContent:''};
+const overlay={style:{},isConnected:true,innerHTML:'',querySelector(s){return s==='canvas'?canvas:caption},querySelectorAll(){return []},addEventListener(){},removeEventListener(){},remove(){removed=true;this.isConnected=false}};
+const document={body:{appendChild(){}},createElement(){return overlay},addEventListener(k,v){listeners[k]=v},removeEventListener(k){delete listeners[k]}};
+const win={NEVERLAND_BGM:{state:{get muted(){return muted},get volume(){return volume}},mute(v){muted=v;muteCalls.push(v)}},AudioContext:class {constructor(){audioContexts++;this.state='running';this.currentTime=0} createOscillator(){return {frequency:{setValueAtTime(){},exponentialRampToValueAtTime(){}},connect(){},start(){},stop(){}}} createGain(){return {gain:{setValueAtTime(){},exponentialRampToValueAtTime(){}},connect(){}}} suspend(){suspends++;this.state='suspended';return Promise.resolve()} resume(){resumes++;this.state='running';return Promise.resolve()} close(){return Promise.resolve()}},setTimeout(){return 1},clearTimeout(){},addEventListener(){},removeEventListener(){}};
+const sandbox={window:win,document,performance:{now:()=>time},requestAnimationFrame(fn){nextFrame=fn;return 1},cancelAnimationFrame(){},console};
+vm.runInNewContext(fs.readFileSync('mirror-chase.js','utf8'),sandbox);
+let chase=win.NeverlandChase.start({gender:'female'});assert.deepStrictEqual(muteCalls,[true]);assert.ok(listeners.keydown);time=6000;nextFrame(time);assert.ok(caption.textContent.includes('도망쳐'));document.hidden=true;listeners.visibilitychange();assert.equal(suspends,1,'hidden tab pauses chase audio');document.hidden=false;listeners.visibilitychange();assert.equal(resumes,1,'visible tab resumes chase audio');chase.destroy();assert.deepStrictEqual(muteCalls,[true,false]);assert.ok(!listeners.keydown);assert.ok(!listeners.visibilitychange);assert.ok(removed);
+muted=true;muteCalls=[];removed=false;overlay.isConnected=true;chase=win.NeverlandChase.start({gender:'male'});chase.destroy();assert.deepStrictEqual(muteCalls,[]);assert.ok(muted);assert.equal(audioContexts,1,'muted audio must not start');
+muted=false;volume=0;overlay.isConnected=true;chase=win.NeverlandChase.start({gender:'male'});chase.destroy();assert.equal(audioContexts,1,'zero volume must not start audio');console.log('mirror chase lifecycle, intro, keyboard cleanup, mute and volume restoration: OK');

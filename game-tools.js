@@ -34,7 +34,7 @@
   action(host,'대사 로그 열기',()=>{hide();window.NEVERLAND_DIALOGUE.openLog();});
  }
  function profile(){const title=s?.phase==='profile';return{name:(title?$('player')?.value?.trim():s?.name)||'여행자',gender:(title?$('gender')?.value:s?.gender)==='male'?'male':'female',temper:(title?$('temper')?.value:s?.temper)||'moderate'};}
- function prepare(){const p=profile();hide();window.NEVERLAND_DIALOGUE.closeLog();newGame();testing=true;badge.hidden=false;close();Object.assign(s,p,{phase:'main',keeperIntroduced:true});queue=[];after=null;puzzle=null;releaseForcedRide3d();pendingRideResult=null;atControl3d=false;atExit3d=false;confronting3d=false;free3d=true;intro3d=false;firstLever3d=false;target3d=null;keeperStoryState.orientation=false;keeperStoryState.ready=true;world3d.configure({free:true,paused:false});}
+ function prepare(){const p=profile();window.NeverlandChase?.close?.();hide();window.NEVERLAND_DIALOGUE.closeLog();newGame();testing=true;badge.hidden=false;close();Object.assign(s,p,{phase:'main',keeperIntroduced:true});queue=[];after=null;puzzle=null;releaseForcedRide3d();pendingRideResult=null;atControl3d=false;atExit3d=false;confronting3d=false;free3d=true;intro3d=false;firstLever3d=false;target3d=null;keeperStoryState.orientation=false;keeperStoryState.ready=true;world3d.configure({free:true,paused:false});}
  function late(){world3d.unlockFracture();s.cleared=new Set([0,1,2,3]);s.visited=new Set([0,1,2,3,4]);s.clues=new Set([0,1,2,3,4]);s.survivedRides=4;s.K=10;s.M=4;s.N=12;s.I=6;s.wins=3;s.exit=true;s.exitRide=1;s.ride=1;keeperStoryState.dream='accuse';keeperStoryState.evidence=new Set([0,1,2,3,4]);}
  function jump(where,id=0){
   if(where==='title'){hide();newGame();return;}
@@ -46,7 +46,7 @@
   else if(['ride','control','force','running','incident'].includes(where)){
    if(!Number.isInteger(id)||id<0||id>=rides.length){explore3d();return;}
    s.ride=id;s.visited.add(id);s.talks=0;world3d.jumpToPark(controls3d[id][0],controls3d[id][1]+5);world3d.enterRide(id);
-   if(id===3){pendingRideResult={kind:'mirror',help:false,risk:false};explore3d(rides[id].name+' · 반대편 흰 출구를 찾아가세요.');}
+   if(id===3){pendingRideResult={kind:'mirror',help:false,risk:false};explore3d(rides[id].name+' · 반대편 흰 출구를 찾아가세요.');offerMirrorGuide3d();}
    else{
     world3d.forceBoard(id);
     if(id===0){free3d=false;firstLever3d=true;}

@@ -8,7 +8,7 @@
   const turn=Math.atan2(Math.sin(angle),Math.cos(angle));
   return Math.abs(turn)<.48?'↑':Math.abs(turn)>2.5?'↶':turn>0?'←':'→';
  }
- let run=null,mazeTime=0,mazeField=null,guide=null,reveal=null;
+ let run=null,mazeTime=0,mazeField=null,guide=null,reveal=null,mirrorGuideEnabled=false;
  const catSpot={x:3,z:3};
  const reduced=()=>window.NEVERLAND_TOOLS?.settings.reduced||matchMedia('(prefers-reduced-motion: reduce)').matches;
  const ui=document.createElement('div');
@@ -87,7 +87,8 @@
   window.NEVERLAND_BGM?.start?.();
   scream(.065);
  }
- function resetMaze(){mazeTime=0;guide=null;}
+ function resetMaze(){mazeTime=0;guide=null;mirrorGuideEnabled=false;}
+ function enableMirrorGuide(){mirrorGuideEnabled=true;mazeTime=30;}
  function clear(){
   clearTimeout(scareTimer);scareTimer=null;stopSound();
   touchKeys.clear();run=null;reveal=null;resetMaze();ui.hidden=true;document.body.classList.remove('chase-active');
@@ -158,6 +159,7 @@
  }
  function mazeGuide(player,interior,dt,valid){
   if(interior?.ride!==3){resetMaze();return;}
+  if(!mirrorGuideEnabled)return;
   mazeTime+=dt;
   if(mazeTime<30)return;
   const finish=window.NEVERLAND_INTERIORS[3].finish;
@@ -204,7 +206,7 @@
  function catDialogue(emergency=false,place=null){
   const text=place?encounter(place):emergency?'고양이가 비상정지 손잡이를 당깁니다. 기구가 움직이기 전에 잠겼습니다. 장치를 다시 맞추세요.':'푸른 눈의 렉돌이 다리에 몸을 비비고 별 모양 전구를 켭니다.';
   if(!place)window.NEVERLAND_DIALOGUE?.record('고양이',text);
-  modal('<h1>별빛 고양이</h1><img class="mascot-portrait" src="assets/mascot-cat.png" alt="작은 모자와 금빛 장식을 한 렉돌"><p>'+text+'</p><button type="button" id="mascot-return">돌아가기</button>');
+  modal('<h1>별빛 고양이</h1><img class="mascot-portrait" src="assets/mascot-cat.png" alt="작은 모자와 금빛 장식을 한 렉돌"><p>'+text+'</p><p>고양이: “재미있게 놀고 있지? 조금만 더 함께 있자.”</p><button type="button" id="mascot-return">돌아가기</button>');
   $('mascot-return').onclick=()=>explore3d();
   $('mascot-return').focus?.();
  }
@@ -223,10 +225,10 @@
   if(win&&(choice==='alone'||choice==='together')&&(id===2||id===5)){
    const origin=world3d.state.player;
    reveal={};
-   story([
+   (window.NEVERLAND_DUO?.play||story)([
     ['','렉돌이 발치에 몸을 비빈다. 목에 달린 별이 꺼지자, 고양이의 등이 솟구치고 앞발이 바닥을 긁는다. 푸른 눈이 금빛으로 변한다.'],
-    ['네버랜드','내가 네버랜드야. 손님 발길이 끊긴 뒤로, 네가 처음이었어. 네가 나가면 또 아무도 없잖아.'],
-    ['키퍼','저도 손님이었어요. 나가려던 날, 이곳이 문을 삼켰죠. 그 뒤로 계속 여기 갇혀 있었어요.'],
+    ['네버랜드','네가 나가면 불이 꺼질 거야. 또 아무도 없잖아.'],
+    ['키퍼','그만해. 이번에는 이 사람을 보내 줘.'],
     ['','고양이가 있던 자리에서 거대한 형체가 일어선다. 난간이 솟아 길을 여러 갈래로 가른다. 키퍼가 열쇠를 꺾어 열린 문틈에 끼운다.'],
     ['키퍼','제가 남긴 별을 따라가요. 문이 닫히기 전에 건너요!']
    ],()=>start(()=>oldChoice(win,choice),origin));
@@ -235,7 +237,7 @@
   return oldChoice(win,choice);
  };
  window.NEVERLAND_MASCOT={
-  start,catSpot,rideSpot,clear,resetMaze,tick,updateSound,mazeGuide,catDialogue,encounter,
+  start,catSpot,rideSpot,clear,resetMaze,enableMirrorGuide,tick,updateSound,mazeGuide,catDialogue,encounter,
   get reveal(){return reveal;},
   get active(){return !!run;},get chase(){return run;},get guide(){return guide;},
   touchKey:key=>Array.from(touchKeys.values()).includes(key),

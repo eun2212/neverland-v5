@@ -181,11 +181,11 @@
  }
  function close(returnToPark=false){
   if(!run)return;
-  const {onReturn}=run;run=null;
+  const {onReturn,completed}=run;run=null;
   ui.lever?.destroy();ui.lever=null;ui.leave.hidden=false;
   ui.shell.hidden=true;ui.shell.classList.remove('coaster-running','coaster-lever-open');
   document.body.classList.remove('coaster-active');
-  if(returnToPark)onReturn();
+  if(returnToPark)onReturn(completed);
  }
  window.NEVERLAND_COASTER={
   createModel,

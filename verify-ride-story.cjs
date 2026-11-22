@@ -1,0 +1,21 @@
+'use strict';
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const source=fs.readFileSync('keeper-story.js','utf8');
+const start=source.indexOf('function keeperRideStoryOrder3d('),end=source.indexOf('\nsuccess=function(',start);
+assert(start>=0&&end>start,'story helpers exist');
+const box={s:{name:'여행자',cleared:new Set(),survivedRides:0,actions:[]}};
+vm.createContext(box);vm.runInContext(source.slice(start,end),box);
+const order=id=>box.keeperRideStoryOrder3d(id);
+const before=id=>box.keeperRideBefore3d(id).map(line=>line[1]).join(' ');
+const after=id=>box.keeperRideAfter3d(id).map(line=>line[1]).join(' ');
+for(const id of [0,1,2,3,4,'coaster']){assert.equal(order(id),2,'any next ride is second');assert.match(before(id),/손님.*이름/);assert.match(after(id),id===3?/거울방 출구/:/안전바/);}
+box.s.cleared.add(3);box.s.survivedRides=1;
+assert.equal(order(3),3,'a completed repeat is the next ride');assert.equal(order(1),3);assert.match(after(1),/그림자/);
+assert.equal(box.keeperRideStoryOrder3d(3,true),2,'post-ride narrative accounts for the already incremented counter');
+box.s.actions.push({kind:'coaster-story-complete',ride:0});
+assert.equal(order('coaster'),4,'a completed coaster advances the next ride even on repeat');assert.equal(order(2),4);
+const saved=JSON.parse(JSON.stringify({cleared:[...box.s.cleared],actions:box.s.actions,survivedRides:box.s.survivedRides}));
+box.s.cleared=new Set(saved.cleared);box.s.actions=saved.actions;box.s.survivedRides=saved.survivedRides;
+assert.equal(order('coaster'),4,'coaster progress survives the existing save format');
+box.s.actions=[];assert.equal(order('coaster'),3,'older saves without the marker remain valid');
+console.log('PASS: ride story order, retakes, mirror, coaster, save restoration and old saves.');

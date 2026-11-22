@@ -15,7 +15,7 @@ setInterval(()=>{if(!active)return;const now=Date.now();fade=Math.min(1,fade+(no
 document.addEventListener('visibilitychange',()=>{hidden=!!document.hidden;if(hidden){active?.pause();previous?.pause();}else{last=Date.now();play(active);play(previous);}});
 // A later user gesture can resume media if the browser initially refused playback.
 function gesture(){if(!started&&current==='profile')start();else if(started)play(active);}document.addEventListener('pointerdown',gesture);document.addEventListener('keydown',gesture);
-window.NEVERLAND_BGM={tracks,cue,start,mute,setVolume(value){volume=Math.max(0,Math.min(1,value));},update(state,phase){switchTo(cue(state,phase));},get state(){return{started,muted,current,fading:!!previous};}};
+window.NEVERLAND_BGM={tracks,cue,start,mute,setVolume(value){volume=Math.max(0,Math.min(1,value));},update(state,phase){switchTo(cue(state,phase));},get state(){return{started,muted,volume,current,fading:!!previous};}};
 })();
 
 

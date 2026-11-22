@@ -42,6 +42,8 @@ for(const choice of [0,1])for(let ride=0;ride<5;ride++){
  test(s.clues.has(s.ride)&&keeperStoryState.evidence.has(s.ride),'both evidence responses retain the record');
  var narrativeScore=s.N;investigate3d();drain();$('choices').children[0].onclick();drain();test(s.N===narrativeScore,'rechecking evidence cannot farm points');\`);
 }
+run(\`startMain();s.survivedRides=0;var early=keeperRideBefore3d(1);test(early.some(q=>q[0]==='고양이')&&early.some(q=>q[0]==='키퍼'),'early rides show cat and keeper interacting');test(!early.some(q=>q[0]==='네버랜드'),'early interaction conceals cat identity');
+ keeperPastReveal();var late=queue.map(q=>q[1]).join(' ');test(late.includes('죽었어요')&&late.includes('되살리고')&&late.includes('공원')&&late.includes('약속'),'final confrontation reveals keeper history and the park');drain();test($('choices').children.length===3,'past reveal returns to confession choices');\`);
 for(const dream of ['doubt','comfort','accuse'])for(const choice of [0,1,2]){
  run(\`startMain();keeperStoryState.dream='\`+dream+\`';s.exit=true;atExit3d=true;finale();atExit3d=false;
  test(queue.some(q=>q[1].includes('제가 정지 장치를 놓았어요')),'keeper admits intentional sabotage');drain();

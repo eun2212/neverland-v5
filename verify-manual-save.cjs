@@ -102,11 +102,13 @@ test(roomCheckpoint.shop==='candy'&&roomCheckpoint.pose.x===.81&&world3d.state.p
 const old=JSON.parse(localStorage.getItem(key+2));
 old.parkRevision=2;old.player.x=0;old.player.z=24;
 old.story.cheshire={met:true,evidence:['legacy']};
+old.story.actions.push({kind:'coaster-story-complete',ride:0});
 old.log.push({who:'체셔',text:'legacy scene'});
 localStorage.setItem(key+2,JSON.stringify(old));
 newGame();$('manual-save-load').onclick();button(2).onclick();
 test(world3d.state.player.z===window.NEVERLAND_LAYOUT.rides[0].control[1]-3.7,'old cabin save relocates to safe captain approach');
 test(!s.cheshire&&!window.NEVERLAND_DIALOGUE.history.some(x=>x.who==='체셔'),'legacy Cheshire fields do not restore the deleted character');
+test(s.actions.some(action=>action.kind==='coaster-story-complete'),'coaster story completion survives save restore');
 old.parkRevision=3;old.player.x=0;old.player.z=-80;
 localStorage.setItem(key+2,JSON.stringify(old));
 newGame();$('manual-save-load').onclick();button(2).onclick();

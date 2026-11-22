@@ -51,9 +51,10 @@ Object.assign(worldQA.player,rideCat);
 test(worldQA.nearest()?.place==='ride','ride cat has a reachable interaction');
 startMain();s.ride=3;world3d.enterRide(3);explore3d();
 const pet=window.NEVERLAND_MASCOT;
-for(let i=0;i<599;i++)worldQA.updateProgress(.05);
-test(!pet.guide,'maze hint waits for thirty seconds');
-for(let i=0;i<3;i++)worldQA.updateProgress(.05);
+for(let i=0;i<602;i++)worldQA.updateProgress(.05);
+test(!pet.guide,'maze cat waits until the player accepts help');
+pet.enableMirrorGuide();
+worldQA.updateProgress(.05);
 test(!!pet.guide&&world3d.interiorValid(pet.guide.x,pet.guide.z),'maze cat begins on a walkable route');
 let mascotSteps=0;
 while(Math.hypot(worldQA.player.x,worldQA.player.z+8.5)>1.6&&mascotSteps++<180){

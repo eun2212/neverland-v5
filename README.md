@@ -19,6 +19,7 @@ node server.cjs
 ## 현재 작업과 이어서 개발하기
 
 - [최신 인수인계](HANDOFF.md)와 [v5 작업 기록](v5-hq/threads/README.md)을 먼저 확인하세요. Codex 대화 자체는 Git에 저장되지 않으며, 작업 기록 파일은 별도 보관본입니다.
+- 현재 확정된 세계관과 인물 관계는 [과거사 정리](v5-hq/story-bible.md), [관계도 이미지](v5-hq/assets-v5/neverland-story-relationships.png)에 보관되어 있습니다.
 - 게임 내 **장면 이동 · 제작**에서 이야기 분기, 기구별 탑승·조작·키퍼 개입·운행, 미니게임과 엔딩을 테스트할 수 있습니다. 제작 테스트는 일반 플레이의 수집 기록에 저장되지 않습니다.
 - 기구 조작은 `coaster-lever.js`, `coaster-safetybar.js`, `ride-interactions.js`에 있습니다. 장면 이동 UI는 `game-tools.js`, 공원 외형과 간판은 `carnival-scene.js`에 있습니다.
 - `play.html`과 `game.js`는 예전 독립 데모입니다. `prepare-full-story.cjs`는 현재 통합본을 덮어쓸 수 있으므로 실행하지 마세요.
@@ -34,6 +35,14 @@ node verify-coaster-safetybar.cjs
 node verify-coaster-entry.cjs
 node verify-ride-signs.cjs
 node verify-midway-signs.cjs
+node verify-chapter-cards.cjs
+node verify-duo-dialogue.cjs
+node verify-mirror-transition.cjs
+node verify-mirror-chase.cjs
+node verify-ride-story.cjs
+node verify-keeper-story.cjs
+node verify-mascot.cjs
+node verify-manual-save.cjs
 ```
 
 자동 검사는 게임 로직과 일부 모의 화면을 확인합니다. 그래픽과 3D 화면, 기기별 조작은 실제 브라우저에서도 확인해야 합니다. GitHub 푸시는 공개 플레이 사이트의 자동 배포를 의미하지 않습니다.
